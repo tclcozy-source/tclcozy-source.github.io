@@ -2,6 +2,7 @@
 <html>
 <head>
   <title>Rock Paper Scissors</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
@@ -100,6 +101,18 @@
       transition: opacity 0.2s, transform 0.2s;
     }
     .action-btn:hover { opacity: 0.85; transform: scale(1.04); }
+
+    @media (max-width: 480px) {
+      .content { padding: 28px 16px 48px; }
+      h1 { font-size: 34px; }
+      .subtitle { font-size: 14px; margin-bottom: 24px; }
+      .glass { padding: 28px 16px 32px; }
+      .choice-btn { width: 82px; height: 82px; font-size: 36px; border-radius: 14px; }
+      #result { font-size: 17px; }
+      #score { font-size: 13px; }
+      #winner { font-size: 22px; }
+      .action-btn { font-size: 15px; padding: 12px 28px; }
+    }
   </style>
 </head>
 <body>

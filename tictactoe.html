@@ -2,6 +2,7 @@
 <html>
 <head>
   <title>Tic Tac Toe</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
@@ -116,6 +117,18 @@
       transition: opacity 0.2s, transform 0.2s;
     }
     .action-btn:hover { opacity: 0.85; transform: scale(1.04); }
+
+    @media (max-width: 480px) {
+      .content { padding: 28px 16px 48px; }
+      h1 { font-size: 34px; }
+      .subtitle { font-size: 14px; margin-bottom: 24px; }
+      .glass { padding: 24px 12px 32px; }
+      .level-btn { font-size: 13px; padding: 8px 14px; }
+      #status { font-size: 15px; margin-bottom: 14px; }
+      .grid { grid-template-columns: repeat(3, 86px); gap: 8px; }
+      .cell { width: 86px; height: 86px; font-size: 38px; border-radius: 12px; }
+      .action-btn { font-size: 15px; padding: 12px 28px; }
+    }
   </style>
 </head>
 <body>
