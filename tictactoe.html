@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Tic Tac Toe</title>
+  <style>
+    body {
+      background-color: #1a1a2e;
+      color: white;
+      font-family: Arial;
+      text-align: center;
+      padding: 40px;
+    }
+    h1 { color: #e94560; font-size: 50px; }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, 120px);
+      gap: 10px;
+      justify-content: center;
+      margin-top: 30px;
+    }
+    .cell {
+      width: 120px;
+      height: 120px;
+      background-color: #16213e;
+      font-size: 60px;
+      cursor: pointer;
+      border-radius: 10px;
+      color: white;
+      border: none;
+    }
+    .cell:hover { background-color: #0f3460; }
+    #status { font-size: 25px; margin-top: 20px; color: #a8dadc; }
+    .btn {
+      cursor: pointer;
+      font-size: 18px;
+      background: #e94560;
+      padding: 10px 20px;
+      border-radius: 10px;
+      display: inline-block;
+      margin: 10px 5px;
+      border: none;
+      color: white;
+    }
+    .btn.active { background: #0f3460; border: 2px solid #a8dadc; }
+  </style>
+</head>
+<body>
+  <h1>Tic Tac Toe</h1>
+  <div>
+    <button class="btn active" id="easy" onclick="setLevel('easy')">😊 Easy</button>
+    <button class="btn" id="mid" onclick="setLevel('mid')">😐 Medium</button>
+    <button class="btn" id="hard" onclick="setLevel('hard')">😈 Hard</button>
+  </div>
+  <p id="status">Your turn! You are X</p>
+  <div class="grid">
+    <button class="cell"></button>
+    <button class="cell"></button>
+    <button class="cell"></button>
+    <button class="cell"></button>
+    <button class="cell"></button>
+    <button class="cell"></button>
+    <button class="cell"></button>
+    <button class="cell"></button>
+    <button class="cell"></button>
+  </div>
+  <br>
+  <button class="btn" onclick="resetGame()">🔄 Restart</button>
+
+  <script>
+    var board = ["","","","","","","","",""];
+    var cells = document.querySelectorAll(".cell");
+    var gameOver = false;
+    var level = "easy";
+
+    function setLevel(l) {
+      level = l;
+      document.getElementById("easy").classList.remove("active");
+      document.getElementById("mid").classList.remove("active");
+      document.getElementById("hard").classList.remove("active");
+      document.getElementById(l).classList.add("active");
+      resetGame();
+    }
+
+    cells.forEach(function(cell, index) {
+      cell.onclick = function() {
+        if (board[index] === "" && !gameOver) {
+          makeMove(index, "X");
+          if (!gameOver) setTimeout(computerMove, 400);
+        }
+      };
+    });
+
+    function makeMove(index, player) {
+      board[index] = player;
+      cells[index].innerHTML = player;
+      cells[index].style.color = player === "X" ? "#e94560" : "#a8dadc";
+      if (checkWin(player)) {
+        gameOver = true;
+        document.getElementById("status").innerHTML =
+          player === "X" ? "🎉 You win!" : "💻 Computer wins!";
+      } else if (board.every(function(b) { return b !== ""; })) {
+        gameOver = true;
+        document.getElementById("status").innerHTML = "🤝 It's a tie!";
+      }
+    }
+
+    function getEmpty() {
+      var empty = [];
+      board.forEach(function(b, i) { if (b === "") empty.push(i); });
+      return empty;
+    }
+
+    function findWinningMove(player) {
+      var wins = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+      for (var i = 0; i < wins.length; i++) {
+        var combo = wins[i];
+        var vals = combo.map(function(c) { return board[c]; });
+        if (vals.filter(function(v) { return v === player; }).length === 2 &&
+            vals.filter(function(v) { return v === ""; }).length === 1) {
+          return combo[vals.indexOf("")];
+        }
+      }
+      return -1;
+    }
+
+    function minimax(b, isMax) {
+      if (checkWinBoard(b, "O")) return 10;
+      if (checkWinBoard(b, "X")) return -10;
+      if (b.every(function(v) { return v !== ""; })) return 0;
+      if (isMax) {
+        var best = -100;
+        b.forEach(function(val, i) {
+          if (val === "") {
+            b[i] = "O";
+            best = Math.max(best, minimax(b, false));
+            b[i] = "";
+          }
+        });
+        return best;
+      } else {
+        var best = 100;
+        b.forEach(function(val, i) {
+          if (val === "") {
+            b[i] = "X";
+            best = Math.min(best, minimax(b, true));
+            b[i] = "";
+          }
+        });
+        return best;
+      }
+    }
+
+    function checkWinBoard(b, player) {
+      var wins = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+      return wins.some(function(combo) {
+        return b[combo[0]] === player && b[combo[1]] === player && b[combo[2]] === player;
+      });
+    }
+
+    function computerMove() {
+      var empty = getEmpty();
+      if (empty.length === 0) return;
+      var pick;
+
+      if (level === "easy") {
+        pick = empty[Math.floor(Math.random() * empty.length)];
+      } else if (level === "mid") {
+        var win = findWinningMove("O");
+        var block = findWinningMove("X");
+        if (win !== -1) pick = win;
+        else if (block !== -1) pick = block;
+        else pick = empty[Math.floor(Math.random() * empty.length)];
+      } else {
+        var bestVal = -100, bestMove = -1;
+        board.forEach(function(val, i) {
+          if (val === "") {
+            board[i] = "O";
+            var moveVal = minimax(board, false);
+            board[i] = "";
+            if (moveVal > bestVal) { bestVal = moveVal; bestMove = i; }
+          }
+        });
+        pick = bestMove;
+      }
+
+      makeMove(pick, "O");
+      if (!gameOver) document.getElementById("status").innerHTML = "Your turn! You are X";
+    }
+
+    function checkWin(player) { return checkWinBoard(board, player); }
+
+    function resetGame() {
+      board = ["","","","","","","","",""];
+      gameOver = false;
+      cells.forEach(function(cell) {
+        cell.innerHTML = "";
+        cell.style.color = "white";
+      });
+      document.getElementById("status").innerHTML = "Your turn! You are X";
+    }
+  </script>
+</body>
+</html>
