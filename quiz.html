@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Science Quiz</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background-color: #1a1a2e;
+      color: white;
+      font-family: Arial;
+      text-align: center;
+      padding: 40px 20px;
+    }
+    h1 { font-size: 50px; color: #e94560; margin-bottom: 10px; }
+    #question {
+      font-size: 24px;
+      margin: 30px auto;
+      max-width: 600px;
+      color: #a8dadc;
+    }
+    .options {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 15px;
+      margin-top: 20px;
+    }
+    .option {
+      background: #16213e;
+      border: 2px solid transparent;
+      color: white;
+      font-size: 18px;
+      padding: 15px 30px;
+      border-radius: 12px;
+      cursor: pointer;
+      width: 400px;
+      transition: border 0.2s, transform 0.2s;
+    }
+    .option:hover { border: 2px solid #e94560; transform: scale(1.03); }
+    .option.selected { border: 2px solid #a8dadc; background: #0f3460; }
+    #progress { font-size: 16px; color: #a8dadc; margin-bottom: 10px; }
+    .btn {
+      background: #e94560;
+      color: white;
+      border: none;
+      padding: 12px 25px;
+      font-size: 18px;
+      border-radius: 12px;
+      cursor: pointer;
+      margin-top: 25px;
+    }
+    .btn:hover { background: #c73652; }
+    #result-screen { display: none; }
+    .review-item {
+      background: #16213e;
+      border-radius: 12px;
+      padding: 20px;
+      margin: 15px auto;
+      max-width: 600px;
+      text-align: left;
+    }
+    .review-item.correct { border-left: 5px solid lime; }
+    .review-item.wrong { border-left: 5px solid red; }
+    .review-item p { margin-top: 8px; font-size: 16px; }
+    #final-score { font-size: 40px; color: gold; margin: 20px 0; }
+  </style>
+</head>
+<body>
+
+  <div id="quiz-screen">
+    <h1>🔬 Science Quiz</h1>
+    <p id="progress">Question 1 of 8</p>
+    <p id="question"></p>
+    <div class="options" id="options"></div>
+    <button class="btn" id="nextBtn" onclick="nextQuestion()" style="display:none">Next ➡️</button>
+  </div>
+
+  <div id="result-screen">
+    <h1>🔬 Quiz Results</h1>
+    <p id="final-score"></p>
+    <div id="review"></div>
+    <button class="btn" onclick="restartQuiz()">🔄 Play Again</button>
+  </div>
+
+  <script>
+    var questions = [
+      { q: "What is the closest planet to the Sun?", options: ["Venus", "Earth", "Mercury", "Mars"], answer: "Mercury" },
+      { q: "What gas do plants absorb from the atmosphere?", options: ["Oxygen", "Carbon Dioxide", "Nitrogen", "Hydrogen"], answer: "Carbon Dioxide" },
+      { q: "How many bones are in the adult human body?", options: ["206", "185", "230", "196"], answer: "206" },
+      { q: "What is the chemical symbol for water?", options: ["WA", "H2O", "HO2", "OW"], answer: "H2O" },
+      { q: "What planet is known as the Red Planet?", options: ["Jupiter", "Saturn", "Venus", "Mars"], answer: "Mars" },
+      { q: "What is the powerhouse of the cell?", options: ["Nucleus", "Ribosome", "Mitochondria", "Chloroplast"], answer: "Mitochondria" },
+      { q: "What force keeps us on the ground?", options: ["Magnetism", "Friction", "Gravity", "Tension"], answer: "Gravity" },
+      { q: "What is the speed of light?", options: ["300,000 km/s", "150,000 km/s", "500,000 km/s", "100,000 km/s"], answer: "300,000 km/s" }
+    ];
+
+    var current = 0;
+    var userAnswers = [];
+    var selectedAnswer = null;
+
+    function loadQuestion() {
+      selectedAnswer = null;
+      var q = questions[current];
+      document.getElementById("question").innerHTML = q.q;
+      document.getElementById("progress").innerHTML = "Question " + (current + 1) + " of " + questions.length;
+      document.getElementById("nextBtn").style.display = "none";
+
+      var optionsDiv = document.getElementById("options");
+      optionsDiv.innerHTML = "";
+
+      q.options.forEach(function(opt) {
+        var btn = document.createElement("button");
+        btn.className = "option";
+        btn.innerHTML = opt;
+        btn.onclick = function() {
+          document.querySelectorAll(".option").forEach(function(b) {
+            b.classList.remove("selected");
+          });
+          btn.classList.add("selected");
+          selectedAnswer = opt;
+          document.getElementById("nextBtn").style.display = "inline-block";
+        };
+        optionsDiv.appendChild(btn);
+      });
+    }
+
+    function nextQuestion() {
+      if (!selectedAnswer) return;
+      userAnswers.push(selectedAnswer);
+      current++;
+
+      if (current < questions.length) {
+        loadQuestion();
+      } else {
+        showResults();
+      }
+    }
+
+    function showResults() {
+      document.getElementById("quiz-screen").style.display = "none";
+      document.getElementById("result-screen").style.display = "block";
+
+      var score = 0;
+      var reviewHTML = "";
+
+      questions.forEach(function(q, i) {
+        var correct = userAnswers[i] === q.answer;
+        if (correct) score++;
+        reviewHTML += "<div class='review-item " + (correct ? "correct" : "wrong") + "'>";
+        reviewHTML += "<strong>" + (correct ? "✅" : "❌") + " Q" + (i+1) + ": " + q.q + "</strong>";
+        reviewHTML += "<p>Your answer: " + userAnswers[i] + "</p>";
+        if (!correct) reviewHTML += "<p style='color:lime'>Correct: " + q.answer + "</p>";
+        reviewHTML += "</div>";
+      });
+
+      var msg = score === 8 ? "🏆 Perfect!" : score >= 6 ? "🎉 Great job!" : score >= 4 ? "👍 Not bad!" : "😅 Keep studying!";
+      document.getElementById("final-score").innerHTML = msg + "<br>" + score + " / 8";
+      document.getElementById("review").innerHTML = reviewHTML;
+    }
+
+    function restartQuiz() {
+      current = 0;
+      userAnswers = [];
+      selectedAnswer = null;
+      document.getElementById("quiz-screen").style.display = "block";
+      document.getElementById("result-screen").style.display = "none";
+      loadQuestion();
+    }
+
+    loadQuestion();
+  </script>
+</body>
+</html>

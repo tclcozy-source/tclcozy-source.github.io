@@ -4,35 +4,20 @@
   <title>My Game Hub</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-
     body {
       background-color: #1a1a2e;
       color: white;
       font-family: Arial;
       text-align: center;
       min-height: 100vh;
-      overflow-x: hidden;
     }
-
     header {
       background: linear-gradient(135deg, #e94560, #0f3460);
       padding: 50px 20px;
       margin-bottom: 40px;
     }
-
-    header h1 {
-      font-size: 70px;
-      letter-spacing: 3px;
-      animation: fadeIn 1s ease;
-    }
-
-    header p {
-      font-size: 20px;
-      margin-top: 10px;
-      color: #a8dadc;
-      animation: fadeIn 1.5s ease;
-    }
-
+    header h1 { font-size: 70px; letter-spacing: 3px; animation: fadeIn 1s ease; }
+    header p { font-size: 20px; margin-top: 10px; color: #a8dadc; animation: fadeIn 1.5s ease; }
     .badge {
       display: inline-block;
       background: #e94560;
@@ -42,12 +27,10 @@
       margin-top: 10px;
       animation: fadeIn 2s ease;
     }
-
     @keyframes fadeIn {
       from { opacity: 0; transform: translateY(-20px); }
       to { opacity: 1; transform: translateY(0); }
     }
-
     .games {
       display: flex;
       justify-content: center;
@@ -55,7 +38,6 @@
       gap: 25px;
       padding: 20px;
     }
-
     .card {
       background: linear-gradient(135deg, #16213e, #0f3460);
       border-radius: 20px;
@@ -66,53 +48,22 @@
       color: white;
       border: 2px solid transparent;
       transition: transform 0.3s, border 0.3s, box-shadow 0.3s;
-      animation: popIn 0.5s ease;
     }
-
     .card:hover {
       transform: translateY(-10px) scale(1.05);
       border: 2px solid #e94560;
       box-shadow: 0 10px 30px rgba(233, 69, 96, 0.4);
     }
-
-    .card h2 {
-      font-size: 55px;
-      margin-bottom: 10px;
-    }
-
-    .card p {
-      font-size: 16px;
-      color: #a8dadc;
-    }
-
-    .coming-soon {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-
-    .coming-soon:hover {
-      transform: none;
-      border: 2px solid transparent;
-      box-shadow: none;
-    }
-
-    @keyframes popIn {
-      from { opacity: 0; transform: scale(0.8); }
-      to { opacity: 1; transform: scale(1); }
-    }
-
-    footer {
-      margin-top: 60px;
-      padding: 20px;
-      color: #a8dadc;
-      font-size: 14px;
-    }
+    .card h2 { font-size: 55px; margin-bottom: 10px; }
+    .card p { font-size: 16px; color: #a8dadc; }
+    .coming-soon { opacity: 0.5; cursor: not-allowed; }
+    .coming-soon:hover { transform: none; border: 2px solid transparent; box-shadow: none; }
+    footer { margin-top: 60px; padding: 20px; color: #a8dadc; font-size: 14px; }
   </style>
 </head>
 <body>
-
   <header>
-    <h1>🎮 Shahmeer's Games</h1>
+    <h1>🎮 Game Hub</h1>
     <p>Made by a 12 year old developer</p>
     <span class="badge">⚡ Built with HTML, CSS & JS</span>
   </header>
@@ -126,6 +77,10 @@
       <h2>❌</h2>
       <p>Tic Tac Toe</p>
     </a>
+    <a class="card" href="quiz.html">
+      <h2>🔬</h2>
+      <p>Science Quiz</p>
+    </a>
     <a class="card coming-soon" href="#">
       <h2>🎯</h2>
       <p>Coming Soon!</p>
@@ -135,6 +90,5 @@
   <footer>
     <p>🚀 More games coming soon!</p>
   </footer>
-
 </body>
 </html>
