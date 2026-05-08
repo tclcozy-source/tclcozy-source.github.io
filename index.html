@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>My Game Hub</title>
+  <style>
+    body {
+      background-color: #1a1a2e;
+      color: white;
+      font-family: Arial;
+      text-align: center;
+      padding: 40px;
+    }
+    h1 {
+      font-size: 60px;
+      color: #e94560;
+    }
+    p {
+      color: #a8dadc;
+      font-size: 20px;
+    }
+    .games {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-top: 40px;
+      gap: 20px;
+    }
+    .card {
+      background-color: #16213e;
+      border-radius: 20px;
+      padding: 30px;
+      width: 200px;
+      cursor: pointer;
+      transition: transform 0.2s;
+      text-decoration: none;
+      color: white;
+    }
+    .card:hover {
+      transform: scale(1.1);
+    }
+    .card h2 {
+      font-size: 50px;
+      margin: 0;
+    }
+    .card p {
+      font-size: 16px;
+      color: #a8dadc;
+    }
+  </style>
+</head>
+<body>
+  <h1>🎮 My Game Hub</h1>
+  <p>Choose a game to play!</p>
+
+  <div class="games">
+    <a class="card" href="rps.html">
+      <h2>✂️</h2>
+      <p>Rock Paper Scissors</p>
+    </a>
+    <a class="card" href="#">
+      <h2>🔢</h2>
+      <p>Coming Soon!</p>
+    </a>
+    <a class="card" href="#">
+      <h2>🎯</h2>
+      <p>Coming Soon!</p>
+    </a>
+  </div>
+</body>
+</html>

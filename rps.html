@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Rock Paper Scissors</title>
+  <style>
+    body {
+      background-color: #1a1a2e;
+      color: white;
+      font-family: Arial;
+      text-align: center;
+      padding: 40px;
+    }
+    h1 { font-size: 50px; color: #e94560; }
+    button {
+      font-size: 30px;
+      padding: 15px 25px;
+      margin: 10px;
+      border: none;
+      border-radius: 15px;
+      cursor: pointer;
+      background-color: #e94560;
+      color: white;
+      transition: transform 0.1s;
+    }
+    button:hover { background-color: #c73652; transform: scale(1.1); }
+    button:disabled { opacity: 0.4; cursor: not-allowed; }
+    #result { font-size: 30px; margin: 20px; }
+    #score { font-size: 20px; color: #a8dadc; }
+    #winner { font-size: 40px; color: gold; }
+    .play-again {
+      cursor: pointer;
+      font-size: 25px;
+      background: #e94560;
+      padding: 10px 20px;
+      border-radius: 10px;
+      display: inline-block;
+      margin-top: 15px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Rock Paper Scissors</h1>
+  <p>First to 2 wins! 🏆</p>
+  <button id="r" onclick="play('rock')">🪨 Rock</button>
+  <button id="p" onclick="play('paper')">📄 Paper</button>
+  <button id="s" onclick="play('scissors')">✂️ Scissors</button>
+  <p id="result">Make your move!</p>
+  <p id="score">Wins: 0 | Losses: 0 | Ties: 0</p>
+  <p id="winner"></p>
+
+  <script>
+    var wins = 0, losses = 0, ties = 0;
+
+    function disableButtons() {
+      document.getElementById("r").disabled = true;
+      document.getElementById("p").disabled = true;
+      document.getElementById("s").disabled = true;
+    }
+
+    function enableButtons() {
+      document.getElementById("r").disabled = false;
+      document.getElementById("p").disabled = false;
+      document.getElementById("s").disabled = false;
+    }
+
+    function resetGame() {
+      wins = 0; losses = 0; ties = 0;
+      document.getElementById("score").innerHTML = "Wins: 0 | Losses: 0 | Ties: 0";
+      document.getElementById("result").innerHTML = "Make your move!";
+      document.getElementById("result").style.color = "white";
+      document.getElementById("winner").innerHTML = "";
+      enableButtons();
+    }
+
+    function play(player) {
+      disableButtons();
+      document.getElementById("result").innerHTML = "⏳ Processing...";
+
+      setTimeout(function() {
+        var choices = ["rock", "paper", "scissors"];
+        var computer = choices[Math.floor(Math.random() * 3)];
+        var result = document.getElementById("result");
+        var winner = document.getElementById("winner");
+
+        if (player === computer) {
+          ties++;
+          result.style.color = "yellow";
+          result.innerHTML = "🤝 Tie! Computer chose " + computer;
+        } else if (
+          (player === "rock" && computer === "scissors") ||
+          (player === "paper" && computer === "rock") ||
+          (player === "scissors" && computer === "paper")
+        ) {
+          wins++;
+          result.style.color = "lime";
+          result.innerHTML = "🎉 You win! Computer chose " + computer;
+        } else {
+          losses++;
+          result.style.color = "red";
+          result.innerHTML = "💀 You lose! Computer chose " + computer;
+        }
+
+        document.getElementById("score").innerHTML =
+          "Wins: " + wins + " | Losses: " + losses + " | Ties: " + ties;
+
+        if (wins === 2) {
+          setTimeout(function() {
+            winner.innerHTML = "🏆 You are the Champion!<br><span class='play-again' onclick='resetGame()'>Play Again</span>";
+          }, 1000);
+        } else if (losses === 2) {
+          setTimeout(function() {
+            winner.innerHTML = "💻 Computer wins!<br><span class='play-again' onclick='resetGame()'>Play Again</span>";
+          }, 1000);
+        } else {
+          setTimeout(enableButtons, 1000);
+        }
+      }, 600);
+    }
+  </script>
+</body>
+</html>
