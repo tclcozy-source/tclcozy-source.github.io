@@ -48,8 +48,23 @@
       border-radius: 12px;
       cursor: pointer;
       margin-top: 25px;
+      text-decoration: none;
+      display: inline-block;
     }
     .btn:hover { background: #c73652; }
+    .back-btn {
+      background: #0f3460;
+      color: #a8dadc;
+      border: none;
+      padding: 8px 18px;
+      font-size: 16px;
+      border-radius: 10px;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-block;
+      margin-bottom: 20px;
+    }
+    .back-btn:hover { background: #16213e; }
     #result-screen { display: none; }
     .review-item {
       background: #16213e;
@@ -66,8 +81,8 @@
   </style>
 </head>
 <body>
-
-  <div id="quiz-screen">
+    <div id="quiz-screen">
+    <a class="back-btn" href="index.html">⬅️ Home</a>
     <h1>🔬 Science Quiz</h1>
     <p id="progress">Question 1 of 8</p>
     <p id="question"></p>
@@ -76,6 +91,7 @@
   </div>
 
   <div id="result-screen">
+    <a class="back-btn" href="index.html">⬅️ Home</a>
     <h1>🔬 Quiz Results</h1>
     <p id="final-score"></p>
     <div id="review"></div>
@@ -83,6 +99,10 @@
   </div>
 
   <script>
+    function shuffle(arr) {
+      return arr.sort(function() { return Math.random() - 0.5; });
+    }
+
     var questions = [
       { q: "What is the closest planet to the Sun?", options: ["Venus", "Earth", "Mercury", "Mars"], answer: "Mercury" },
       { q: "What gas do plants absorb from the atmosphere?", options: ["Oxygen", "Carbon Dioxide", "Nitrogen", "Hydrogen"], answer: "Carbon Dioxide" },
@@ -108,7 +128,7 @@
       var optionsDiv = document.getElementById("options");
       optionsDiv.innerHTML = "";
 
-      q.options.forEach(function(opt) {
+      shuffle(q.options).forEach(function(opt) {
         var btn = document.createElement("button");
         btn.className = "option";
         btn.innerHTML = opt;
@@ -128,7 +148,6 @@
       if (!selectedAnswer) return;
       userAnswers.push(selectedAnswer);
       current++;
-
       if (current < questions.length) {
         loadQuestion();
       } else {
