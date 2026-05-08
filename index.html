@@ -151,6 +151,18 @@
       letter-spacing: 1px;
       animation: fadeDown 1.2s ease both;
     }
+    .email-link {
+      background: linear-gradient(90deg, #ff4d9e, #a855f7);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      text-decoration: none;
+      font-weight: 600;
+      transition: text-shadow 0.3s ease, filter 0.3s ease;
+    }
+    .email-link:hover {
+      filter: drop-shadow(0 0 8px rgba(255,77,158,0.7)) drop-shadow(0 0 16px rgba(168,85,247,0.4));
+    }
 
     @keyframes fadeDown {
       from { opacity: 0; transform: translateY(-20px); }
@@ -209,7 +221,11 @@
       </a>
     </div>
 
-    <footer>✨ More games coming soon</footer>
+    <footer>
+      ✨ More games coming soon
+      <br><br>
+      Got a game idea? Email me at <a href="mailto:tclcozy@gmail.com" class="email-link">tclcozy@gmail.com</a>
+    </footer>
   </div>
 
   <script>
