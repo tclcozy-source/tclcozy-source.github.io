@@ -5,103 +5,158 @@
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
-      background-color: #1a1a2e;
+      background: #0a0a0f;
       color: white;
-      font-family: Arial;
+      font-family: Arial, sans-serif;
       text-align: center;
-      padding: 40px 20px;
+      min-height: 100vh;
+      overflow-x: hidden;
     }
-    h1 { font-size: 50px; color: #e94560; margin-bottom: 10px; }
-    #question {
-      font-size: 24px;
-      margin: 30px auto;
-      max-width: 600px;
-      color: #a8dadc;
+    canvas {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      pointer-events: none;
+      z-index: 0;
     }
-    .options {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 15px;
-      margin-top: 20px;
+    .content {
+      position: relative;
+      z-index: 1;
+      padding: 40px 20px 60px;
     }
-    .option {
-      background: #16213e;
-      border: 2px solid transparent;
-      color: white;
-      font-size: 18px;
-      padding: 15px 30px;
-      border-radius: 12px;
-      cursor: pointer;
-      width: 400px;
-      transition: border 0.2s, transform 0.2s;
-    }
-    .option:hover { border: 2px solid #e94560; transform: scale(1.03); }
-    .option.selected { border: 2px solid #a8dadc; background: #0f3460; }
-    #progress { font-size: 16px; color: #a8dadc; margin-bottom: 10px; }
-    .btn {
-      background: #e94560;
-      color: white;
-      border: none;
-      padding: 12px 25px;
-      font-size: 18px;
-      border-radius: 12px;
-      cursor: pointer;
-      margin-top: 25px;
-      text-decoration: none;
-      display: inline-block;
-    }
-    .btn:hover { background: #c73652; }
     .back-btn {
-      background: #0f3460;
-      color: #a8dadc;
-      border: none;
-      padding: 8px 18px;
-      font-size: 16px;
-      border-radius: 10px;
-      cursor: pointer;
-      text-decoration: none;
       display: inline-block;
-      margin-bottom: 20px;
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.12);
+      color: rgba(255,255,255,0.7);
+      padding: 8px 20px;
+      border-radius: 999px;
+      font-size: 14px;
+      text-decoration: none;
+      backdrop-filter: blur(10px);
+      transition: background 0.2s;
+      margin-bottom: 36px;
     }
-    .back-btn:hover { background: #16213e; }
-    #result-screen { display: none; }
-    .review-item {
-      background: #16213e;
-      border-radius: 12px;
-      padding: 20px;
-      margin: 15px auto;
-      max-width: 600px;
+    .back-btn:hover { background: rgba(255,255,255,0.13); }
+    h1 {
+      font-size: 56px;
+      font-weight: 900;
+      background: linear-gradient(90deg, #ff4d9e, #a855f7, #3b82f6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 8px;
+    }
+    .subtitle { font-size: 16px; color: rgba(255,255,255,0.4); margin-bottom: 36px; }
+    .glass {
+      background: rgba(255,255,255,0.05);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 24px;
+      padding: 40px 32px;
+      max-width: 560px;
+      margin: 0 auto;
+    }
+    #progress { font-size: 14px; color: rgba(255,255,255,0.35); margin-bottom: 16px; }
+    #question { font-size: 20px; color: rgba(255,255,255,0.9); line-height: 1.5; margin-bottom: 28px; min-height: 56px; }
+    .options { display: flex; flex-direction: column; gap: 12px; align-items: center; }
+    .option {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.1);
+      color: rgba(255,255,255,0.8);
+      font-size: 16px;
+      padding: 14px 24px;
+      border-radius: 14px;
+      cursor: pointer;
+      width: 100%;
+      max-width: 420px;
+      transition: border 0.2s, transform 0.15s, background 0.2s;
       text-align: left;
     }
-    .review-item.correct { border-left: 5px solid lime; }
-    .review-item.wrong { border-left: 5px solid red; }
-    .review-item p { margin-top: 8px; font-size: 16px; }
-    #final-score { font-size: 40px; color: gold; margin: 20px 0; }
+    .option:hover { border-color: rgba(255,77,158,0.5); transform: scale(1.02); background: rgba(255,255,255,0.09); }
+    .option.selected { border-color: #a855f7; background: rgba(168,85,247,0.15); color: white; }
+    .action-btn {
+      background: linear-gradient(135deg, #ff4d9e, #a855f7);
+      border: none;
+      color: white;
+      font-size: 16px;
+      font-weight: 600;
+      padding: 11px 28px;
+      border-radius: 999px;
+      cursor: pointer;
+      margin-top: 24px;
+      transition: opacity 0.2s, transform 0.2s;
+    }
+    .action-btn:hover { opacity: 0.85; transform: scale(1.04); }
+    #final-score { font-size: 42px; color: gold; margin: 16px 0 24px; }
+    .review-item {
+      background: rgba(255,255,255,0.04);
+      border-radius: 14px;
+      padding: 18px 20px;
+      margin: 12px auto;
+      max-width: 460px;
+      text-align: left;
+      font-size: 15px;
+    }
+    .review-item.correct { border-left: 4px solid #4ade80; }
+    .review-item.wrong { border-left: 4px solid #f87171; }
+    .review-item p { margin-top: 6px; color: rgba(255,255,255,0.55); font-size: 14px; }
+    .review-item .correct-ans { color: #4ade80; }
   </style>
 </head>
 <body>
+  <canvas id="stars"></canvas>
+  <div class="content">
     <div id="quiz-screen">
-    <a class="back-btn" href="index.html">⬅️ Home</a>
-    <h1>🔬 Science Quiz</h1>
-    <p id="progress">Question 1 of 8</p>
-    <p id="question"></p>
-    <div class="options" id="options"></div>
-    <button class="btn" id="nextBtn" onclick="nextQuestion()" style="display:none">Next ➡️</button>
-  </div>
+      <a class="back-btn" href="index.html">⬅️ Home</a>
+      <h1>🔬 Science Quiz</h1>
+      <p class="subtitle">8 questions — how many can you get right?</p>
+      <div class="glass">
+        <p id="progress">Question 1 of 8</p>
+        <p id="question"></p>
+        <div class="options" id="options"></div>
+        <button class="action-btn" id="nextBtn" onclick="nextQuestion()" style="display:none">Next ➡️</button>
+      </div>
+    </div>
 
-  <div id="result-screen">
-    <a class="back-btn" href="index.html">⬅️ Home</a>
-    <h1>🔬 Quiz Results</h1>
-    <p id="final-score"></p>
-    <div id="review"></div>
-    <button class="btn" onclick="restartQuiz()">🔄 Play Again</button>
+    <div id="result-screen" style="display:none">
+      <a class="back-btn" href="index.html">⬅️ Home</a>
+      <h1>🔬 Quiz Results</h1>
+      <p class="subtitle">Here's how you did</p>
+      <div class="glass">
+        <p id="final-score"></p>
+        <div id="review"></div>
+        <button class="action-btn" onclick="restartQuiz()">🔄 Play Again</button>
+      </div>
+    </div>
   </div>
 
   <script>
-    function shuffle(arr) {
-      return arr.sort(function() { return Math.random() - 0.5; });
+    var canvas = document.getElementById("stars");
+    var ctx = canvas.getContext("2d");
+    var stars = [];
+    function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+    resize();
+    window.addEventListener("resize", resize);
+    for (var i = 0; i < 160; i++) {
+      stars.push({ x: Math.random(), y: Math.random(), r: Math.random() * 1.5 + 0.3, speed: Math.random() * 0.012 + 0.003, phase: Math.random() * Math.PI * 2 });
     }
+    function drawStars(t) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      for (var i = 0; i < stars.length; i++) {
+        var s = stars[i];
+        var alpha = 0.3 + 0.7 * (0.5 + 0.5 * Math.sin(t * s.speed + s.phase));
+        ctx.beginPath();
+        ctx.arc(s.x * canvas.width, s.y * canvas.height, s.r, 0, Math.PI * 2);
+        ctx.fillStyle = "rgba(255,255,255," + alpha + ")";
+        ctx.fill();
+      }
+      requestAnimationFrame(drawStars);
+    }
+    requestAnimationFrame(drawStars);
+
+    function shuffle(arr) { return arr.sort(function() { return Math.random() - 0.5; }); }
 
     var questions = [
       { q: "What is the closest planet to the Sun?", options: ["Venus", "Earth", "Mercury", "Mars"], answer: "Mercury" },
@@ -114,9 +169,7 @@
       { q: "What is the speed of light?", options: ["300,000 km/s", "150,000 km/s", "500,000 km/s", "100,000 km/s"], answer: "300,000 km/s" }
     ];
 
-    var current = 0;
-    var userAnswers = [];
-    var selectedAnswer = null;
+    var current = 0, userAnswers = [], selectedAnswer = null;
 
     function loadQuestion() {
       selectedAnswer = null;
@@ -124,18 +177,14 @@
       document.getElementById("question").innerHTML = q.q;
       document.getElementById("progress").innerHTML = "Question " + (current + 1) + " of " + questions.length;
       document.getElementById("nextBtn").style.display = "none";
-
       var optionsDiv = document.getElementById("options");
       optionsDiv.innerHTML = "";
-
-      shuffle(q.options).forEach(function(opt) {
+      shuffle(q.options.slice()).forEach(function(opt) {
         var btn = document.createElement("button");
         btn.className = "option";
         btn.innerHTML = opt;
         btn.onclick = function() {
-          document.querySelectorAll(".option").forEach(function(b) {
-            b.classList.remove("selected");
-          });
+          document.querySelectorAll(".option").forEach(function(b) { b.classList.remove("selected"); });
           btn.classList.add("selected");
           selectedAnswer = opt;
           document.getElementById("nextBtn").style.display = "inline-block";
@@ -148,39 +197,29 @@
       if (!selectedAnswer) return;
       userAnswers.push(selectedAnswer);
       current++;
-      if (current < questions.length) {
-        loadQuestion();
-      } else {
-        showResults();
-      }
+      if (current < questions.length) { loadQuestion(); } else { showResults(); }
     }
 
     function showResults() {
       document.getElementById("quiz-screen").style.display = "none";
       document.getElementById("result-screen").style.display = "block";
-
-      var score = 0;
-      var reviewHTML = "";
-
+      var score = 0, reviewHTML = "";
       questions.forEach(function(q, i) {
         var correct = userAnswers[i] === q.answer;
         if (correct) score++;
         reviewHTML += "<div class='review-item " + (correct ? "correct" : "wrong") + "'>";
         reviewHTML += "<strong>" + (correct ? "✅" : "❌") + " Q" + (i+1) + ": " + q.q + "</strong>";
         reviewHTML += "<p>Your answer: " + userAnswers[i] + "</p>";
-        if (!correct) reviewHTML += "<p style='color:lime'>Correct: " + q.answer + "</p>";
+        if (!correct) reviewHTML += "<p class='correct-ans'>Correct: " + q.answer + "</p>";
         reviewHTML += "</div>";
       });
-
       var msg = score === 8 ? "🏆 Perfect!" : score >= 6 ? "🎉 Great job!" : score >= 4 ? "👍 Not bad!" : "😅 Keep studying!";
       document.getElementById("final-score").innerHTML = msg + "<br>" + score + " / 8";
       document.getElementById("review").innerHTML = reviewHTML;
     }
 
     function restartQuiz() {
-      current = 0;
-      userAnswers = [];
-      selectedAnswer = null;
+      current = 0; userAnswers = []; selectedAnswer = null;
       document.getElementById("quiz-screen").style.display = "block";
       document.getElementById("result-screen").style.display = "none";
       loadQuestion();

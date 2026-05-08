@@ -3,71 +3,167 @@
 <head>
   <title>Tic Tac Toe</title>
   <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
-      background-color: #1a1a2e;
+      background: #0a0a0f;
       color: white;
-      font-family: Arial;
+      font-family: Arial, sans-serif;
       text-align: center;
-      padding: 40px;
+      min-height: 100vh;
+      overflow-x: hidden;
     }
-    h1 { color: #e94560; font-size: 50px; }
+    canvas {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .content {
+      position: relative;
+      z-index: 1;
+      padding: 40px 20px 60px;
+    }
+    .back-btn {
+      display: inline-block;
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.12);
+      color: rgba(255,255,255,0.7);
+      padding: 8px 20px;
+      border-radius: 999px;
+      font-size: 14px;
+      text-decoration: none;
+      backdrop-filter: blur(10px);
+      transition: background 0.2s;
+      margin-bottom: 36px;
+    }
+    .back-btn:hover { background: rgba(255,255,255,0.13); }
+    h1 {
+      font-size: 56px;
+      font-weight: 900;
+      background: linear-gradient(90deg, #ff4d9e, #a855f7, #3b82f6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 8px;
+    }
+    .subtitle { font-size: 16px; color: rgba(255,255,255,0.4); margin-bottom: 36px; }
+    .glass {
+      background: rgba(255,255,255,0.05);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 24px;
+      padding: 36px 32px 40px;
+      max-width: 480px;
+      margin: 0 auto;
+    }
+    .levels { display: flex; justify-content: center; gap: 10px; margin-bottom: 24px; flex-wrap: wrap; }
+    .level-btn {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.1);
+      color: rgba(255,255,255,0.6);
+      font-size: 14px;
+      padding: 8px 20px;
+      border-radius: 999px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .level-btn.active {
+      background: linear-gradient(135deg, #ff4d9e, #a855f7);
+      border-color: transparent;
+      color: white;
+    }
+    .level-btn:hover:not(.active) { border-color: rgba(255,77,158,0.4); color: white; }
+    #status { font-size: 18px; color: rgba(255,255,255,0.6); margin-bottom: 20px; min-height: 26px; }
     .grid {
       display: grid;
-      grid-template-columns: repeat(3, 120px);
+      grid-template-columns: repeat(3, 110px);
       gap: 10px;
       justify-content: center;
-      margin-top: 30px;
+      margin-bottom: 24px;
     }
     .cell {
-      width: 120px;
-      height: 120px;
-      background-color: #16213e;
-      font-size: 60px;
+      width: 110px; height: 110px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.1);
+      font-size: 52px;
       cursor: pointer;
-      border-radius: 10px;
+      border-radius: 14px;
       color: white;
-      border: none;
+      transition: background 0.15s, border 0.15s;
     }
-    .cell:hover { background-color: #0f3460; }
-    #status { font-size: 25px; margin-top: 20px; color: #a8dadc; }
-    .btn {
-      cursor: pointer;
-      font-size: 18px;
-      background: #e94560;
-      padding: 10px 20px;
-      border-radius: 10px;
-      display: inline-block;
-      margin: 10px 5px;
+    .cell:hover:not(:disabled) {
+      background: rgba(255,255,255,0.1);
+      border-color: rgba(255,77,158,0.4);
+    }
+    .cell:disabled { cursor: not-allowed; }
+    .action-btn {
+      background: linear-gradient(135deg, #ff4d9e, #a855f7);
       border: none;
       color: white;
+      font-size: 16px;
+      font-weight: 600;
+      padding: 11px 28px;
+      border-radius: 999px;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.2s;
     }
-    .btn.active { background: #0f3460; border: 2px solid #a8dadc; }
+    .action-btn:hover { opacity: 0.85; transform: scale(1.04); }
   </style>
 </head>
 <body>
-  <a style="background:#0f3460; color:#a8dadc; border:none; padding:8px 18px; font-size:16px; border-radius:10px; cursor:pointer; text-decoration:none; display:inline-block; margin-bottom:20px;" href="index.html">⬅️ Home</a>
-  <h1>Tic Tac Toe</h1>
-  <div>
-    <button class="btn active" id="easy" onclick="setLevel('easy')">😊 Easy</button>
-    <button class="btn" id="mid" onclick="setLevel('mid')">😐 Medium</button>
-    <button class="btn" id="hard" onclick="setLevel('hard')">😈 Hard</button>
+  <canvas id="stars"></canvas>
+  <div class="content">
+    <a class="back-btn" href="index.html">⬅️ Home</a>
+    <h1>Tic Tac Toe</h1>
+    <p class="subtitle">Get three in a row to win! ❌</p>
+    <div class="glass">
+      <div class="levels">
+        <button class="level-btn active" id="easy" onclick="setLevel('easy')">😊 Easy</button>
+        <button class="level-btn" id="mid" onclick="setLevel('mid')">😐 Medium</button>
+        <button class="level-btn" id="hard" onclick="setLevel('hard')">😈 Hard</button>
+      </div>
+      <p id="status">Your turn! You are X</p>
+      <div class="grid">
+        <button class="cell"></button>
+        <button class="cell"></button>
+        <button class="cell"></button>
+        <button class="cell"></button>
+        <button class="cell"></button>
+        <button class="cell"></button>
+        <button class="cell"></button>
+        <button class="cell"></button>
+        <button class="cell"></button>
+      </div>
+      <button class="action-btn" onclick="resetGame()">🔄 Restart</button>
+    </div>
   </div>
-  <p id="status">Your turn! You are X</p>
-  <div class="grid">
-    <button class="cell"></button>
-    <button class="cell"></button>
-    <button class="cell"></button>
-    <button class="cell"></button>
-    <button class="cell"></button>
-    <button class="cell"></button>
-    <button class="cell"></button>
-    <button class="cell"></button>
-    <button class="cell"></button>
-  </div>
-  <br>
-  <button class="btn" onclick="resetGame()">🔄 Restart</button>
 
   <script>
+    var canvas = document.getElementById("stars");
+    var ctx = canvas.getContext("2d");
+    var stars = [];
+    function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+    resize();
+    window.addEventListener("resize", resize);
+    for (var i = 0; i < 160; i++) {
+      stars.push({ x: Math.random(), y: Math.random(), r: Math.random() * 1.5 + 0.3, speed: Math.random() * 0.012 + 0.003, phase: Math.random() * Math.PI * 2 });
+    }
+    function drawStars(t) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      for (var i = 0; i < stars.length; i++) {
+        var s = stars[i];
+        var alpha = 0.3 + 0.7 * (0.5 + 0.5 * Math.sin(t * s.speed + s.phase));
+        ctx.beginPath();
+        ctx.arc(s.x * canvas.width, s.y * canvas.height, s.r, 0, Math.PI * 2);
+        ctx.fillStyle = "rgba(255,255,255," + alpha + ")";
+        ctx.fill();
+      }
+      requestAnimationFrame(drawStars);
+    }
+    requestAnimationFrame(drawStars);
+
     var board = ["","","","","","","","",""];
     var cells = document.querySelectorAll(".cell");
     var gameOver = false;
@@ -75,9 +171,7 @@
 
     function setLevel(l) {
       level = l;
-      document.getElementById("easy").classList.remove("active");
-      document.getElementById("mid").classList.remove("active");
-      document.getElementById("hard").classList.remove("active");
+      ["easy","mid","hard"].forEach(function(id) { document.getElementById(id).classList.remove("active"); });
       document.getElementById(l).classList.add("active");
       resetGame();
     }
@@ -94,11 +188,10 @@
     function makeMove(index, player) {
       board[index] = player;
       cells[index].innerHTML = player;
-      cells[index].style.color = player === "X" ? "#e94560" : "#a8dadc";
+      cells[index].style.color = player === "X" ? "#ff4d9e" : "#a78bfa";
       if (checkWin(player)) {
         gameOver = true;
-        document.getElementById("status").innerHTML =
-          player === "X" ? "🎉 You win!" : "💻 Computer wins!";
+        document.getElementById("status").innerHTML = player === "X" ? "🎉 You win!" : "💻 Computer wins!";
       } else if (board.every(function(b) { return b !== ""; })) {
         gameOver = true;
         document.getElementById("status").innerHTML = "🤝 It's a tie!";
@@ -131,21 +224,13 @@
       if (isMax) {
         var best = -100;
         b.forEach(function(val, i) {
-          if (val === "") {
-            b[i] = "O";
-            best = Math.max(best, minimax(b, false));
-            b[i] = "";
-          }
+          if (val === "") { b[i] = "O"; best = Math.max(best, minimax(b, false)); b[i] = ""; }
         });
         return best;
       } else {
         var best = 100;
         b.forEach(function(val, i) {
-          if (val === "") {
-            b[i] = "X";
-            best = Math.min(best, minimax(b, true));
-            b[i] = "";
-          }
+          if (val === "") { b[i] = "X"; best = Math.min(best, minimax(b, true)); b[i] = ""; }
         });
         return best;
       }
@@ -153,21 +238,17 @@
 
     function checkWinBoard(b, player) {
       var wins = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
-      return wins.some(function(combo) {
-        return b[combo[0]] === player && b[combo[1]] === player && b[combo[2]] === player;
-      });
+      return wins.some(function(combo) { return b[combo[0]] === player && b[combo[1]] === player && b[combo[2]] === player; });
     }
 
     function computerMove() {
       var empty = getEmpty();
       if (empty.length === 0) return;
       var pick;
-
       if (level === "easy") {
         pick = empty[Math.floor(Math.random() * empty.length)];
       } else if (level === "mid") {
-        var win = findWinningMove("O");
-        var block = findWinningMove("X");
+        var win = findWinningMove("O"), block = findWinningMove("X");
         if (win !== -1) pick = win;
         else if (block !== -1) pick = block;
         else pick = empty[Math.floor(Math.random() * empty.length)];
@@ -183,7 +264,6 @@
         });
         pick = bestMove;
       }
-
       makeMove(pick, "O");
       if (!gameOver) document.getElementById("status").innerHTML = "Your turn! You are X";
     }
@@ -193,10 +273,7 @@
     function resetGame() {
       board = ["","","","","","","","",""];
       gameOver = false;
-      cells.forEach(function(cell) {
-        cell.innerHTML = "";
-        cell.style.color = "white";
-      });
+      cells.forEach(function(cell) { cell.innerHTML = ""; cell.style.color = "white"; });
       document.getElementById("status").innerHTML = "Your turn! You are X";
     }
   </script>
