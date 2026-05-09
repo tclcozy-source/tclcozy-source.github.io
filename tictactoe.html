@@ -35,7 +35,7 @@
       font-size: 14px;
       text-decoration: none;
       backdrop-filter: blur(10px);
-      transition: background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease, color 0.3s ease;
+      transition: background 0.3s, border-color 0.3s, box-shadow 0.3s, transform 0.3s, color 0.3s;
       margin-bottom: 36px;
     }
     .back-btn:hover {
@@ -54,17 +54,40 @@
       background-clip: text;
       margin-bottom: 8px;
     }
-    .subtitle { font-size: 16px; color: rgba(255,255,255,0.4); margin-bottom: 36px; }
+    .subtitle { font-size: 16px; color: rgba(255,255,255,0.4); margin-bottom: 36px; min-height: 22px; }
     .glass {
       background: rgba(255,255,255,0.05);
       backdrop-filter: blur(16px);
       -webkit-backdrop-filter: blur(16px);
       border: 1px solid rgba(255,255,255,0.1);
       border-radius: 24px;
-      padding: 36px 32px 40px;
+      padding: 28px 32px 40px;
       max-width: 480px;
       margin: 0 auto;
     }
+
+    /* Mode selector */
+    .modes { display: flex; justify-content: center; gap: 8px; margin-bottom: 14px; }
+    .mode-btn {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.1);
+      color: rgba(255,255,255,0.6);
+      font-size: 14px;
+      font-weight: 600;
+      padding: 9px 22px;
+      border-radius: 999px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .mode-btn.active {
+      background: linear-gradient(135deg, #ff4d9e, #a855f7);
+      border-color: transparent;
+      color: white;
+    }
+    .mode-btn:hover:not(.active) { border-color: rgba(255,77,158,0.4); color: white; }
+
+    .mode-divider { border: none; border-top: 1px solid rgba(255,255,255,0.08); margin: 0 0 16px; }
+
     .levels { display: flex; justify-content: center; gap: 10px; margin-bottom: 24px; flex-wrap: wrap; }
     .level-btn {
       background: rgba(255,255,255,0.06);
@@ -82,6 +105,7 @@
       color: white;
     }
     .level-btn:hover:not(.active) { border-color: rgba(255,77,158,0.4); color: white; }
+
     #status { font-size: 18px; color: rgba(255,255,255,0.6); margin-bottom: 20px; min-height: 26px; }
     .grid {
       display: grid;
@@ -98,13 +122,15 @@
       cursor: pointer;
       border-radius: 14px;
       color: white;
-      transition: background 0.15s, border 0.15s;
+      transition: background 0.15s, border-color 0.15s, opacity 0.35s ease;
     }
     .cell:hover:not(:disabled) {
       background: rgba(255,255,255,0.1);
       border-color: rgba(255,77,158,0.4);
     }
     .cell:disabled { cursor: not-allowed; }
+    .cell.faded { opacity: 0.22; }
+
     .action-btn {
       background: linear-gradient(135deg, #ff4d9e, #a855f7);
       border: none;
@@ -118,11 +144,125 @@
     }
     .action-btn:hover { opacity: 0.85; transform: scale(1.04); }
 
+    /* Go Mode tutorial modal */
+    #go-tutorial {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.82);
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+      padding: 20px 16px;
+      overflow-y: auto;
+    }
+    #go-tutorial.show { display: flex; }
+
+    .tut-box {
+      background: #1a1a1b;
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 20px;
+      padding: 28px 24px 24px;
+      max-width: 380px;
+      width: 100%;
+      text-align: left;
+      animation: tutIn 0.3s ease;
+    }
+    @keyframes tutIn {
+      from { transform: scale(0.88); opacity: 0; }
+      to   { transform: scale(1);    opacity: 1; }
+    }
+
+    .tut-title {
+      font-size: 20px;
+      font-weight: 700;
+      text-align: center;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      background: linear-gradient(90deg, #ff4d9e, #a855f7);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      padding-bottom: 14px;
+      margin-bottom: 16px;
+    }
+
+    .tut-rules {
+      list-style: none;
+      font-size: 14px;
+      line-height: 1.65;
+      color: rgba(255,255,255,0.78);
+      margin-bottom: 18px;
+    }
+    .tut-rules li { padding-left: 18px; position: relative; margin-bottom: 8px; }
+    .tut-rules li::before { content: '⚡'; position: absolute; left: 0; font-size: 11px; top: 3px; }
+
+    .tut-divider { border: none; border-top: 1px solid rgba(255,255,255,0.08); margin: 16px 0; }
+
+    .tut-preview-label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.35);
+      margin-bottom: 12px;
+    }
+
+    .mini-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 42px);
+      gap: 5px;
+      justify-content: center;
+      margin: 0 auto 10px;
+    }
+    .mini-cell {
+      width: 42px; height: 42px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 19px;
+      font-weight: 800;
+      transition: opacity 0.3s;
+    }
+    .mini-cell.x { color: #ff4d9e; }
+    .mini-cell.o { color: #a78bfa; }
+    .mini-cell.faded { opacity: 0.22; }
+
+    .tut-caption {
+      font-size: 13px;
+      color: rgba(255,255,255,0.5);
+      text-align: center;
+      margin-bottom: 20px;
+      line-height: 1.5;
+    }
+    .tut-caption strong { color: rgba(255,255,255,0.85); }
+
+    .btn-play {
+      display: block;
+      width: 100%;
+      background: linear-gradient(135deg, #ff4d9e, #a855f7);
+      border: none;
+      color: white;
+      font-size: 15px;
+      font-weight: 700;
+      padding: 13px 0;
+      border-radius: 999px;
+      cursor: pointer;
+      letter-spacing: 0.5px;
+      transition: opacity 0.2s, transform 0.15s;
+    }
+    .btn-play:hover  { opacity: 0.88; }
+    .btn-play:active { transform: scale(0.97); }
+
     @media (max-width: 480px) {
       .content { padding: 28px 16px 48px; }
       h1 { font-size: 34px; }
       .subtitle { font-size: 14px; margin-bottom: 24px; }
-      .glass { padding: 24px 12px 32px; }
+      .glass { padding: 20px 12px 32px; }
       .level-btn { font-size: 13px; padding: 8px 14px; }
       #status { font-size: 15px; margin-bottom: 14px; }
       .grid { grid-template-columns: repeat(3, 86px); gap: 8px; }
@@ -133,11 +273,47 @@
 </head>
 <body>
   <canvas id="stars"></canvas>
+
+  <!-- Go Mode Tutorial -->
+  <div id="go-tutorial">
+    <div class="tut-box">
+      <div class="tut-title">⚡ Go Mode</div>
+      <ul class="tut-rules">
+        <li>Each player can only have <strong>3 marks</strong> on the board at a time.</li>
+        <li>Placing a <strong>4th mark</strong> removes your oldest mark automatically.</li>
+        <li>Your oldest mark appears <strong>faded</strong> — it vanishes when you next place.</li>
+        <li>First to get <strong>3 in a row</strong> wins. No ties!</li>
+      </ul>
+      <hr class="tut-divider">
+      <div class="tut-preview-label">Example</div>
+      <div class="mini-grid">
+        <div class="mini-cell x faded">X</div>
+        <div class="mini-cell"></div>
+        <div class="mini-cell o">O</div>
+        <div class="mini-cell x">X</div>
+        <div class="mini-cell o">O</div>
+        <div class="mini-cell"></div>
+        <div class="mini-cell"></div>
+        <div class="mini-cell"></div>
+        <div class="mini-cell x">X</div>
+      </div>
+      <p class="tut-caption">
+        The <strong>faded X</strong> (top-left) will disappear as soon as X places their next mark.
+      </p>
+      <button class="btn-play" onclick="closeGoTutorial()">Got it! Let's Play ⚡</button>
+    </div>
+  </div>
+
   <div class="content">
     <a class="back-btn" href="index.html">⬅️ Home</a>
     <h1>Tic Tac Toe</h1>
-    <p class="subtitle">Get three in a row to win! ❌</p>
+    <p class="subtitle" id="subtitle">Get three in a row to win! ❌</p>
     <div class="glass">
+      <div class="modes">
+        <button class="mode-btn active" id="mode-classic" onclick="setMode('classic')">Classic</button>
+        <button class="mode-btn" id="mode-go" onclick="setMode('go')">⚡ Go Mode</button>
+      </div>
+      <hr class="mode-divider">
       <div class="levels">
         <button class="level-btn active" id="easy" onclick="setLevel('easy')">😊 Easy</button>
         <button class="level-btn" id="mid" onclick="setLevel('mid')">😐 Medium</button>
@@ -160,6 +336,7 @@
   </div>
 
   <script>
+    // Stars
     var canvas = document.getElementById("stars");
     var ctx = canvas.getContext("2d");
     var stars = [];
@@ -183,11 +360,38 @@
     }
     requestAnimationFrame(drawStars);
 
+    // Game state
     var board = ["","","","","","","","",""];
     var cells = document.querySelectorAll(".cell");
     var gameOver = false;
     var level = "easy";
+    var mode = "classic";
+    var xMoves = [];       // X's placed indices, oldest first
+    var oMoves = [];       // O's placed indices, oldest first
+    var currentTurn = "X";
 
+    // — Mode —
+    function setMode(m) {
+      if (m === mode) return;
+      mode = m;
+      document.getElementById("mode-classic").classList.toggle("active", m === "classic");
+      document.getElementById("mode-go").classList.toggle("active", m === "go");
+      document.getElementById("subtitle").textContent = m === "go"
+        ? "3 marks max — oldest fades when you place a 4th! ⚡"
+        : "Get three in a row to win! ❌";
+      if (m === "go") {
+        document.getElementById("go-tutorial").classList.add("show");
+      } else {
+        resetGame();
+      }
+    }
+
+    function closeGoTutorial() {
+      document.getElementById("go-tutorial").classList.remove("show");
+      resetGame();
+    }
+
+    // — Difficulty —
     function setLevel(l) {
       level = l;
       ["easy","mid","hard"].forEach(function(id) { document.getElementById(id).classList.remove("active"); });
@@ -195,16 +399,27 @@
       resetGame();
     }
 
+    // — Cell clicks —
     cells.forEach(function(cell, index) {
       cell.onclick = function() {
-        if (board[index] === "" && !gameOver) {
-          makeMove(index, "X");
-          if (!gameOver) setTimeout(computerMove, 400);
+        if (board[index] !== "" || gameOver || currentTurn !== "X") return;
+        makeMove(index, "X");
+        if (!gameOver) {
+          currentTurn = "O";
+          document.getElementById("status").innerHTML = "💻 Computer thinking...";
+          updateFading();
+          setTimeout(computerMove, 420);
         }
       };
     });
 
+    // — Move dispatch —
     function makeMove(index, player) {
+      if (mode === "go") makeGoMove(index, player);
+      else makeClassicMove(index, player);
+    }
+
+    function makeClassicMove(index, player) {
       board[index] = player;
       cells[index].innerHTML = player;
       cells[index].style.color = player === "X" ? "#ff4d9e" : "#a78bfa";
@@ -217,10 +432,119 @@
       }
     }
 
+    function makeGoMove(index, player) {
+      var moves = player === "X" ? xMoves : oMoves;
+
+      // Remove oldest mark if player is at the 3-mark limit
+      if (moves.length === 3) {
+        var oldest = moves.shift();
+        board[oldest] = "";
+        cells[oldest].classList.remove("faded");
+        cells[oldest].innerHTML = "";
+        cells[oldest].style.color = "";
+      }
+
+      // Place new mark
+      board[index] = player;
+      moves.push(index);
+      cells[index].classList.remove("faded");
+      cells[index].innerHTML = player;
+      cells[index].style.color = player === "X" ? "#ff4d9e" : "#a78bfa";
+
+      // Check win on final board state
+      if (checkWin(player)) {
+        gameOver = true;
+        document.getElementById("status").innerHTML = player === "X" ? "🎉 You win!" : "💻 Computer wins!";
+      }
+    }
+
+    // Highlight the mark that will be removed on the current player's next placement
+    function updateFading() {
+      cells.forEach(function(c) { c.classList.remove("faded"); });
+      if (mode !== "go" || gameOver) return;
+      var moves = currentTurn === "X" ? xMoves : oMoves;
+      if (moves.length === 3) cells[moves[0]].classList.add("faded");
+    }
+
+    // — Computer —
+    function computerMove() {
+      if (gameOver) return;
+      var empty = getEmpty();
+      if (empty.length === 0) return;
+      var pick = (mode === "go") ? getGoComputerPick(empty) : getClassicComputerPick(empty);
+      makeMove(pick, "O");
+      if (!gameOver) {
+        currentTurn = "X";
+        document.getElementById("status").innerHTML = "Your turn! You are X";
+        updateFading();
+      }
+    }
+
+    function getClassicComputerPick(empty) {
+      if (level === "easy") return empty[Math.floor(Math.random() * empty.length)];
+      if (level === "mid") {
+        var win = findWinningMove("O"), block = findWinningMove("X");
+        if (win !== -1) return win;
+        if (block !== -1) return block;
+        return empty[Math.floor(Math.random() * empty.length)];
+      }
+      // Hard: minimax
+      var bestVal = -100, bestMove = -1;
+      board.forEach(function(val, i) {
+        if (val === "") {
+          board[i] = "O";
+          var v = minimax(board, false);
+          board[i] = "";
+          if (v > bestVal) { bestVal = v; bestMove = i; }
+        }
+      });
+      return bestMove;
+    }
+
+    function getGoComputerPick(empty) {
+      var pick = -1;
+
+      // Look for a winning move
+      for (var i = 0; i < empty.length; i++) {
+        var p = projectGoMove(board.slice(), empty[i], "O", oMoves.slice());
+        if (checkWinBoard(p.board, "O")) { pick = empty[i]; break; }
+      }
+
+      // Block player's winning move
+      if (pick === -1) {
+        for (var i = 0; i < empty.length; i++) {
+          var p = projectGoMove(board.slice(), empty[i], "X", xMoves.slice());
+          if (checkWinBoard(p.board, "X")) { pick = empty[i]; break; }
+        }
+      }
+
+      // Prefer center/corners on Hard, else random
+      if (pick === -1 && level === "hard") {
+        var preferred = [4, 0, 2, 6, 8, 1, 3, 5, 7];
+        for (var i = 0; i < preferred.length; i++) {
+          if (board[preferred[i]] === "") { pick = preferred[i]; break; }
+        }
+      }
+
+      if (pick === -1) pick = empty[Math.floor(Math.random() * empty.length)];
+      return pick;
+    }
+
+    // Simulate a Go Mode move without touching real state
+    function projectGoMove(b, index, player, moves) {
+      var nm = moves.slice();
+      var nb = b.slice();
+      nm.push(index);
+      nb[index] = player;
+      if (nm.length > 3) nb[nm.shift()] = "";
+      return { board: nb, moves: nm };
+    }
+
+    // — Helpers —
     function getEmpty() {
-      var empty = [];
-      board.forEach(function(b, i) { if (b === "") empty.push(i); });
-      return empty;
+      var e = [];
+      board.forEach(function(b, i) { if (b === "") e.push(i); });
+      return e;
     }
 
     function findWinningMove(player) {
@@ -257,34 +581,9 @@
 
     function checkWinBoard(b, player) {
       var wins = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
-      return wins.some(function(combo) { return b[combo[0]] === player && b[combo[1]] === player && b[combo[2]] === player; });
-    }
-
-    function computerMove() {
-      var empty = getEmpty();
-      if (empty.length === 0) return;
-      var pick;
-      if (level === "easy") {
-        pick = empty[Math.floor(Math.random() * empty.length)];
-      } else if (level === "mid") {
-        var win = findWinningMove("O"), block = findWinningMove("X");
-        if (win !== -1) pick = win;
-        else if (block !== -1) pick = block;
-        else pick = empty[Math.floor(Math.random() * empty.length)];
-      } else {
-        var bestVal = -100, bestMove = -1;
-        board.forEach(function(val, i) {
-          if (val === "") {
-            board[i] = "O";
-            var moveVal = minimax(board, false);
-            board[i] = "";
-            if (moveVal > bestVal) { bestVal = moveVal; bestMove = i; }
-          }
-        });
-        pick = bestMove;
-      }
-      makeMove(pick, "O");
-      if (!gameOver) document.getElementById("status").innerHTML = "Your turn! You are X";
+      return wins.some(function(combo) {
+        return b[combo[0]] === player && b[combo[1]] === player && b[combo[2]] === player;
+      });
     }
 
     function checkWin(player) { return checkWinBoard(board, player); }
@@ -292,7 +591,14 @@
     function resetGame() {
       board = ["","","","","","","","",""];
       gameOver = false;
-      cells.forEach(function(cell) { cell.innerHTML = ""; cell.style.color = "white"; });
+      xMoves = [];
+      oMoves = [];
+      currentTurn = "X";
+      cells.forEach(function(cell) {
+        cell.innerHTML = "";
+        cell.style.color = "";
+        cell.classList.remove("faded");
+      });
       document.getElementById("status").innerHTML = "Your turn! You are X";
     }
   </script>
