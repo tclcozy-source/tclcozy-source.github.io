@@ -476,7 +476,49 @@
     "until","upper","usual","utter","valid","value","valve","video","viral","virus",
     "vista","vital","vivid","vocal","voice","voter","waste","watch","water","weary",
     "weave","weird","whole","width","witch","woman","women","world","worry","worth",
-    "would","wound","wrath","write","wrote","yacht","yield","young","youth","zebra"
+    "would","wound","wrath","write","wrote","yacht","yield","young","youth","zebra",
+    "aback","abide","abode","abyss","acorn","adore","adept","agile","agony","algae",
+    "aloft","aloud","amaze","amend","among","ample","amuse","annex","annoy","anvil",
+    "atone","avail","awoke","badge","banjo","bathe","bingo","birch","bison","bliss",
+    "boxer","braid","brash","brawn","brisk","brood","broth","brunt","budge","bulky",
+    "bully","bumpy","bunch","bunny","burnt","burly","bushy","cache","cadet","cameo",
+    "canal","cargo","carol","carve","cedar","cello","chafe","champ","chant","chaos",
+    "chill","chimp","choir","chomp","chore","clamp","clang","cleft","cloak","clout",
+    "clove","clown","cluck","clump","comet","corny","crane","creak","creep","crimp",
+    "croak","crone","crook","croon","crust","cubic","curly","cyber","daisy","dandy",
+    "depot","diner","dizzy","dodge","dopey","dowdy","drape","drawl","dread","dregs",
+    "dwarf","dwell","eagle","easel","ebony","elbow","ember","enact","endow","ethos",
+    "evade","every","fable","facet","farce","favor","feign","femur","fence","fiend",
+    "flair","flare","fleck","flock","flora","floss","flute","foamy","folly","foray",
+    "forte","foyer","frail","freak","friar","froth","fungi","funky","fuzzy","gable",
+    "gaudy","gecko","giddy","gizmo","glare","gleam","glean","glide","glint","gloat",
+    "glyph","gnash","gnome","gooey","gorge","gouge","gourd","graze","gripe","grimy",
+    "guava","guile","guise","gummy","gusto","gutsy","haiku","handy","haunt","haven",
+    "havoc","hazel","hedge","hefty","heist","helix","hence","hippo","hoist","holly",
+    "horde","hubby","humid","husky","hutch","hyena","idiom","inane","inept","ingot",
+    "inlay","intro","jaded","jazzy","joust","jumpy","juicy","kayak","kiosk","kitty",
+    "klutz","knack","knave","knead","kneel","knelt","knoll","lance","lanky","lapel",
+    "larva","latch","lathe","latte","leafy","leapt","leech","levee","lilac","lithe",
+    "livid","llama","loamy","lofty","lowly","lucid","lusty","lyric","manly","manor",
+    "marry","marsh","maxim","melee","merry","messy","metro","milky","minty","mirth",
+    "misty","moody","moped","mossy","muddy","muggy","mushy","musty","nadir","nasty",
+    "natty","needy","nerdy","nifty","nippy","nutty","optic","orbit","otter","ovary",
+    "pagan","panic","parka","pasta","peach","petal","petty","phony","pinch","pithy",
+    "pixie","plank","pleat","pluck","plumb","plump","plunk","poker","polka","poppy",
+    "perky","porch","pouch","pouty","privy","prowl","pudgy","purge","qualm","quark",
+    "quirk","rabbi","rabid","radar","rainy","rally","rangy","raspy","ratty","raven",
+    "rayon","recur","reedy","repel","resin","rivet","rowdy","runny","rusty","savvy",
+    "scald","scalp","scaly","seedy","sedan","silky","siren","skimp","slack","slain",
+    "slang","slant","slash","sloth","slump","smack","smear","smelt","snaky","snare",
+    "sneak","sneer","snide","snowy","snuck","snuff","soggy","spade","spank","spare",
+    "spasm","spawn","speck","spike","spore","spout","sprig","spunk","squid","stark",
+    "steed","stoic","stomp","stunk","stunt","sulky","sunny","sushi","tabby","tacit",
+    "talon","taunt","tawny","tepid","thief","thump","tipsy","toast","tonic","topaz",
+    "torch","toxic","tramp","trite","troll","trump","tuber","tulip","tutor","twang",
+    "tweak","tweed","twirl","ulcer","usurp","vapid","vault","venom","verve","vigor",
+    "vixen","vouch","vying","waltz","wacky","wager","waver","whack","wheat","whiff",
+    "whirl","whisk","wince","windy","witty","woozy","wordy","yearn","yodel","yummy",
+    "zippy"
   ];
 
   const VALID = new Set(WORDS);
@@ -491,10 +533,20 @@
   }
 
   function getDailyWord() {
-    const epoch = new Date(2024, 0, 1);
-    const today = new Date(); today.setHours(0, 0, 0, 0);
-    const day = Math.floor((today - epoch) / 86400000);
-    return WORDS[((day % WORDS.length) + WORDS.length) % WORDS.length];
+    var epoch = new Date(2024, 0, 1);
+    var today = new Date(); today.setHours(0, 0, 0, 0);
+    var day = Math.floor((today - epoch) / 86400000);
+    var n = WORDS.length;
+    var cycle = Math.floor(day / n);
+    var pos = day % n;
+    var seed = cycle * 1000003 + 17;
+    var arr = WORDS.slice();
+    for (var i = n - 1; i > 0; i--) {
+      seed = (seed * 16807 + 7) % 2147483647;
+      var j = Math.floor((seed / 2147483647) * (i + 1));
+      var tmp = arr[i]; arr[i] = arr[j]; arr[j] = tmp;
+    }
+    return arr[pos];
   }
 
   function buildGrid() {
