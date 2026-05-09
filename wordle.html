@@ -240,6 +240,102 @@
     .btn-share:hover  { background: #6ab564; }
     .btn-share:active { transform: scale(0.97); }
 
+    /* Tutorial */
+    #tutorial {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.88);
+      z-index: 200;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow-y: auto;
+      padding: 20px 16px;
+    }
+
+    .tut-box {
+      background: #1a1a1b;
+      border: 1px solid #3a3a3c;
+      border-radius: 16px;
+      padding: 26px 24px 22px;
+      max-width: 360px;
+      width: 100%;
+      animation: modalIn 0.35s ease;
+    }
+
+    .tut-title {
+      font-size: 17px;
+      font-weight: 700;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      text-align: center;
+      border-bottom: 1px solid #3a3a3c;
+      padding-bottom: 14px;
+      margin-bottom: 14px;
+    }
+
+    .tut-rules {
+      font-size: 14px;
+      line-height: 1.65;
+      color: rgba(255,255,255,0.8);
+      list-style: none;
+      margin-bottom: 16px;
+    }
+    .tut-rules li { padding-left: 14px; position: relative; margin-bottom: 4px; }
+    .tut-rules li::before { content: '•'; position: absolute; left: 0; color: rgba(255,255,255,0.35); }
+
+    .tut-divider { border: none; border-top: 1px solid #3a3a3c; margin: 14px 0; }
+
+    .tut-ex-label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.4);
+      margin-bottom: 14px;
+    }
+
+    .tut-example { margin-bottom: 14px; }
+    .tut-example:last-of-type { margin-bottom: 0; }
+
+    .ex-row { display: flex; gap: 4px; margin-bottom: 7px; }
+
+    .ex-tile {
+      width: 40px;
+      height: 40px;
+      border: 2px solid #565758;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+    .ex-tile.correct { background: #538d4e; border-color: #538d4e; }
+    .ex-tile.present { background: #b59f3b; border-color: #b59f3b; }
+    .ex-tile.absent  { background: #3a3a3c; border-color: #3a3a3c; }
+
+    .tut-example p { font-size: 14px; color: rgba(255,255,255,0.7); line-height: 1.4; }
+    .tut-example p strong { color: white; }
+
+    .btn-play {
+      display: block;
+      width: 100%;
+      background: #538d4e;
+      border: none;
+      color: white;
+      font-size: 16px;
+      font-weight: 700;
+      padding: 14px 0;
+      border-radius: 999px;
+      cursor: pointer;
+      letter-spacing: 1px;
+      margin-top: 20px;
+      transition: background 0.2s, transform 0.15s;
+    }
+    .btn-play:hover  { background: #6ab564; }
+    .btn-play:active { transform: scale(0.97); }
+
     @media (max-width: 400px) {
       .tile            { width: 54px; height: 54px; font-size: 1.7rem; }
       .key             { height: 50px; }
@@ -249,6 +345,55 @@
   </style>
 </head>
 <body>
+
+  <div id="tutorial">
+    <div class="tut-box">
+      <div class="tut-title">How to Play</div>
+      <ul class="tut-rules">
+        <li>Guess the <strong>WORDLE</strong> in <strong>6</strong> tries.</li>
+        <li>Each guess must be a valid 5-letter word.</li>
+        <li>Press <strong>ENTER</strong> to submit your guess.</li>
+        <li>Tile colors reveal how close you are.</li>
+      </ul>
+      <hr class="tut-divider">
+      <div class="tut-ex-label">Examples</div>
+
+      <div class="tut-example">
+        <div class="ex-row">
+          <div class="ex-tile correct">W</div>
+          <div class="ex-tile">E</div>
+          <div class="ex-tile">A</div>
+          <div class="ex-tile">R</div>
+          <div class="ex-tile">Y</div>
+        </div>
+        <p><strong>W</strong> is in the correct spot.</p>
+      </div>
+
+      <div class="tut-example">
+        <div class="ex-row">
+          <div class="ex-tile">P</div>
+          <div class="ex-tile present">I</div>
+          <div class="ex-tile">L</div>
+          <div class="ex-tile">O</div>
+          <div class="ex-tile">T</div>
+        </div>
+        <p><strong>I</strong> is in the word but in the wrong spot.</p>
+      </div>
+
+      <div class="tut-example">
+        <div class="ex-row">
+          <div class="ex-tile">V</div>
+          <div class="ex-tile">A</div>
+          <div class="ex-tile">G</div>
+          <div class="ex-tile absent">U</div>
+          <div class="ex-tile">E</div>
+        </div>
+        <p><strong>U</strong> is not in the word at all.</p>
+      </div>
+
+      <button class="btn-play" onclick="closeTutorial()">Let's Play!</button>
+    </div>
+  </div>
 
   <header>
     <a class="back-btn" href="index.html">← Back</a>
@@ -337,8 +482,13 @@
   const VALID = new Set(WORDS);
 
   const TARGET = getDailyWord();
-  let row = 0, col = 0, over = false, busy = false;
+  let row = 0, col = 0, over = false, busy = false, tutOpen = true;
   const history = [];
+
+  function closeTutorial() {
+    document.getElementById('tutorial').style.display = 'none';
+    tutOpen = false;
+  }
 
   function getDailyWord() {
     const epoch = new Date(2024, 0, 1);
@@ -383,6 +533,10 @@
   }
 
   function handle(key) {
+    if (tutOpen) {
+      if (key === 'Enter' || key === 'Escape') closeTutorial();
+      return;
+    }
     if (over || busy) return;
     if (key === '⌫' || key === 'Backspace') del();
     else if (key === 'Enter') submit();
