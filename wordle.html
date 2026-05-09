@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Wordle – Shahmeer's Game Hub</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #0a0a0f;
+      color: white;
+      font-family: 'Clear Sans', 'Helvetica Neue', Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      user-select: none;
+    }
+
+    header {
+      width: 100%;
+      max-width: 500px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      border-bottom: 1px solid #3a3a3c;
+    }
+
+    .back-btn {
+      background: none;
+      border: 1px solid #3a3a3c;
+      color: white;
+      padding: 6px 14px;
+      border-radius: 999px;
+      font-size: 13px;
+      cursor: pointer;
+      text-decoration: none;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .back-btn:hover { border-color: #818384; background: rgba(255,255,255,0.05); }
+
+    .header-title {
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: 5px;
+      text-transform: uppercase;
+    }
+
+    .header-spacer { width: 70px; }
+
+    #message-bar {
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 4px 0;
+    }
+
+    #message {
+      background: white;
+      color: #0a0a0f;
+      padding: 8px 18px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 700;
+      opacity: 0;
+      transform: translateY(-6px);
+      transition: opacity 0.15s, transform 0.15s;
+      pointer-events: none;
+    }
+    #message.show { opacity: 1; transform: translateY(0); }
+
+    #grid {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      padding: 10px 0;
+    }
+
+    .row { display: flex; gap: 5px; }
+
+    .tile {
+      width: 62px;
+      height: 62px;
+      border: 2px solid #3a3a3c;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      color: white;
+    }
+
+    .tile[data-letter]:not([data-letter=""]) { border-color: #565758; }
+
+    .tile[data-state="correct"] { background: #538d4e; border-color: #538d4e; }
+    .tile[data-state="present"] { background: #b59f3b; border-color: #b59f3b; }
+    .tile[data-state="absent"]  { background: #3a3a3c; border-color: #3a3a3c; }
+
+    .tile.pop  { animation: pop  0.1s ease; }
+    .tile.flip { animation: flip 0.5s ease forwards; }
+
+    .row.shake { animation: shake 0.5s ease; }
+
+    .row.bounce .tile               { animation: bounce 0.8s ease forwards; }
+    .row.bounce .tile:nth-child(1)  { animation-delay: 0s; }
+    .row.bounce .tile:nth-child(2)  { animation-delay: 0.1s; }
+    .row.bounce .tile:nth-child(3)  { animation-delay: 0.2s; }
+    .row.bounce .tile:nth-child(4)  { animation-delay: 0.3s; }
+    .row.bounce .tile:nth-child(5)  { animation-delay: 0.4s; }
+
+    @keyframes flip {
+      0%  { transform: scaleY(1); }
+      49% { transform: scaleY(0); }
+      51% { transform: scaleY(0); }
+      100%{ transform: scaleY(1); }
+    }
+    @keyframes pop {
+      0%  { transform: scale(1); }
+      50% { transform: scale(1.12); }
+      100%{ transform: scale(1); }
+    }
+    @keyframes shake {
+      0%,100%{ transform: translateX(0); }
+      15%    { transform: translateX(-5px); }
+      30%    { transform: translateX(5px); }
+      45%    { transform: translateX(-5px); }
+      60%    { transform: translateX(5px); }
+      75%    { transform: translateX(-5px); }
+      90%    { transform: translateX(5px); }
+    }
+    @keyframes bounce {
+      0%,20%{ transform: translateY(0); }
+      40%   { transform: translateY(-18px); }
+      60%   { transform: translateY(-9px); }
+      80%   { transform: translateY(-4px); }
+      100%  { transform: translateY(0); }
+    }
+
+    #keyboard {
+      width: 100%;
+      max-width: 500px;
+      padding: 0 8px 16px;
+      margin-top: auto;
+    }
+
+    .kb-row {
+      display: flex;
+      justify-content: center;
+      gap: 6px;
+      margin-bottom: 6px;
+    }
+
+    .key {
+      height: 58px;
+      flex: 1;
+      max-width: 43px;
+      background: #818384;
+      border: none;
+      border-radius: 4px;
+      color: white;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      text-transform: uppercase;
+      transition: background 0.3s, transform 0.1s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .key.wide    { max-width: 65px; font-size: 12px; }
+    .key:active  { transform: scale(0.95); }
+    .key[data-state="correct"] { background: #538d4e; }
+    .key[data-state="present"] { background: #b59f3b; }
+    .key[data-state="absent"]  { background: #3a3a3c; }
+
+    #modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.75);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+    }
+    #modal.show { display: flex; }
+
+    .modal-box {
+      background: #1a1a1b;
+      border: 1px solid #3a3a3c;
+      border-radius: 16px;
+      padding: 32px 28px 24px;
+      text-align: center;
+      max-width: 340px;
+      width: 90%;
+      animation: modalIn 0.3s ease;
+    }
+    @keyframes modalIn {
+      from { transform: scale(0.85); opacity: 0; }
+      to   { transform: scale(1);    opacity: 1; }
+    }
+
+    .modal-title {
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+    .modal-answer {
+      font-size: 30px;
+      font-weight: 900;
+      letter-spacing: 6px;
+      text-transform: uppercase;
+      color: #538d4e;
+      margin: 14px 0 4px;
+    }
+    .modal-tries {
+      color: rgba(255,255,255,0.5);
+      font-size: 14px;
+      margin-bottom: 22px;
+    }
+
+    .btn-share {
+      background: #538d4e;
+      border: none;
+      color: white;
+      font-size: 16px;
+      font-weight: 700;
+      padding: 14px 0;
+      border-radius: 999px;
+      cursor: pointer;
+      letter-spacing: 1px;
+      width: 100%;
+      transition: background 0.2s, transform 0.15s;
+    }
+    .btn-share:hover  { background: #6ab564; }
+    .btn-share:active { transform: scale(0.97); }
+
+    .share-note {
+      font-size: 12px;
+      color: rgba(255,255,255,0.4);
+      margin-top: 10px;
+      height: 16px;
+    }
+
+    @media (max-width: 400px) {
+      .tile            { width: 54px; height: 54px; font-size: 1.7rem; }
+      .key             { height: 50px; }
+      .key.wide        { max-width: 58px; font-size: 11px; }
+      .header-title    { font-size: 22px; letter-spacing: 4px; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <a class="back-btn" href="index.html">← Back</a>
+    <span class="header-title">Wordle</span>
+    <div class="header-spacer"></div>
+  </header>
+
+  <div id="message-bar"><div id="message"></div></div>
+
+  <div id="grid"></div>
+
+  <div id="keyboard"></div>
+
+  <div id="modal">
+    <div class="modal-box">
+      <div class="modal-title" id="modal-title"></div>
+      <div class="modal-answer" id="modal-answer"></div>
+      <div class="modal-tries" id="modal-tries"></div>
+      <button class="btn-share" onclick="share()">Share &nbsp;📋</button>
+      <div class="share-note" id="share-note"></div>
+    </div>
+  </div>
+
+  <script>
+  const WORDS = [
+    "about","above","abuse","actor","acute","admit","adopt","adult","after","again",
+    "agent","agree","ahead","alarm","album","alert","alike","alive","alley","allow",
+    "alone","along","alter","amber","angel","anger","angle","angry","ankle","apple",
+    "apply","arena","argue","arise","armor","aroma","arose","array","aside","asset",
+    "atlas","attic","audio","audit","avoid","awake","award","aware","awful","badly",
+    "basic","basis","beach","beard","beast","began","begin","being","below","bench",
+    "berry","birth","black","blade","blame","blank","blast","blaze","bleed","blend",
+    "bless","blind","block","blood","bloom","blown","blues","blunt","board","boost",
+    "booth","bound","brace","brain","brave","bread","break","breed","bride","brief",
+    "bring","brink","broad","broke","brown","brush","build","built","burst","buyer",
+    "cabin","candy","carry","cause","cease","chain","chair","chalk","charm","chart",
+    "chase","cheap","cheat","check","cheek","chess","chest","chief","child","chunk",
+    "civic","civil","claim","clash","class","clean","clear","clerk","cliff","climb",
+    "cling","clock","clone","close","cloth","cloud","coach","coast","color","comic",
+    "coral","could","count","court","cover","crash","crazy","cream","creek","crime",
+    "crisp","cross","crowd","crown","cruel","crumb","crush","curve","daily","dance",
+    "dated","decay","delay","depth","devil","dirty","doubt","draft","drain","drama",
+    "drawn","dream","drink","drive","drown","drugs","drums","drunk","dying","early",
+    "earth","eight","elite","empty","enter","equal","error","event","exact","exist",
+    "extra","faint","fairy","faith","falls","false","fancy","feast","field","fifth",
+    "fifty","fight","final","first","fixed","flame","flash","flesh","float","floor",
+    "flour","flows","focus","force","forge","forth","found","frame","frank","fraud",
+    "fresh","front","frost","froze","fruit","funny","ghost","giant","given","glass",
+    "globe","gloom","gloss","glove","going","grace","grade","grain","grand","grant",
+    "grape","grasp","grass","grave","great","green","greet","grief","grind","groan",
+    "gross","grove","group","grown","guard","guess","guide","guilt","happy","harsh",
+    "haste","heart","heavy","honor","horse","hotel","house","human","humor","hurry",
+    "image","inner","input","issue","joint","knife","knock","label","large","laser",
+    "later","laugh","layer","learn","least","leave","legal","lemon","level","light",
+    "limit","liver","local","lodge","logic","loose","lucky","magic","major","maple",
+    "march","match","merge","metal","minor","minus","model","money","month","moral",
+    "motor","mount","mouse","mouth","movie","music","naive","nerve","never","night",
+    "ninja","noble","noise","north","noted","novel","nurse","occur","ocean","offer",
+    "often","olive","onset","order","other","outer","oxide","ozone","paint","panel",
+    "paper","party","peace","pearl","phase","phone","piano","piece","pilot","pixel",
+    "place","plain","plane","plant","plate","plaza","point","polar","power","press",
+    "price","pride","prime","print","prior","probe","prose","proud","prove","pulse",
+    "punch","queen","quest","quiet","quite","quota","quote","rapid","react","realm",
+    "rebel","refer","reign","relax","reply","repay","reset","rider","right","risky",
+    "rival","river","robot","rocky","rough","round","route","royal","ruler","rural",
+    "salad","sauce","scale","scare","scene","scent","score","scout","screw","seize",
+    "serve","setup","seven","shade","shake","shame","shape","share","shark","sharp",
+    "shift","shine","shirt","shock","shore","short","shout","shrug","sight","since",
+    "sixth","sixty","skill","slate","sleep","slice","slide","slope","small","smart",
+    "smile","smoke","solar","solid","sorry","south","space","spark","speak","spear",
+    "speed","spell","spend","spill","spine","spoke","spoon","spray","squad","stack",
+    "staff","stage","stain","stake","stale","stamp","stand","stare","start","state",
+    "steam","steel","steep","steer","stern","stick","stiff","still","stock","stone",
+    "storm","story","stove","strap","straw","stray","strip","stuck","study","style",
+    "sugar","suite","super","surge","swamp","swear","sweat","sweep","sweet","swept",
+    "swift","swing","sword","sworn","table","taste","teach","tears","tense","terms",
+    "theft","theme","these","thick","think","thorn","those","three","throw","tiger",
+    "tight","timer","tired","title","token","total","touch","tough","towel","tower",
+    "track","trade","trail","train","trait","trash","treat","trend","trial","tribe",
+    "trick","tried","truck","trust","truth","twist","ultra","under","union","unity",
+    "until","upper","usual","utter","valid","value","valve","video","viral","virus",
+    "vista","vital","vivid","vocal","voice","voter","waste","watch","water","weary",
+    "weave","weird","whole","width","witch","woman","women","world","worry","worth",
+    "would","wound","wrath","write","wrote","yacht","yield","young","youth","zebra"
+  ];
+
+  const VALID = new Set(WORDS);
+
+  const TARGET = getDailyWord();
+  let row = 0, col = 0, over = false, busy = false;
+  const history = [];
+
+  function getDailyWord() {
+    const epoch = new Date(2024, 0, 1);
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const day = Math.floor((today - epoch) / 86400000);
+    return WORDS[((day % WORDS.length) + WORDS.length) % WORDS.length];
+  }
+
+  function buildGrid() {
+    const g = document.getElementById('grid');
+    for (let r = 0; r < 6; r++) {
+      const rowEl = document.createElement('div');
+      rowEl.className = 'row'; rowEl.id = 'row-' + r;
+      for (let c = 0; c < 5; c++) {
+        const t = document.createElement('div');
+        t.className = 'tile'; t.id = 'tile-' + r + '-' + c;
+        t.dataset.letter = '';
+        rowEl.appendChild(t);
+      }
+      g.appendChild(rowEl);
+    }
+  }
+
+  function buildKeyboard() {
+    const kb = document.getElementById('keyboard');
+    [
+      ['q','w','e','r','t','y','u','i','o','p'],
+      ['a','s','d','f','g','h','j','k','l'],
+      ['Enter','z','x','c','v','b','n','m','⌫']
+    ].forEach(keys => {
+      const r = document.createElement('div'); r.className = 'kb-row';
+      keys.forEach(k => {
+        const btn = document.createElement('button');
+        btn.className = 'key' + (k === 'Enter' || k === '⌫' ? ' wide' : '');
+        btn.textContent = k === '⌫' ? '⌫' : k.toUpperCase();
+        btn.dataset.key = k;
+        btn.addEventListener('click', () => handle(k));
+        r.appendChild(btn);
+      });
+      kb.appendChild(r);
+    });
+  }
+
+  function handle(key) {
+    if (over || busy) return;
+    if (key === '⌫' || key === 'Backspace') del();
+    else if (key === 'Enter') submit();
+    else if (/^[a-zA-Z]$/.test(key)) type(key.toLowerCase());
+  }
+
+  function type(letter) {
+    if (col >= 5) return;
+    const t = tile(row, col);
+    t.textContent = letter.toUpperCase();
+    t.dataset.letter = letter;
+    t.classList.remove('pop'); void t.offsetWidth; t.classList.add('pop');
+    col++;
+  }
+
+  function del() {
+    if (col <= 0) return;
+    col--;
+    const t = tile(row, col);
+    t.textContent = ''; t.dataset.letter = '';
+  }
+
+  function submit() {
+    if (col < 5) { toast('Not enough letters'); shakeRow(row); return; }
+    const word = rowWord(row);
+    if (!VALID.has(word)) { toast('Not a word!'); shakeRow(row); return; }
+
+    const states = score(word, TARGET);
+    history.push({ guess: word, states });
+    busy = true;
+
+    reveal(row, states, () => {
+      busy = false;
+      updateKeys(word, states);
+      const won = states.every(s => s === 'correct');
+      if (won) {
+        bounceRow(row);
+        setTimeout(() => showModal(true, row + 1), 500);
+        over = true;
+      } else if (row === 5) {
+        setTimeout(() => showModal(false), 300);
+        over = true;
+      }
+      row++; col = 0;
+    });
+  }
+
+  function score(guess, target) {
+    const out = Array(5).fill('absent');
+    const t = target.split(''), g = guess.split('');
+    for (let i = 0; i < 5; i++) {
+      if (g[i] === t[i]) { out[i] = 'correct'; t[i] = g[i] = null; }
+    }
+    for (let i = 0; i < 5; i++) {
+      if (!g[i]) continue;
+      const j = t.indexOf(g[i]);
+      if (j !== -1) { out[i] = 'present'; t[j] = null; }
+    }
+    return out;
+  }
+
+  const FLIP_DUR = 500, FLIP_GAP = 300;
+
+  function reveal(r, states, done) {
+    for (let c = 0; c < 5; c++) {
+      const t = tile(r, c), delay = c * FLIP_GAP;
+      setTimeout(() => t.classList.add('flip'), delay);
+      setTimeout(() => { t.dataset.state = states[c]; }, delay + FLIP_DUR * 0.5);
+    }
+    setTimeout(done, 4 * FLIP_GAP + FLIP_DUR);
+  }
+
+  function shakeRow(r) {
+    const el = document.getElementById('row-' + r);
+    el.classList.remove('shake'); void el.offsetWidth; el.classList.add('shake');
+  }
+
+  function bounceRow(r) {
+    document.getElementById('row-' + r).classList.add('bounce');
+  }
+
+  function updateKeys(guess, states) {
+    const p = { correct: 3, present: 2, absent: 1 };
+    for (let i = 0; i < 5; i++) {
+      const k = document.querySelector('[data-key="' + guess[i] + '"]');
+      if (!k) continue;
+      if (!k.dataset.state || p[states[i]] > p[k.dataset.state]) k.dataset.state = states[i];
+    }
+  }
+
+  let toastTimer;
+  function toast(msg, ms) {
+    ms = ms || 1800;
+    const el = document.getElementById('message');
+    el.textContent = msg;
+    el.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => el.classList.remove('show'), ms);
+  }
+
+  const WIN_MSGS = ['Genius!', 'Magnificent!', 'Impressive!', 'Splendid!', 'Great!', 'Phew!'];
+
+  function showModal(won, tries) {
+    document.getElementById('modal-title').textContent = won ? WIN_MSGS[tries - 1] : 'Better luck!';
+    document.getElementById('modal-answer').textContent = TARGET.toUpperCase();
+    document.getElementById('modal-tries').textContent = won
+      ? 'Solved in ' + tries + (tries === 1 ? ' try' : ' tries')
+      : 'The word was:';
+    document.getElementById('modal').classList.add('show');
+  }
+
+  function share() {
+    const E = { correct: '🟩', present: '🟨', absent: '⬛' };
+    const today = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    const won = history.length && history[history.length - 1].states.every(s => s === 'correct');
+    const sc = won ? history.length : 'X';
+    let text = 'Wordle ' + today + ' ' + sc + '/6\n\n';
+    history.forEach(function(h) { text += h.states.map(function(s) { return E[s]; }).join('') + '\n'; });
+    navigator.clipboard.writeText(text.trim()).then(function() {
+      const note = document.getElementById('share-note');
+      note.textContent = 'Copied to clipboard!';
+      setTimeout(function() { note.textContent = ''; }, 2000);
+    });
+  }
+
+  function tile(r, c) { return document.getElementById('tile-' + r + '-' + c); }
+  function rowWord(r)  { return [0,1,2,3,4].map(function(c) { return tile(r,c).dataset.letter; }).join(''); }
+
+  document.addEventListener('keydown', function(e) {
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+    handle(e.key);
+  });
+
+  buildGrid();
+  buildKeyboard();
+  </script>
+</body>
+</html>
