@@ -3,6 +3,11 @@
 <head>
   <title>Shahmeer's Game Hub</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script>
+    if (window.location.hostname === 'tclcozy-source.github.io') {
+      window.location.replace('https://shahmeer.me');
+    }
+  </script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -181,6 +186,38 @@
       to { opacity: 1; transform: translateY(0); }
     }
 
+    #redirect-msg {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: #0a0a0f;
+      z-index: 1000;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+      text-align: center;
+      padding: 20px;
+    }
+    #redirect-msg p {
+      font-size: 18px;
+      color: rgba(255,255,255,0.6);
+    }
+    #redirect-msg p strong { color: white; }
+    #redirect-msg a {
+      color: #a855f7;
+      text-decoration: none;
+      border: 1px solid rgba(168,85,247,0.4);
+      padding: 10px 24px;
+      border-radius: 999px;
+      font-size: 15px;
+      transition: background 0.2s, border-color 0.2s;
+    }
+    #redirect-msg a:hover {
+      background: rgba(168,85,247,0.12);
+      border-color: rgba(168,85,247,0.7);
+    }
+
     @media (max-width: 520px) {
       .content { padding: 24px 16px 16px; }
       header { margin-bottom: 0; }
@@ -199,6 +236,11 @@
 </head>
 <body>
   <canvas id="stars"></canvas>
+
+  <div id="redirect-msg">
+    <p>Redirecting to <strong>shahmeer.me</strong>...</p>
+    <a href="https://shahmeer.me">Click here if not redirected</a>
+  </div>
 
   <div class="content">
     <header>
@@ -247,6 +289,11 @@
   </div>
 
   <script>
+    // Show fallback redirect message if still on GitHub Pages (redirect may be slow)
+    if (window.location.hostname === 'tclcozy-source.github.io') {
+      document.getElementById('redirect-msg').style.display = 'flex';
+    }
+
     // Twinkling stars
     var canvas = document.getElementById("stars");
     var ctx = canvas.getContext("2d");
