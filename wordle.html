@@ -223,6 +223,7 @@
     }
 
     .btn-share {
+      display: block;
       background: #538d4e;
       border: none;
       color: white;
@@ -233,17 +234,11 @@
       cursor: pointer;
       letter-spacing: 1px;
       width: 100%;
+      text-decoration: none;
       transition: background 0.2s, transform 0.15s;
     }
     .btn-share:hover  { background: #6ab564; }
     .btn-share:active { transform: scale(0.97); }
-
-    .share-note {
-      font-size: 12px;
-      color: rgba(255,255,255,0.4);
-      margin-top: 10px;
-      height: 16px;
-    }
 
     @media (max-width: 400px) {
       .tile            { width: 54px; height: 54px; font-size: 1.7rem; }
@@ -272,8 +267,7 @@
       <div class="modal-title" id="modal-title"></div>
       <div class="modal-answer" id="modal-answer"></div>
       <div class="modal-tries" id="modal-tries"></div>
-      <button class="btn-share" onclick="share()">Share &nbsp;📋</button>
-      <div class="share-note" id="share-note"></div>
+      <a class="btn-share" href="index.html">Return to Home</a>
     </div>
   </div>
 
@@ -500,21 +494,8 @@
     document.getElementById('modal').classList.add('show');
   }
 
-  function share() {
-    const E = { correct: '🟩', present: '🟨', absent: '⬛' };
-    const today = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-    const won = history.length && history[history.length - 1].states.every(s => s === 'correct');
-    const sc = won ? history.length : 'X';
-    let text = 'Wordle ' + today + ' ' + sc + '/6\n\n';
-    history.forEach(function(h) { text += h.states.map(function(s) { return E[s]; }).join('') + '\n'; });
-    navigator.clipboard.writeText(text.trim()).then(function() {
-      const note = document.getElementById('share-note');
-      note.textContent = 'Copied to clipboard!';
-      setTimeout(function() { note.textContent = ''; }, 2000);
-    });
-  }
 
-  function tile(r, c) { return document.getElementById('tile-' + r + '-' + c); }
+function tile(r, c) { return document.getElementById('tile-' + r + '-' + c); }
   function rowWord(r)  { return [0,1,2,3,4].map(function(c) { return tile(r,c).dataset.letter; }).join(''); }
 
   document.addEventListener('keydown', function(e) {
