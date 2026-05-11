@@ -172,16 +172,151 @@
       justify-content: center;
     }
 
+    /* Tutorial modal */
+    #tutorial-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background: rgba(5,5,8,0.82);
+      backdrop-filter: blur(6px);
+      animation: fadeIn 0.3s ease;
+    }
+    #tutorial-modal.hidden { display: none; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .tutorial-box {
+      background: rgba(10,10,15,0.97);
+      border: 1px solid rgba(74,222,128,0.35);
+      border-radius: 24px;
+      padding: 36px 40px 32px;
+      max-width: 420px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 0 60px rgba(74,222,128,0.1), 0 0 120px rgba(34,211,238,0.06);
+      animation: slideUp 0.35s ease;
+    }
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .tutorial-title {
+      font-size: 30px;
+      font-weight: 900;
+      background: linear-gradient(90deg, #4ade80, #22d3ee);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 6px;
+      letter-spacing: 1px;
+    }
+
+    .tutorial-subtitle {
+      font-size: 13px;
+      color: rgba(255,255,255,0.35);
+      letter-spacing: 1px;
+      margin-bottom: 28px;
+      text-transform: uppercase;
+    }
+
+    .tutorial-rules {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      margin-bottom: 30px;
+      text-align: left;
+    }
+
+    .rule {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 14px;
+      padding: 13px 16px;
+    }
+
+    .rule-icon {
+      font-size: 24px;
+      line-height: 1;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    .rule-text {
+      font-size: 14px;
+      color: rgba(255,255,255,0.75);
+      line-height: 1.45;
+    }
+
+    .rule-text strong {
+      color: white;
+      font-weight: 700;
+    }
+
+    #lets-play-btn {
+      width: 100%;
+      background: linear-gradient(135deg, #4ade80, #22d3ee);
+      border: none;
+      color: #0a0a0f;
+      font-size: 18px;
+      font-weight: 900;
+      padding: 14px;
+      border-radius: 999px;
+      cursor: pointer;
+      letter-spacing: 0.5px;
+      transition: transform 0.15s, opacity 0.15s;
+    }
+    #lets-play-btn:hover { transform: scale(1.04); opacity: 0.9; }
+
     @media (max-width: 480px) {
       h1 { font-size: 22px; }
       .score-value { font-size: 20px; }
       .overlay-box { padding: 24px 24px; }
       .overlay-title { font-size: 26px; }
+      .tutorial-box { padding: 28px 20px 24px; }
+      .tutorial-title { font-size: 24px; }
     }
   </style>
 </head>
 <body>
   <canvas id="bg-canvas"></canvas>
+
+  <!-- Tutorial modal -->
+  <div id="tutorial-modal">
+    <div class="tutorial-box">
+      <div class="tutorial-title">🐍 How to Play</div>
+      <div class="tutorial-subtitle">Snake</div>
+      <div class="tutorial-rules">
+        <div class="rule">
+          <div class="rule-icon">🎮</div>
+          <div class="rule-text"><strong>Arrow keys or WASD</strong> to change direction. The snake never stops moving!</div>
+        </div>
+        <div class="rule">
+          <div class="rule-icon">🔴</div>
+          <div class="rule-text"><strong>Eat the red food</strong> to grow longer and score points. Each piece is worth 10 points.</div>
+        </div>
+        <div class="rule">
+          <div class="rule-icon">💀</div>
+          <div class="rule-text"><strong>Don't hit the walls</strong> or your own body — it's game over!</div>
+        </div>
+        <div class="rule">
+          <div class="rule-icon">⚡</div>
+          <div class="rule-text"><strong>Speed increases</strong> as your snake gets longer. Stay sharp!</div>
+        </div>
+      </div>
+      <button id="lets-play-btn">Let's Play!</button>
+    </div>
+  </div>
 
   <div class="page">
     <div class="top-bar">
@@ -478,6 +613,10 @@
 
     document.getElementById('start-btn').addEventListener('click', startGame);
     document.getElementById('restart-btn').addEventListener('click', startGame);
+    document.getElementById('lets-play-btn').addEventListener('click', function() {
+      document.getElementById('tutorial-modal').classList.add('hidden');
+      startGame();
+    });
 
     // Draw initial state
     initGame();
