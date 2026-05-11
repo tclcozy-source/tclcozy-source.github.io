@@ -5,684 +5,535 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body {
-      background: #0a0a0f;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-      font-family: Arial, sans-serif;
-      overflow: hidden;
-      user-select: none;
-    }
-    #ui {
-      position: fixed;
-      top: 0; left: 0; right: 0;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      padding: 10px 20px;
-      gap: 40px;
-      z-index: 10;
-      background: rgba(0,0,0,0.4);
-    }
-    #score {
-      font-size: 32px;
-      font-weight: 900;
-      letter-spacing: 6px;
-      color: white;
-    }
-    #p1label { color: #4da6ff; font-size: 14px; font-weight: 700; }
-    #p2label { color: #ff4444; font-size: 14px; font-weight: 700; }
-    #backBtn {
-      position: fixed;
-      top: 12px; left: 14px;
-      z-index: 20;
-      background: rgba(255,255,255,0.08);
-      border: 1px solid rgba(255,255,255,0.15);
-      color: white;
-      font-size: 13px;
-      padding: 6px 14px;
-      border-radius: 999px;
-      cursor: pointer;
-      text-decoration: none;
-      transition: background 0.2s;
-    }
-    #backBtn:hover { background: rgba(255,255,255,0.16); }
+    body { overflow: hidden; font-family: Arial, sans-serif; user-select: none; background: #1a7a1a; }
     canvas { display: block; }
-    #menu, #winScreen {
-      position: fixed;
-      inset: 0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 18px;
-      z-index: 30;
-      background: rgba(0,0,0,0.82);
+
+    #scoreBar {
+      position: fixed; top: 0; left: 0; right: 0;
+      display: none; align-items: center; justify-content: center; gap: 20px;
+      padding: 10px 20px;
+      background: rgba(0,0,0,0.55);
+      z-index: 10;
     }
-    #winScreen { display: none; }
-    .menu-title {
-      font-size: 54px;
-      font-weight: 900;
-      background: linear-gradient(90deg, #4da6ff, #a855f7, #ff4444);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
+    #scoreBar.show { display: flex; }
+    #scoreText { font-size: 34px; font-weight: 900; color: #fff; letter-spacing: 8px; }
+    .slabel { font-size: 13px; font-weight: 700; }
+
+    #goalBanner {
+      position: fixed; top: 50%; left: 50%;
+      transform: translate(-50%,-50%) scale(0);
+      font-size: 100px; font-weight: 900;
+      color: #FFD700;
+      text-shadow: 0 0 30px #ff8c00, 0 0 70px rgba(255,60,0,0.7);
+      z-index: 25; pointer-events: none; white-space: nowrap;
+      transition: transform 0.18s cubic-bezier(.34,1.56,.64,1);
+    }
+
+    .screen {
+      position: fixed; inset: 0; display: none;
+      flex-direction: column; align-items: center; justify-content: center;
+      gap: 18px; background: rgba(0,0,0,0.78); z-index: 20;
+    }
+    .screen.show { display: flex; }
+    .big-title {
+      font-size: 60px; font-weight: 900; color: #fff;
+      text-shadow: 0 4px 24px rgba(0,200,0,0.5);
       letter-spacing: 2px;
     }
-    .menu-sub { color: rgba(255,255,255,0.5); font-size: 15px; margin-top: -8px; }
-    .menu-btn {
-      padding: 14px 48px;
-      border-radius: 999px;
-      border: none;
-      font-size: 18px;
-      font-weight: 700;
-      cursor: pointer;
-      transition: transform 0.15s, opacity 0.15s;
+    .sub { color: rgba(255,255,255,0.55); font-size: 15px; }
+    .btn {
+      padding: 14px 54px; border: none; border-radius: 999px;
+      font-size: 19px; font-weight: 700; cursor: pointer;
+      transition: transform 0.12s, opacity 0.12s;
     }
-    .menu-btn:hover { transform: scale(1.06); opacity: 0.9; }
-    .btn-cpu { background: linear-gradient(135deg, #4da6ff, #a855f7); color: white; }
-    .btn-2p  { background: linear-gradient(135deg, #ff4444, #ff8c00); color: white; }
-    .controls-hint {
-      color: rgba(255,255,255,0.35);
-      font-size: 12px;
-      text-align: center;
-      line-height: 1.8;
+    .btn:hover { transform: scale(1.07); opacity: 0.9; }
+    .btn-blue   { background: linear-gradient(135deg,#4da6ff,#7c3aed); color: #fff; }
+    .btn-red    { background: linear-gradient(135deg,#ff4444,#ff8c00); color: #fff; }
+    .btn-green  { background: linear-gradient(135deg,#22c55e,#16a34a); color: #fff; }
+    .hint { color: rgba(255,255,255,0.38); font-size: 13px; text-align: center; line-height: 2; }
+    #winMsg { font-size: 52px; font-weight: 900; color: #fff; }
+    #winSub { color: rgba(255,255,255,0.5); font-size: 17px; }
+
+    #backBtn {
+      position: fixed; top: 12px; left: 14px; z-index: 30;
+      background: rgba(0,0,0,0.45); border: 1px solid rgba(255,255,255,0.2);
+      color: #fff; font-size: 13px; padding: 6px 14px;
+      border-radius: 999px; cursor: pointer; text-decoration: none;
     }
-    #goalText {
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%) scale(0);
-      font-size: 90px;
-      font-weight: 900;
-      color: #FFD700;
-      text-shadow: 0 0 40px #ff8c00, 0 0 80px #ff4d00;
-      z-index: 25;
-      pointer-events: none;
-      transition: transform 0.15s cubic-bezier(.34,1.56,.64,1);
-      white-space: nowrap;
-    }
-    #winMsg {
-      font-size: 48px;
-      font-weight: 900;
-      color: white;
-      text-shadow: 0 0 30px rgba(255,255,255,0.4);
-    }
-    #winSub { color: rgba(255,255,255,0.55); font-size: 16px; }
-    .btn-play-again { background: linear-gradient(135deg, #22c55e, #16a34a); color: white; }
+    #backBtn:hover { background: rgba(0,0,0,0.65); }
   </style>
 </head>
 <body>
-  <a id="backBtn" href="index.html">← Back</a>
 
-  <div id="ui">
-    <span id="p1label">PLAYER 1 (W)</span>
-    <span id="score">0 – 0</span>
-    <span id="p2label">PLAYER 2 (↑)</span>
+<a id="backBtn" href="index.html">← Back</a>
+<canvas id="c"></canvas>
+
+<div id="scoreBar">
+  <span class="slabel" style="color:#4da6ff" id="p1lbl">PLAYER 1</span>
+  <span id="scoreText">0 – 0</span>
+  <span class="slabel" style="color:#ff4444" id="p2lbl">PLAYER 2</span>
+</div>
+
+<div id="goalBanner">⚽ GOAL!</div>
+
+<div id="menuScreen" class="screen show">
+  <div class="big-title">⚽ Football</div>
+  <div class="sub">First to 5 goals wins</div>
+  <button class="btn btn-blue" id="btnCPU">1 Player</button>
+  <button class="btn btn-red"  id="btn2P">2 Players</button>
+  <div class="hint">
+    Player 1: <b>W</b> to jump &nbsp;|&nbsp; Player 2: <b>↑</b> to jump<br>
+    Your wobble controls launch direction!
   </div>
+</div>
 
-  <canvas id="c"></canvas>
-
-  <div id="goalText">⚽ GOAL!</div>
-
-  <div id="menu">
-    <div class="menu-title">⚽ Football</div>
-    <div class="menu-sub">First to 5 goals wins</div>
-    <button class="menu-btn btn-cpu" id="btnCPU">vs CPU</button>
-    <button class="menu-btn btn-2p"  id="btn2P">2 Players</button>
-    <div class="controls-hint">Player 1: <b>W</b> to jump/kick &nbsp;|&nbsp; Player 2: <b>↑</b> to jump/kick</div>
-  </div>
-
-  <div id="winScreen">
-    <div id="winMsg"></div>
-    <div id="winSub"></div>
-    <button class="menu-btn btn-play-again" id="btnPlayAgain">Play Again</button>
-    <button class="menu-btn btn-cpu" id="btnMenu" style="font-size:15px;padding:10px 32px">Main Menu</button>
-  </div>
+<div id="winScreen" class="screen">
+  <div id="winMsg"></div>
+  <div id="winSub"></div>
+  <button class="btn btn-green" id="btnAgain">Play Again</button>
+  <button class="btn btn-blue"  id="btnMenu" style="font-size:15px;padding:10px 34px">Main Menu</button>
+</div>
 
 <script>
 const canvas = document.getElementById('c');
-const ctx = canvas.getContext('2d');
-const W = () => canvas.width, H = () => canvas.height;
+const ctx    = canvas.getContext('2d');
 
-// ─── resize ───────────────────────────────────────────────────
+// ── sizing ──────────────────────────────────────────────────────
+let W, H, GY;
 function resize() {
-  canvas.width  = window.innerWidth;
-  canvas.height = window.innerHeight;
+  W = canvas.width  = window.innerWidth;
+  H = canvas.height = window.innerHeight;
+  GY = H - 65;
 }
 resize();
-window.addEventListener('resize', () => { resize(); resetPositions(); });
+window.addEventListener('resize', () => { resize(); if (running && !celebrating) resetPositions(); });
 
-// ─── constants ────────────────────────────────────────────────
-const GRAVITY    = 0.55;
-const GROUND_Y   = () => H() - 80;
-const GOAL_W     = 18;
-const GOAL_H     = () => Math.min(120, H() * 0.22);
-const PLAYER_W   = 28;
-const PLAYER_H   = 52;
-const BALL_R     = 14;
-const JUMP_FORCE = -13.5;
-const KICK_RANGE = 48;
-const WIN_SCORE  = 5;
+// ── constants ───────────────────────────────────────────────────
+const GRAVITY     = 0.55;
+const BALL_R      = 15;
+const BODY_R      = 24;
+const HEAD_R      = 18;
+const PLAYER_SPAN = BODY_R + HEAD_R + 4; // dist from body center to head center
+const JUMP_POWER  = 14.5;
+const WOBBLE_SPD  = 0.065;  // rad/frame → ~97 frames per full swing
+const WOBBLE_AMP  = 0.88;   // max tilt (~50°)
+const GOAL_W      = 55;
+const WIN_SCORE   = 5;
 
-// ─── state ────────────────────────────────────────────────────
-let cpuMode = true;
-let score   = [0, 0];
-let celebrating = false;
-let celebTimer  = 0;
-let gameOver    = false;
-let running     = false;
+function goalH() { return Math.min(H * 0.26, 200); }
+
+// ── state ───────────────────────────────────────────────────────
+let cpuMode = true, score = [0, 0];
+let celebrating = false, celebTimer = 0, gameOver = false, running = false;
 
 const keys = {};
 window.addEventListener('keydown', e => {
   keys[e.code] = true;
-  if (e.code === 'ArrowUp') e.preventDefault();
-  if (e.code === 'KeyW')    e.preventDefault();
+  if (['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space','KeyW'].includes(e.code))
+    e.preventDefault();
 });
-window.addEventListener('keyup',   e => { keys[e.code] = false; });
+window.addEventListener('keyup', e => { keys[e.code] = false; });
 
-// ─── physics objects ──────────────────────────────────────────
+// ── entities ────────────────────────────────────────────────────
 let p1, p2, ball;
 
-function makePlayer(x, color, flip) {
+function makePlayer(xFrac, color, phaseOffset, isCpu) {
   return {
-    x, y: GROUND_Y() - PLAYER_H,
-    vx: 0, vy: 0,
-    onGround: true,
-    color,
-    flip,         // facing direction (+1 right, -1 left)
-    kickTimer: 0, // frames of kick animation
-    limbPhase: 0, // walking wobble
-    jumpPressed: false
+    x: W * xFrac, y: GY - BODY_R,
+    vx: 0, vy: 0, onGround: true,
+    color, phase: phaseOffset, angle: 0,
+    jumpPressed: false,
+    cpu: isCpu,
+    cpuTimer: cpuDelay(),
   };
 }
 
+function cpuDelay() { return 25 + Math.random() * 100; }
+
 function makeBall() {
   return {
-    x: W() / 2, y: GROUND_Y() - BALL_R - 40,
-    vx: (Math.random() > 0.5 ? 1 : -1) * 2.5,
-    vy: -3,
-    spin: 0
+    x: W / 2, y: GY - 130,
+    vx: (Math.random() > 0.5 ? 1 : -1) * (2.5 + Math.random()),
+    vy: -3 - Math.random() * 2,
+    spin: 0,
   };
 }
 
 function resetPositions() {
-  if (!p1) return;
-  const gy = GROUND_Y();
-  p1.x = W() * 0.25; p1.y = gy - PLAYER_H; p1.vx = 0; p1.vy = 0; p1.onGround = true;
-  p2.x = W() * 0.75; p2.y = gy - PLAYER_H; p2.vx = 0; p2.vy = 0; p2.onGround = true;
-  ball.x = W() / 2;  ball.y = gy - BALL_R - 60;
-  ball.vx = (Math.random() > 0.5 ? 1 : -1) * 2.5;
-  ball.vy = -3;
+  p1.x = W * 0.25; p1.y = GY - BODY_R; p1.vx = 0; p1.vy = 0; p1.onGround = true;
+  p2.x = W * 0.75; p2.y = GY - BODY_R; p2.vx = 0; p2.vy = 0; p2.onGround = true;
+  ball.x = W / 2; ball.y = GY - 130;
+  ball.vx = (Math.random() > 0.5 ? 1 : -1) * (2.5 + Math.random());
+  ball.vy = -3 - Math.random() * 2;
 }
 
 function initGame() {
-  p1   = makePlayer(W() * 0.25, '#4da6ff', 1);
-  p2   = makePlayer(W() * 0.75, '#ff4444', -1);
+  p1   = makePlayer(0.25, '#4da6ff', 0,        false);
+  p2   = makePlayer(0.75, '#ff4444', Math.PI,  cpuMode);
   ball = makeBall();
   score = [0, 0];
-  celebrating = false;
-  gameOver = false;
+  celebrating = false; celebTimer = 0; gameOver = false;
   updateScore();
 }
 
-// ─── score display ────────────────────────────────────────────
-function updateScore() {
-  document.getElementById('score').textContent = score[0] + ' – ' + score[1];
-  const lbl = document.getElementById('p2label');
-  lbl.textContent = cpuMode ? 'CPU (↑)' : 'PLAYER 2 (↑)';
+// ── jump ────────────────────────────────────────────────────────
+function doJump(p) {
+  if (!p.onGround) return;
+  // Launch direction from current wobble angle:
+  // angle=0 → straight up; angle>0 → rightward; angle<0 → leftward
+  p.vx += Math.sin(p.angle) * JUMP_POWER;
+  p.vy  = -(Math.cos(p.angle) * JUMP_POWER * 0.85 + 5);
+  p.onGround = false;
 }
 
-// ─── GOAL celebration ─────────────────────────────────────────
-const goalText = document.getElementById('goalText');
+// ── score / goal UI ─────────────────────────────────────────────
+const goalBanner = document.getElementById('goalBanner');
+
+function updateScore() {
+  document.getElementById('scoreText').textContent = score[0] + ' – ' + score[1];
+  document.getElementById('p2lbl').textContent = cpuMode ? 'CPU' : 'PLAYER 2';
+}
 
 function triggerGoal(scorer) {
+  if (celebrating) return;
   score[scorer]++;
   updateScore();
   celebrating = true;
-  celebTimer  = 120;
-  goalText.style.transform = 'translate(-50%,-50%) scale(1)';
-  goalText.style.color = scorer === 0 ? '#4da6ff' : '#ff4444';
-  if (score[scorer] >= WIN_SCORE) {
-    gameOver = true;
-  }
+  celebTimer  = 130; // ~2.2 seconds
+  goalBanner.style.color = scorer === 0 ? '#4da6ff' : '#ff4444';
+  goalBanner.style.transform = 'translate(-50%,-50%) scale(1)';
+  if (score[scorer] >= WIN_SCORE) gameOver = true;
 }
 
 function endCelebration() {
-  goalText.style.transform = 'translate(-50%,-50%) scale(0)';
+  goalBanner.style.transform = 'translate(-50%,-50%) scale(0)';
+  celebrating = false;
   if (gameOver) {
-    showWin();
+    const name  = score[0] >= WIN_SCORE ? 'Player 1' : (cpuMode ? 'CPU' : 'Player 2');
+    const color = score[0] >= WIN_SCORE ? '#4da6ff' : '#ff4444';
+    const wm = document.getElementById('winMsg');
+    wm.textContent = name + ' Wins! 🏆';
+    wm.style.color = color;
+    document.getElementById('winSub').textContent = score[0] + ' – ' + score[1];
+    document.getElementById('winScreen').classList.add('show');
+    running = false;
   } else {
     resetPositions();
   }
 }
 
-function showWin() {
-  const winner = score[0] >= WIN_SCORE ? 'Player 1' : (cpuMode ? 'CPU' : 'Player 2');
-  const color  = score[0] >= WIN_SCORE ? '#4da6ff' : '#ff4444';
-  document.getElementById('winMsg').textContent = winner + ' Wins! 🏆';
-  document.getElementById('winMsg').style.color = color;
-  document.getElementById('winSub').textContent = score[0] + ' – ' + score[1];
-  document.getElementById('winScreen').style.display = 'flex';
-  running = false;
-}
+// ── physics ─────────────────────────────────────────────────────
+function updatePhysics() {
+  const gh = goalH();
 
-// ─── CPU AI ──────────────────────────────────────────────────
-function cpuThink() {
-  if (!cpuMode) return;
-  const speed = 3.8;
-  const targetX = ball.x;
-  const dx = targetX - (p2.x + PLAYER_W / 2);
+  // Wobble always runs
+  [p1, p2].forEach(p => {
+    p.phase += WOBBLE_SPD;
+    p.angle  = Math.sin(p.phase) * WOBBLE_AMP;
+  });
 
-  if (Math.abs(dx) > 6) {
-    p2.vx = Math.sign(dx) * Math.min(speed, Math.abs(dx) * 0.12);
-  } else {
-    p2.vx *= 0.7;
+  // During goal celebration just count down
+  if (celebrating) {
+    celebTimer--;
+    if (celebTimer <= 0) endCelebration();
+    return;
   }
 
-  // jump if ball is coming high or needs to kick
-  const ballNear = Math.abs(ball.x - p2.x) < KICK_RANGE + 20;
-  const ballHigh = ball.y < GROUND_Y() - 80;
-  if (p2.onGround && (ballHigh && ballNear || ball.vy < -2 && ballNear)) {
-    cpuJump();
-  }
-}
-
-let cpuJumpCooldown = 0;
-function cpuJump() {
-  if (cpuJumpCooldown > 0) return;
-  p2.vy = JUMP_FORCE;
-  p2.onGround = false;
-  p2.kickTimer = 12;
-  cpuJumpCooldown = 45;
-}
-
-// ─── player input ────────────────────────────────────────────
-function handleInput() {
-  // P1 jump/kick
-  if (keys['KeyW']) {
-    if (p1.onGround && !p1.jumpPressed) {
-      p1.vy = JUMP_FORCE;
-      p1.onGround = false;
-      p1.kickTimer = 12;
-      p1.jumpPressed = true;
-    }
-  } else {
-    p1.jumpPressed = false;
-  }
-
-  // P2 jump/kick (human)
-  if (!cpuMode) {
-    if (keys['ArrowUp']) {
-      if (p2.onGround && !p2.jumpPressed) {
-        p2.vy = JUMP_FORCE;
-        p2.onGround = false;
-        p2.kickTimer = 12;
-        p2.jumpPressed = true;
+  // Input / CPU
+  [p1, p2].forEach((p, i) => {
+    if (p.cpu) {
+      p.cpuTimer--;
+      if (p.cpuTimer <= 0) {
+        doJump(p);
+        p.cpuTimer = cpuDelay();
       }
     } else {
-      p2.jumpPressed = false;
+      const key = i === 0 ? 'KeyW' : 'ArrowUp';
+      if (keys[key]) {
+        if (!p.jumpPressed) { doJump(p); p.jumpPressed = true; }
+      } else {
+        p.jumpPressed = false;
+      }
     }
-  }
-}
+  });
 
-// ─── physics update ──────────────────────────────────────────
-function updatePhysics() {
-  if (celebrating || gameOver) return;
-  const gy = GROUND_Y();
-
-  handleInput();
-  if (cpuMode && cpuJumpCooldown > 0) cpuJumpCooldown--;
-  cpuThink();
-
-  // ── players ──
-  [p1, p2].forEach((p, i) => {
+  // Player movement
+  [p1, p2].forEach(p => {
     p.vy += GRAVITY;
     p.x  += p.vx;
     p.y  += p.vy;
-    p.vx *= 0.82;
+    p.vx *= 0.87;
 
-    // ground
-    if (p.y + PLAYER_H >= gy) {
-      p.y = gy - PLAYER_H;
+    // Ground
+    if (p.y + BODY_R >= GY) {
+      p.y = GY - BODY_R;
       p.vy = 0;
+      p.vx *= 0.75;
       p.onGround = true;
     } else {
       p.onGround = false;
     }
 
-    // wall clamp
-    const minX = GOAL_W;
-    const maxX = W() - GOAL_W - PLAYER_W;
-    if (p.x < minX) { p.x = minX; p.vx = 0; }
-    if (p.x > maxX) { p.x = maxX; p.vx = 0; }
-
-    // kick timer
-    if (p.kickTimer > 0) p.kickTimer--;
-
-    // limb phase
-    p.limbPhase += Math.abs(p.vx) * 0.15 + 0.04;
-
-    // face toward ball
-    if (ball.x > p.x + PLAYER_W / 2) p.flip = 1;
-    else p.flip = -1;
+    // Wall clamp (keep out of goal areas)
+    const minX = GOAL_W + BODY_R + 2;
+    const maxX = W - GOAL_W - BODY_R - 2;
+    if (p.x < minX) { p.x = minX; p.vx =  Math.abs(p.vx) * 0.5; }
+    if (p.x > maxX) { p.x = maxX; p.vx = -Math.abs(p.vx) * 0.5; }
   });
 
-  // ── ball ──
-  ball.vy   += GRAVITY * 0.9;
-  ball.x    += ball.vx;
-  ball.y    += ball.vy;
-  ball.spin += ball.vx * 0.05;
+  // Ball movement
+  ball.vy += GRAVITY * 0.93;
+  ball.x  += ball.vx;
+  ball.y  += ball.vy;
+  ball.spin += ball.vx * 0.045;
 
-  // ground bounce
-  if (ball.y + BALL_R >= gy) {
-    ball.y  = gy - BALL_R;
-    ball.vy = ball.vy < -1.5 ? ball.vy * -0.62 : 0;
+  // Ball ground
+  if (ball.y + BALL_R >= GY) {
+    ball.y  = GY - BALL_R;
+    ball.vy = Math.abs(ball.vy) > 1.2 ? ball.vy * -0.58 : 0;
     ball.vx *= 0.80;
-    ball.vy -= 0.1;
   }
 
-  // wall bounce (not in goal zones)
-  if (ball.x - BALL_R <= GOAL_W) {
-    if (ball.y + BALL_R < gy - GOAL_H() || ball.y - BALL_R > gy) {
-      ball.x  = GOAL_W + BALL_R;
-      ball.vx = Math.abs(ball.vx) * 0.7;
-    }
-  }
-  if (ball.x + BALL_R >= W() - GOAL_W) {
-    if (ball.y + BALL_R < gy - GOAL_H() || ball.y - BALL_R > gy) {
-      ball.x  = W() - GOAL_W - BALL_R;
-      ball.vx = -Math.abs(ball.vx) * 0.7;
-    }
+  // Ball ceiling
+  if (ball.y - BALL_R <= 0) {
+    ball.y  = BALL_R;
+    ball.vy = Math.abs(ball.vy) * 0.6;
   }
 
-  // ── goal detection ──
-  const inGoalLeft  = ball.x - BALL_R < GOAL_W  && ball.y + BALL_R > gy - GOAL_H() && ball.y - BALL_R < gy;
-  const inGoalRight = ball.x + BALL_R > W() - GOAL_W && ball.y + BALL_R > gy - GOAL_H() && ball.y - BALL_R < gy;
+  // Ball side walls – bounce only outside goal zone
+  if (ball.x - BALL_R <= GOAL_W && ball.y + BALL_R < GY - gh) {
+    ball.x  = GOAL_W + BALL_R;
+    ball.vx = Math.abs(ball.vx) * 0.65;
+  }
+  if (ball.x + BALL_R >= W - GOAL_W && ball.y + BALL_R < GY - gh) {
+    ball.x  = W - GOAL_W - BALL_R;
+    ball.vx = -Math.abs(ball.vx) * 0.65;
+  }
 
-  if (inGoalLeft && !celebrating)  triggerGoal(1); // p2 scores
-  if (inGoalRight && !celebrating) triggerGoal(0); // p1 scores
+  // Speed cap
+  const spd = Math.hypot(ball.vx, ball.vy);
+  if (spd > 22) { ball.vx = ball.vx / spd * 22; ball.vy = ball.vy / spd * 22; }
 
-  // ── ball-player collision ──
+  // Goal detection
+  if (ball.x - BALL_R <= GOAL_W  && ball.y + BALL_R >= GY - gh && ball.y - BALL_R < GY) triggerGoal(1);
+  if (ball.x + BALL_R >= W - GOAL_W && ball.y + BALL_R >= GY - gh && ball.y - BALL_R < GY) triggerGoal(0);
+
+  // Ball ↔ player collision (use body circle + small head bonus)
   [p1, p2].forEach(p => {
-    const cx = p.x + PLAYER_W / 2;
-    const cy = p.y + PLAYER_H / 2;
-    const dx = ball.x - cx;
-    const dy = ball.y - cy;
-    const dist = Math.sqrt(dx * dx + dy * dy);
-    const minDist = BALL_R + PLAYER_W / 2 + 4;
+    // Approximate head world position (rotated above body)
+    const hx = p.x + PLAYER_SPAN * Math.sin(p.angle);
+    const hy = p.y - PLAYER_SPAN * Math.cos(p.angle);
 
-    if (dist < minDist) {
-      const nx = dx / dist;
-      const ny = dy / dist;
-      ball.x = cx + nx * minDist;
-      ball.y = cy + ny * minDist;
-
-      const kick = p.kickTimer > 0 ? 2.2 : 1.0;
-      const relVx = ball.vx - p.vx;
-      const relVy = ball.vy - p.vy;
-      const dot = relVx * nx + relVy * ny;
-      if (dot < 0) {
-        ball.vx -= (1.5 * kick) * dot * nx;
-        ball.vy -= (1.5 * kick) * dot * ny;
-      }
-      ball.vx = Math.max(-18, Math.min(18, ball.vx));
-      ball.vy = Math.max(-18, Math.min(18, ball.vy));
-    }
+    // Check body circle
+    collideCircle(ball, p.x, p.y, BODY_R + 4, p.vx, p.vy);
+    // Check head circle
+    collideCircle(ball, hx, hy, HEAD_R + 3, p.vx, p.vy);
   });
+}
 
-  // celebrate countdown
-  if (celebrating && !gameOver) {
-    celebTimer--;
-    if (celebTimer <= 0) {
-      celebrating = false;
-      endCelebration();
-    }
-  }
-  if (celebrating && gameOver && celebTimer > 0) {
-    celebTimer--;
-    if (celebTimer <= 0) endCelebration();
+function collideCircle(b, cx, cy, cr, pvx, pvy) {
+  const dx = b.x - cx, dy = b.y - cy;
+  const dist = Math.hypot(dx, dy);
+  const minD  = BALL_R + cr;
+  if (dist >= minD || dist === 0) return;
+  const nx = dx / dist, ny = dy / dist;
+  b.x = cx + nx * minD;
+  b.y = cy + ny * minD;
+  const rvx = b.vx - pvx, rvy = b.vy - pvy;
+  const dot  = rvx * nx + rvy * ny;
+  if (dot < 0) {
+    b.vx -= 1.85 * dot * nx;
+    b.vy -= 1.85 * dot * ny;
   }
 }
 
-// ─── drawing ─────────────────────────────────────────────────
+// ── drawing ─────────────────────────────────────────────────────
 function drawField() {
-  const gy = GROUND_Y();
+  const gh = goalH();
 
-  // sky gradient
-  const sky = ctx.createLinearGradient(0, 0, 0, gy);
-  sky.addColorStop(0, '#0d1b2a');
-  sky.addColorStop(1, '#1a3a1a');
-  ctx.fillStyle = sky;
-  ctx.fillRect(0, 0, W(), H());
+  // Grass base
+  ctx.fillStyle = '#2f9e2f';
+  ctx.fillRect(0, 0, W, H);
 
-  // grass
-  ctx.fillStyle = '#2d5a1b';
-  ctx.fillRect(0, gy, W(), H() - gy);
+  // Alternating stripes
+  ctx.fillStyle = '#2b8f2b';
+  const sw = 90;
+  for (let x = 0; x < W; x += sw * 2) ctx.fillRect(x, 0, sw, H);
 
-  // grass lines
-  ctx.strokeStyle = '#3a7022';
-  ctx.lineWidth = 2;
-  for (let x = 80; x < W(); x += 80) {
-    ctx.beginPath();
-    ctx.moveTo(x, gy);
-    ctx.lineTo(x, H());
-    ctx.stroke();
-  }
-
-  // center line
-  ctx.strokeStyle = 'rgba(255,255,255,0.15)';
-  ctx.setLineDash([8, 8]);
-  ctx.beginPath();
-  ctx.moveTo(W() / 2, 0);
-  ctx.lineTo(W() / 2, gy);
-  ctx.stroke();
+  // Center dashed line
+  ctx.strokeStyle = 'rgba(255,255,255,0.45)';
+  ctx.lineWidth = 3;
+  ctx.setLineDash([14, 11]);
+  ctx.beginPath(); ctx.moveTo(W / 2, 0); ctx.lineTo(W / 2, GY); ctx.stroke();
   ctx.setLineDash([]);
 
-  // center circle
-  ctx.strokeStyle = 'rgba(255,255,255,0.1)';
-  ctx.lineWidth = 2;
+  // Center semicircle
+  ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+  ctx.lineWidth = 3;
   ctx.beginPath();
-  ctx.arc(W() / 2, gy - 10, 60, Math.PI, 0);
+  ctx.arc(W / 2, GY, 90, -Math.PI, 0);
   ctx.stroke();
 
-  // goals
-  const gh = GOAL_H();
-  // left goal
-  ctx.fillStyle = '#cccccc';
-  ctx.fillRect(0, gy - gh, GOAL_W, gh);
-  ctx.fillStyle = 'rgba(255,255,255,0.06)';
-  ctx.fillRect(0, gy - gh, GOAL_W, gh);
-  // net lines left
-  ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+  // Ground line
+  ctx.fillStyle = 'rgba(255,255,255,0.6)';
+  ctx.fillRect(0, GY - 2, W, 3);
+
+  // Underground dirt
+  ctx.fillStyle = '#7a4f2a';
+  ctx.fillRect(0, GY, W, H - GY);
+
+  // ── LEFT GOAL ──
+  // Net area (light grey tint)
+  ctx.fillStyle = 'rgba(255,255,255,0.08)';
+  ctx.fillRect(0, GY - gh, GOAL_W, gh);
+
+  // Net grid
+  ctx.strokeStyle = 'rgba(255,255,255,0.35)';
   ctx.lineWidth = 1;
-  for (let y = gy - gh; y < gy; y += 12) {
+  for (let y = GY - gh; y <= GY; y += 16) {
     ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(GOAL_W, y); ctx.stroke();
   }
-  for (let x = 0; x < GOAL_W; x += 9) {
-    ctx.beginPath(); ctx.moveTo(x, gy - gh); ctx.lineTo(x, gy); ctx.stroke();
+  for (let x = 0; x <= GOAL_W; x += 12) {
+    ctx.beginPath(); ctx.moveTo(x, GY - gh); ctx.lineTo(x, GY); ctx.stroke();
   }
 
-  // right goal
-  ctx.fillStyle = '#cccccc';
-  ctx.fillRect(W() - GOAL_W, gy - gh, GOAL_W, gh);
-  ctx.fillStyle = 'rgba(255,255,255,0.06)';
-  ctx.fillRect(W() - GOAL_W, gy - gh, GOAL_W, gh);
-  ctx.strokeStyle = 'rgba(255,255,255,0.2)';
-  for (let y = gy - gh; y < gy; y += 12) {
-    ctx.beginPath(); ctx.moveTo(W() - GOAL_W, y); ctx.lineTo(W(), y); ctx.stroke();
+  // Post (right side of left goal – the inner post)
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(GOAL_W - 7, GY - gh - 4, 8, gh + 4);
+  // Crossbar
+  ctx.fillRect(0, GY - gh - 7, GOAL_W + 1, 8);
+
+  // ── RIGHT GOAL ──
+  ctx.fillStyle = 'rgba(255,255,255,0.08)';
+  ctx.fillRect(W - GOAL_W, GY - gh, GOAL_W, gh);
+
+  ctx.strokeStyle = 'rgba(255,255,255,0.35)';
+  ctx.lineWidth = 1;
+  for (let y = GY - gh; y <= GY; y += 16) {
+    ctx.beginPath(); ctx.moveTo(W - GOAL_W, y); ctx.lineTo(W, y); ctx.stroke();
   }
-  for (let x = W() - GOAL_W; x < W(); x += 9) {
-    ctx.beginPath(); ctx.moveTo(x, gy - gh); ctx.lineTo(x, gy); ctx.stroke();
+  for (let x = W - GOAL_W; x <= W; x += 12) {
+    ctx.beginPath(); ctx.moveTo(x, GY - gh); ctx.lineTo(x, GY); ctx.stroke();
   }
+
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(W - GOAL_W, GY - gh - 4, 8, gh + 4);
+  ctx.fillRect(W - GOAL_W - 1, GY - gh - 7, GOAL_W + 1, 8);
 }
 
 function drawPlayer(p) {
   ctx.save();
-  const cx = p.x + PLAYER_W / 2;
-  const cy = p.y + PLAYER_H / 2;
+  ctx.translate(p.x, p.y);
+  ctx.rotate(p.angle);
 
-  // wobble: body sway
-  const sway = Math.sin(p.limbPhase) * 4;
-  const wobble = Math.cos(p.limbPhase * 0.7) * 3;
-
-  // ── legs ──
-  const legSwing = Math.sin(p.limbPhase) * 18;
-  const legLen = 20;
-  ctx.strokeStyle = p.color;
-  ctx.lineWidth = 7;
-  ctx.lineCap = 'round';
-
-  // leg 1
+  // Shadow
   ctx.save();
-  ctx.translate(cx - 5, p.y + PLAYER_H - 4);
-  ctx.rotate((p.kickTimer > 0 ? -0.9 * p.flip : legSwing * 0.017) + wobble * 0.02);
+  ctx.translate(0, GY - p.y);
+  ctx.scale(1, 0.2);
   ctx.beginPath();
-  ctx.moveTo(0, 0);
-  ctx.lineTo(0, legLen);
-  ctx.stroke();
-  // foot
-  ctx.beginPath();
-  ctx.arc(0, legLen, 5, 0, Math.PI * 2);
-  ctx.fillStyle = '#888';
+  ctx.arc(0, 0, BODY_R * 0.9, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(0,0,0,0.25)';
   ctx.fill();
   ctx.restore();
 
-  // leg 2
-  ctx.save();
-  ctx.translate(cx + 5, p.y + PLAYER_H - 4);
-  ctx.rotate((p.kickTimer > 0 ? 0.5 * p.flip : -legSwing * 0.017) + wobble * 0.02);
+  // Body circle
   ctx.beginPath();
-  ctx.moveTo(0, 0);
-  ctx.lineTo(0, legLen);
-  ctx.stroke();
-  ctx.beginPath();
-  ctx.arc(0, legLen, 5, 0, Math.PI * 2);
-  ctx.fillStyle = '#888';
-  ctx.fill();
-  ctx.restore();
-
-  // ── body ──
-  ctx.save();
-  ctx.translate(cx, cy - 4 + sway);
-  ctx.rotate(wobble * 0.015);
-
-  // torso
+  ctx.arc(0, 0, BODY_R, 0, Math.PI * 2);
   ctx.fillStyle = p.color;
-  ctx.beginPath();
-  ctx.roundRect(-PLAYER_W / 2 + 2, -PLAYER_H / 2 + 10, PLAYER_W - 4, PLAYER_H / 2 - 4, 8);
   ctx.fill();
+  ctx.strokeStyle = 'rgba(0,0,0,0.25)';
+  ctx.lineWidth = 2;
+  ctx.stroke();
 
-  // shirt number
-  ctx.fillStyle = 'rgba(255,255,255,0.5)';
-  ctx.font = 'bold 11px Arial';
+  // Jersey number
+  ctx.fillStyle = 'rgba(255,255,255,0.75)';
+  ctx.font = 'bold 15px Arial';
   ctx.textAlign = 'center';
-  ctx.fillText(p === p1 ? '1' : '2', 0, 2);
+  ctx.textBaseline = 'middle';
+  ctx.fillText(p === p1 ? '1' : '2', 0, 0);
 
-  // ── arms ──
-  const armSwing = Math.sin(p.limbPhase + Math.PI) * 22;
-  ctx.lineWidth = 6;
-  ctx.strokeStyle = p.color;
-
-  // arm 1
-  ctx.save();
-  ctx.translate(-PLAYER_W / 2 + 4, -PLAYER_H / 2 + 16);
-  ctx.rotate((armSwing + (p.kickTimer > 0 ? -40 : 0)) * 0.017);
+  // Head
+  const hy = -(PLAYER_SPAN);
   ctx.beginPath();
-  ctx.moveTo(0, 0);
-  ctx.lineTo(-6, 16);
-  ctx.stroke();
-  ctx.restore();
-
-  // arm 2
-  ctx.save();
-  ctx.translate(PLAYER_W / 2 - 4, -PLAYER_H / 2 + 16);
-  ctx.rotate((-armSwing + (p.kickTimer > 0 ? 40 : 0)) * 0.017);
-  ctx.beginPath();
-  ctx.moveTo(0, 0);
-  ctx.lineTo(6, 16);
-  ctx.stroke();
-  ctx.restore();
-
-  // ── head ──
-  const headWobble = Math.sin(p.limbPhase * 1.3) * 2;
+  ctx.arc(0, hy, HEAD_R, 0, Math.PI * 2);
   ctx.fillStyle = '#f5c5a3';
-  ctx.beginPath();
-  ctx.arc(headWobble, -PLAYER_H / 2 + 6, 13, 0, Math.PI * 2);
   ctx.fill();
+  ctx.strokeStyle = 'rgba(0,0,0,0.15)';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
 
-  // eyes
-  ctx.fillStyle = '#222';
-  const eyeX = p.flip * 4;
-  ctx.beginPath();
-  ctx.arc(eyeX - 3, -PLAYER_H / 2 + 4, 2, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.beginPath();
-  ctx.arc(eyeX + 3, -PLAYER_H / 2 + 4, 2, 0, Math.PI * 2);
-  ctx.fill();
-
-  // hair
+  // Hair
   ctx.fillStyle = p === p1 ? '#1a4a8a' : '#8a1a1a';
   ctx.beginPath();
-  ctx.ellipse(headWobble, -PLAYER_H / 2 - 2, 13, 7, 0, Math.PI, 0);
+  ctx.ellipse(0, hy - HEAD_R * 0.5, HEAD_R, HEAD_R * 0.65, 0, Math.PI, 0);
   ctx.fill();
 
-  ctx.restore();
+  // Eyes (always face forward regardless of tilt)
+  const eyeY = hy - HEAD_R * 0.1;
+  ctx.fillStyle = '#222';
+  ctx.beginPath(); ctx.arc(-6, eyeY, 3, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc( 6, eyeY, 3, 0, Math.PI * 2); ctx.fill();
+  // Eye shine
+  ctx.fillStyle = '#fff';
+  ctx.beginPath(); ctx.arc(-5, eyeY - 1, 1.2, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc( 7, eyeY - 1, 1.2, 0, Math.PI * 2); ctx.fill();
+
+  // Smile
+  ctx.strokeStyle = '#a0745a';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.arc(0, hy + HEAD_R * 0.2, 5, 0.2, Math.PI - 0.2);
+  ctx.stroke();
+
   ctx.restore();
 }
 
 function drawBall() {
+  const shadowAlpha = Math.max(0, 0.45 * (1 - (GY - ball.y) / (H * 0.7)));
+  if (shadowAlpha > 0) {
+    ctx.save();
+    ctx.translate(ball.x, GY);
+    ctx.scale(1, 0.22);
+    ctx.beginPath();
+    ctx.arc(0, 0, BALL_R * 0.95, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(0,0,0,${shadowAlpha})`;
+    ctx.fill();
+    ctx.restore();
+  }
+
   ctx.save();
   ctx.translate(ball.x, ball.y);
   ctx.rotate(ball.spin);
 
-  // shadow
-  ctx.save();
-  ctx.translate(0, GROUND_Y() - ball.y + 4);
-  ctx.scale(1, 0.3);
-  ctx.beginPath();
-  ctx.arc(0, 0, BALL_R * 0.9, 0, Math.PI * 2);
-  ctx.fillStyle = 'rgba(0,0,0,0.3)';
-  ctx.fill();
-  ctx.restore();
-
-  // ball base
   ctx.beginPath();
   ctx.arc(0, 0, BALL_R, 0, Math.PI * 2);
-  ctx.fillStyle = 'white';
+  ctx.fillStyle = '#ffffff';
   ctx.fill();
   ctx.strokeStyle = '#222';
   ctx.lineWidth = 1.5;
   ctx.stroke();
 
-  // pentagon patches
-  const patches = [
-    [0, 0], [BALL_R * 0.55, 0], [-BALL_R * 0.55, 0],
-    [BALL_R * 0.28, -BALL_R * 0.48], [-BALL_R * 0.28, -BALL_R * 0.48]
-  ];
+  // Pentagon patches
   ctx.fillStyle = '#222';
-  patches.forEach(([px, py]) => {
+  const pts = [[0,0],[BALL_R*0.5,0],[-BALL_R*0.5,0],[BALL_R*0.28,-BALL_R*0.48],[-BALL_R*0.28,-BALL_R*0.48]];
+  pts.forEach(([px, py]) => {
     ctx.beginPath();
     for (let i = 0; i < 5; i++) {
-      const a = (i / 5) * Math.PI * 2 - Math.PI / 2;
+      const a = i / 5 * Math.PI * 2 - Math.PI / 2;
       const r = BALL_R * 0.22;
-      const vx = px + Math.cos(a) * r;
-      const vy = py + Math.sin(a) * r;
-      i === 0 ? ctx.moveTo(vx, vy) : ctx.lineTo(vx, vy);
+      i === 0
+        ? ctx.moveTo(px + Math.cos(a)*r, py + Math.sin(a)*r)
+        : ctx.lineTo(px + Math.cos(a)*r, py + Math.sin(a)*r);
     }
-    ctx.closePath();
-    ctx.fill();
+    ctx.closePath(); ctx.fill();
   });
 
   ctx.restore();
 }
 
-// ─── main loop ───────────────────────────────────────────────
+// ── main loop ───────────────────────────────────────────────────
 function loop() {
-  ctx.clearRect(0, 0, W(), H());
+  ctx.clearRect(0, 0, W, H);
   if (running) {
     updatePhysics();
     drawField();
@@ -693,33 +544,34 @@ function loop() {
   requestAnimationFrame(loop);
 }
 
-// ─── menu wiring ─────────────────────────────────────────────
-document.getElementById('btnCPU').onclick = () => {
-  cpuMode = true;
-  document.getElementById('menu').style.display = 'none';
-  document.getElementById('p2label').textContent = 'CPU (↑)';
+// ── menu wiring ─────────────────────────────────────────────────
+const menuScreen = document.getElementById('menuScreen');
+const winScreen  = document.getElementById('winScreen');
+const scoreBar   = document.getElementById('scoreBar');
+
+function startGame(cpu) {
+  cpuMode = cpu;
+  menuScreen.classList.remove('show');
+  winScreen.classList.remove('show');
+  scoreBar.classList.add('show');
+  initGame();
+  running = true;
+}
+
+document.getElementById('btnCPU').onclick   = () => startGame(true);
+document.getElementById('btn2P').onclick    = () => startGame(false);
+document.getElementById('btnAgain').onclick = () => {
+  winScreen.classList.remove('show');
   initGame();
   running = true;
 };
-
-document.getElementById('btn2P').onclick = () => {
-  cpuMode = false;
-  document.getElementById('menu').style.display = 'none';
-  document.getElementById('p2label').textContent = 'PLAYER 2 (↑)';
-  initGame();
-  running = true;
-};
-
-document.getElementById('btnPlayAgain').onclick = () => {
-  document.getElementById('winScreen').style.display = 'none';
-  initGame();
-  running = true;
-};
-
-document.getElementById('btnMenu').onclick = () => {
-  document.getElementById('winScreen').style.display = 'none';
-  document.getElementById('menu').style.display = 'flex';
+document.getElementById('btnMenu').onclick  = () => {
+  winScreen.classList.remove('show');
+  scoreBar.classList.remove('show');
+  goalBanner.style.transform = 'translate(-50%,-50%) scale(0)';
+  menuScreen.classList.add('show');
   running = false;
+  celebrating = false;
 };
 
 loop();
