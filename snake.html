@@ -425,7 +425,7 @@
       dir = { x: 1, y: 0 };
       nextDir = { x: 1, y: 0 };
       score = 0;
-      speed = 150;
+      speed = 220;
       document.getElementById('score-val').textContent = '0';
       placeFood();
     }
@@ -476,8 +476,10 @@
         score += 10;
         document.getElementById('score-val').textContent = score;
         placeFood();
-        // Speed up every 50 points, down to 70ms minimum
-        speed = Math.max(70, 150 - Math.floor(score / 50) * 10);
+        // Stay slow until 100 points, then speed up every 50 points down to 80ms
+        if (score > 90) {
+          speed = Math.max(80, 220 - Math.floor((score - 90) / 50) * 20);
+        }
       } else {
         snake.pop();
       }
