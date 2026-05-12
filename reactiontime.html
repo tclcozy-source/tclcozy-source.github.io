@@ -250,6 +250,7 @@
 </head>
 <body>
   <canvas id="bg-canvas"></canvas>
+  <button id="mute-btn" onclick="toggleMute()" title="Sound" style="position:fixed;top:14px;right:14px;z-index:9999;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);color:white;width:38px;height:38px;border-radius:50%;font-size:16px;cursor:pointer;backdrop-filter:blur(10px);transition:transform .15s"></button>
 
   <div class="page">
     <div class="top-bar">
@@ -375,6 +376,7 @@
       lights.forEach(function(light, i) {
         var t = setTimeout(function() {
           light.classList.add('on');
+          sndLightOn();
           if (i === 4) {
             // All 5 lit — wait random 1-4s then extinguish
             state = STATE.WAITING;
@@ -383,6 +385,7 @@
               resetLights();
               goTime = performance.now();
               state = STATE.GO;
+              sndLightsOut();
               instruction.textContent = 'NOW! Press Space or click!';
               setStatus('neutral', 'GO!', '', 'REACTION TIME');
             }, wait);
@@ -397,6 +400,7 @@
         // Jump start
         clearAllTimers();
         resetLights();
+        sndJumpStart();
         state = STATE.PENALTY;
         setStatus('penalty', 'Jump Start!', 'Too early — wait for lights out', 'PENALTY');
         actionBtn.textContent = 'Try Again';
@@ -418,6 +422,7 @@
         }
 
         var qualityClass = colorClass.replace('result-', 'quality-');
+        sndResult(rt);
         setStatus(colorClass.replace('result-', ''), rt + ' ms', quality, 'REACTION TIME');
         statusSub.className = 'status-sub ' + qualityClass;
 
@@ -468,6 +473,17 @@
         react();
       }
     });
+
+    // ── Audio ──────────────────────────────────────────────────────
+    var _ac=null,_muted=localStorage.getItem('sfx')==='1';
+    function _ctx(){return _ac||(_ac=new(window.AudioContext||window.webkitAudioContext)())}
+    function _sfx(f){if(!_muted)try{f(_ctx())}catch(e){}}
+    function toggleMute(){_muted=!_muted;localStorage.setItem('sfx',_muted?'1':'0');document.getElementById('mute-btn').textContent=_muted?'🔇':'🔊'}
+    function sndLightOn(){_sfx(function(c){var o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);o.type='sine';o.frequency.setValueAtTime(400,c.currentTime);o.frequency.exponentialRampToValueAtTime(200,c.currentTime+.06);g.gain.setValueAtTime(.2,c.currentTime);g.gain.exponentialRampToValueAtTime(.001,c.currentTime+.08);o.start();o.stop(c.currentTime+.08)})}
+    function sndLightsOut(){_sfx(function(c){var o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);o.type='sine';o.frequency.setValueAtTime(150,c.currentTime);o.frequency.linearRampToValueAtTime(80,c.currentTime+.2);g.gain.setValueAtTime(.25,c.currentTime);g.gain.exponentialRampToValueAtTime(.001,c.currentTime+.25);o.start();o.stop(c.currentTime+.25)})}
+    function sndResult(ms){_sfx(function(c){var f=ms<200?880:ms<300?660:440;var o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);o.type='sine';o.frequency.value=f;g.gain.setValueAtTime(.18,c.currentTime);g.gain.exponentialRampToValueAtTime(.001,c.currentTime+.3);o.start();o.stop(c.currentTime+.3)})}
+    function sndJumpStart(){_sfx(function(c){var o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);o.type='sawtooth';o.frequency.setValueAtTime(300,c.currentTime);o.frequency.exponentialRampToValueAtTime(100,c.currentTime+.3);g.gain.setValueAtTime(.18,c.currentTime);g.gain.exponentialRampToValueAtTime(.001,c.currentTime+.35);o.start();o.stop(c.currentTime+.35)})}
+    document.getElementById('mute-btn').textContent=_muted?'🔇':'🔊';
   </script>
 </body>
 </html>

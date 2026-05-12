@@ -298,6 +298,7 @@
 </head>
 <body>
   <canvas id="bg-canvas"></canvas>
+  <button id="mute-btn" onclick="toggleMute()" title="Sound" style="position:fixed;top:14px;right:14px;z-index:9999;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);color:white;width:38px;height:38px;border-radius:50%;font-size:16px;cursor:pointer;backdrop-filter:blur(10px);transition:transform .15s"></button>
 
   <!-- Tutorial modal -->
   <div id="tutorial-modal">
@@ -472,6 +473,7 @@
       snake.unshift(head);
 
       if (head.x === food.x && head.y === food.y) {
+        sndEat();
         score += 10;
         document.getElementById('score-val').textContent = score;
         placeFood();
@@ -488,6 +490,7 @@
     }
 
     function endGame() {
+      sndDie();
       running = false;
       clearTimeout(gameLoop);
       var isNew = score > highScore;
@@ -634,6 +637,15 @@
     // Draw initial state
     initGame();
     draw();
+
+    // ── Audio ──────────────────────────────────────────────────────
+    var _ac=null,_muted=localStorage.getItem('sfx')==='1';
+    function _ctx(){return _ac||(_ac=new(window.AudioContext||window.webkitAudioContext)())}
+    function _sfx(f){if(!_muted)try{f(_ctx())}catch(e){}}
+    function toggleMute(){_muted=!_muted;localStorage.setItem('sfx',_muted?'1':'0');document.getElementById('mute-btn').textContent=_muted?'🔇':'🔊'}
+    function sndEat(){_sfx(function(c){var o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);o.type='square';o.frequency.setValueAtTime(880,c.currentTime);o.frequency.exponentialRampToValueAtTime(1760,c.currentTime+.08);g.gain.setValueAtTime(.07,c.currentTime);g.gain.exponentialRampToValueAtTime(.001,c.currentTime+.1);o.start();o.stop(c.currentTime+.1)})}
+    function sndDie(){_sfx(function(c){var o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);o.type='sawtooth';o.frequency.setValueAtTime(440,c.currentTime);o.frequency.exponentialRampToValueAtTime(55,c.currentTime+.6);g.gain.setValueAtTime(.16,c.currentTime);g.gain.exponentialRampToValueAtTime(.001,c.currentTime+.6);o.start();o.stop(c.currentTime+.6)})}
+    document.getElementById('mute-btn').textContent=_muted?'🔇':'🔊';
   </script>
 </body>
 </html>

@@ -126,6 +126,7 @@
 </head>
 <body>
   <canvas id="stars"></canvas>
+  <button id="mute-btn" onclick="toggleMute()" title="Sound" style="position:fixed;top:14px;right:14px;z-index:9999;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);color:white;width:38px;height:38px;border-radius:50%;font-size:16px;cursor:pointer;backdrop-filter:blur(10px);transition:transform .15s"></button>
   <div class="content">
     <div id="quiz-screen">
       <a class="back-btn" href="index.html">⬅️ Home</a>
@@ -264,12 +265,14 @@
 
     function nextQuestion() {
       if (!selectedAnswer) return;
+      if (selectedAnswer === questions[current].answer) sndCorrect(); else sndWrong();
       userAnswers.push(selectedAnswer);
       current++;
       if (current < questions.length) { loadQuestion(); } else { showResults(); }
     }
 
     function showResults() {
+      sndComplete();
       document.getElementById("quiz-screen").style.display = "none";
       document.getElementById("result-screen").style.display = "block";
       var score = 0, reviewHTML = "";
@@ -297,6 +300,16 @@
 
     pickQuestions();
     loadQuestion();
+
+    // ── Audio ──────────────────────────────────────────────────────
+    var _ac=null,_muted=localStorage.getItem('sfx')==='1';
+    function _ctx(){return _ac||(_ac=new(window.AudioContext||window.webkitAudioContext)())}
+    function _sfx(f){if(!_muted)try{f(_ctx())}catch(e){}}
+    function toggleMute(){_muted=!_muted;localStorage.setItem('sfx',_muted?'1':'0');document.getElementById('mute-btn').textContent=_muted?'🔇':'🔊'}
+    function sndCorrect(){_sfx(function(c){[660,880].forEach(function(f,i){var o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);o.type='sine';o.frequency.value=f;var t=c.currentTime+i*.1;g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.14,t+.02);g.gain.exponentialRampToValueAtTime(.001,t+.25);o.start(t);o.stop(t+.25)})})}
+    function sndWrong(){_sfx(function(c){var o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);o.type='sawtooth';o.frequency.setValueAtTime(220,c.currentTime);o.frequency.linearRampToValueAtTime(160,c.currentTime+.22);g.gain.setValueAtTime(.13,c.currentTime);g.gain.exponentialRampToValueAtTime(.001,c.currentTime+.25);o.start();o.stop(c.currentTime+.25)})}
+    function sndComplete(){_sfx(function(c){[523,659,784,659,1047].forEach(function(f,i){var o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);o.type='sine';o.frequency.value=f;var t=c.currentTime+i*.12;g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.14,t+.02);g.gain.exponentialRampToValueAtTime(.001,t+.3);o.start(t);o.stop(t+.3)})})}
+    document.getElementById('mute-btn').textContent=_muted?'🔇':'🔊';
   </script>
 </body>
 </html>

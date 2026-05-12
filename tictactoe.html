@@ -273,6 +273,7 @@
 </head>
 <body>
   <canvas id="stars"></canvas>
+  <button id="mute-btn" onclick="toggleMute()" title="Sound" style="position:fixed;top:14px;right:14px;z-index:9999;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);color:white;width:38px;height:38px;border-radius:50%;font-size:16px;cursor:pointer;backdrop-filter:blur(10px);transition:transform .15s"></button>
 
   <!-- Go Mode Tutorial -->
   <div id="go-tutorial">
@@ -423,11 +424,14 @@
       board[index] = player;
       cells[index].innerHTML = player;
       cells[index].style.color = player === "X" ? "#ff4d9e" : "#a78bfa";
+      sndPlace();
       if (checkWin(player)) {
         gameOver = true;
+        if (player === "X") sndWin(); else sndLose();
         document.getElementById("status").innerHTML = player === "X" ? "🎉 You win!" : "💻 Computer wins!";
       } else if (board.every(function(b) { return b !== ""; })) {
         gameOver = true;
+        sndTie();
         document.getElementById("status").innerHTML = "🤝 It's a tie!";
       }
     }
@@ -450,10 +454,12 @@
       cells[index].classList.remove("faded");
       cells[index].innerHTML = player;
       cells[index].style.color = player === "X" ? "#ff4d9e" : "#a78bfa";
+      sndPlace();
 
       // Check win on final board state
       if (checkWin(player)) {
         gameOver = true;
+        if (player === "X") sndWin(); else sndLose();
         document.getElementById("status").innerHTML = player === "X" ? "🎉 You win!" : "💻 Computer wins!";
       }
     }
@@ -613,6 +619,17 @@
       });
       document.getElementById("status").innerHTML = "Your turn! You are X";
     }
+
+    // ── Audio ──────────────────────────────────────────────────────
+    var _ac=null,_muted=localStorage.getItem('sfx')==='1';
+    function _ctx(){return _ac||(_ac=new(window.AudioContext||window.webkitAudioContext)())}
+    function _sfx(f){if(!_muted)try{f(_ctx())}catch(e){}}
+    function toggleMute(){_muted=!_muted;localStorage.setItem('sfx',_muted?'1':'0');document.getElementById('mute-btn').textContent=_muted?'🔇':'🔊'}
+    function sndPlace(){_sfx(function(c){var o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);o.type='sine';o.frequency.setValueAtTime(700,c.currentTime);o.frequency.exponentialRampToValueAtTime(350,c.currentTime+.07);g.gain.setValueAtTime(.12,c.currentTime);g.gain.exponentialRampToValueAtTime(.001,c.currentTime+.1);o.start();o.stop(c.currentTime+.1)})}
+    function sndWin(){_sfx(function(c){[523,659,784,1047].forEach(function(f,i){var o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);o.type='sine';o.frequency.value=f;var t=c.currentTime+i*.1;g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.15,t+.02);g.gain.exponentialRampToValueAtTime(.001,t+.28);o.start(t);o.stop(t+.28)})})}
+    function sndLose(){_sfx(function(c){[330,277,220].forEach(function(f,i){var o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);o.type='triangle';o.frequency.value=f;var t=c.currentTime+i*.18;g.gain.setValueAtTime(.13,t);g.gain.exponentialRampToValueAtTime(.001,t+.35);o.start(t);o.stop(t+.35)})})}
+    function sndTie(){_sfx(function(c){var o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);o.type='sine';o.frequency.value=440;g.gain.setValueAtTime(.1,c.currentTime);g.gain.exponentialRampToValueAtTime(.001,c.currentTime+.18);o.start();o.stop(c.currentTime+.18)})}
+    document.getElementById('mute-btn').textContent=_muted?'🔇':'🔊';
   </script>
 </body>
 </html>
