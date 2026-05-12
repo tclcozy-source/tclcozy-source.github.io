@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Pong – Shahmeer's Game Hub</title>
+  <title>Table Tennis – Shahmeer's Game Hub</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -19,121 +19,67 @@
     }
 
     #bg-canvas {
-      position: fixed;
-      top: 0; left: 0;
+      position: fixed; top: 0; left: 0;
       width: 100%; height: 100%;
-      pointer-events: none;
-      z-index: 0;
+      pointer-events: none; z-index: 0;
     }
 
     .page {
-      position: relative;
-      z-index: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      width: 100%;
-      padding: 20px 16px 24px;
-      gap: 16px;
+      position: relative; z-index: 1;
+      display: flex; flex-direction: column;
+      align-items: center; width: 100%;
+      padding: 18px 16px 20px; gap: 12px;
     }
 
     .top-bar {
-      display: flex;
-      align-items: center;
+      display: flex; align-items: center;
       justify-content: space-between;
-      width: 100%;
-      max-width: 640px;
+      width: 100%; max-width: 680px;
     }
 
     .back-btn {
       text-decoration: none;
-      color: rgba(255,255,255,0.5);
-      font-size: 14px;
+      color: rgba(255,255,255,0.5); font-size: 14px;
       background: rgba(255,255,255,0.07);
       border: 1px solid rgba(255,255,255,0.15);
-      padding: 6px 14px;
-      border-radius: 999px;
+      padding: 6px 14px; border-radius: 999px;
       backdrop-filter: blur(10px);
-      transition: background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease, color 0.3s ease;
+      transition: background 0.3s, border-color 0.3s, box-shadow 0.3s, transform 0.3s, color 0.3s;
     }
     .back-btn:hover {
       background: rgba(255,77,158,0.15);
-      border-color: rgba(168,85,247,0.6);
-      color: white;
+      border-color: rgba(168,85,247,0.6); color: white;
       transform: scale(1.08);
       box-shadow: 0 0 18px rgba(255,77,158,0.35), 0 0 36px rgba(168,85,247,0.15);
     }
 
     h1 {
-      font-size: 24px;
-      font-weight: 900;
+      font-size: 22px; font-weight: 900;
       background: linear-gradient(90deg, #ff4d9e, #a855f7, #3b82f6);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      letter-spacing: 2px;
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text; letter-spacing: 2px;
     }
 
-    /* Score bar */
     .score-bar {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0;
-      width: 100%;
-      max-width: 640px;
+      display: flex; align-items: center; justify-content: center;
+      width: 100%; max-width: 680px; gap: 0;
     }
+    .score-side { flex: 1; text-align: center; }
+    .score-name { font-size: 11px; color: rgba(255,255,255,0.35); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 2px; }
+    .score-num { font-size: 42px; font-weight: 900; color: white; line-height: 1; }
+    .score-divider { font-size: 28px; color: rgba(255,255,255,0.15); padding: 0 12px; font-weight: 300; }
 
-    .score-side {
-      flex: 1;
-      text-align: center;
-    }
-
-    .score-name {
-      font-size: 12px;
-      color: rgba(255,255,255,0.35);
-      letter-spacing: 2px;
-      text-transform: uppercase;
-      margin-bottom: 2px;
-    }
-
-    .score-num {
-      font-size: 48px;
-      font-weight: 900;
-      color: white;
-      line-height: 1;
-    }
-
-    .score-divider {
-      font-size: 32px;
-      color: rgba(255,255,255,0.15);
-      padding: 0 16px;
-      font-weight: 300;
-    }
-
-    /* Canvas */
-    #game-canvas {
-      border-radius: 12px;
-      display: block;
-      border: 1px solid rgba(255,255,255,0.08);
-      box-shadow: 0 0 40px rgba(255,255,255,0.04);
-    }
-
-    /* Overlays */
     .canvas-wrap {
       position: relative;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      display: flex; align-items: center; justify-content: center;
     }
 
+    #game-canvas { display: block; border-radius: 16px; }
+
     .modal {
-      position: absolute;
-      inset: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 12px;
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 16px;
       background: rgba(5,5,8,0.88);
       backdrop-filter: blur(8px);
     }
@@ -142,387 +88,481 @@
     .modal-box {
       background: rgba(10,10,15,0.97);
       border: 1px solid rgba(255,255,255,0.12);
-      border-radius: 20px;
-      padding: 36px 44px;
-      text-align: center;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 18px;
+      border-radius: 22px; padding: 36px 44px;
+      text-align: center; display: flex;
+      flex-direction: column; align-items: center; gap: 16px;
       min-width: 260px;
     }
 
     .modal-title {
-      font-size: 30px;
-      font-weight: 900;
+      font-size: 28px; font-weight: 900;
       background: linear-gradient(90deg, #ff4d9e, #a855f7);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      letter-spacing: 1px;
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text; letter-spacing: 1px;
     }
+    .modal-sub { font-size: 14px; color: rgba(255,255,255,0.4); margin-top: -6px; }
 
-    .modal-sub {
-      font-size: 15px;
-      color: rgba(255,255,255,0.45);
-      margin-top: -8px;
-    }
-
-    .btn-group {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      width: 100%;
-    }
-
+    .btn-group { display: flex; flex-direction: column; gap: 10px; width: 100%; }
     .btn {
       background: linear-gradient(135deg, #ff4d9e, #a855f7);
-      border: none;
-      color: white;
-      font-size: 16px;
-      font-weight: 800;
-      padding: 13px 32px;
-      border-radius: 999px;
-      cursor: pointer;
-      letter-spacing: 0.5px;
-      transition: transform 0.15s, opacity 0.15s;
-      width: 100%;
+      border: none; color: white; font-size: 15px; font-weight: 800;
+      padding: 13px 32px; border-radius: 999px; cursor: pointer;
+      letter-spacing: 0.5px; transition: transform 0.15s, opacity 0.15s; width: 100%;
     }
     .btn:hover { transform: scale(1.04); opacity: 0.9; }
-
     .btn.secondary {
       background: rgba(255,255,255,0.08);
       border: 1px solid rgba(255,255,255,0.15);
     }
     .btn.secondary:hover { background: rgba(255,255,255,0.14); }
 
-    .winner-label {
-      font-size: 18px;
-      color: rgba(255,255,255,0.6);
-    }
-    .winner-name {
-      font-size: 36px;
-      font-weight: 900;
-      color: #facc15;
-    }
+    .winner-label { font-size: 16px; color: rgba(255,255,255,0.5); }
+    .winner-name { font-size: 34px; font-weight: 900; color: #facc15; margin-top: -6px; }
+    .hint { font-size: 11px; color: rgba(255,255,255,0.2); letter-spacing: 0.5px; }
 
-    .hint {
-      font-size: 12px;
-      color: rgba(255,255,255,0.2);
-      letter-spacing: 0.5px;
-    }
-
-    @media (max-width: 520px) {
-      h1 { font-size: 18px; }
-      .score-num { font-size: 36px; }
-      .modal-box { padding: 28px 24px; min-width: 0; width: 88%; }
-      .modal-title { font-size: 24px; }
+    @media (max-width: 500px) {
+      h1 { font-size: 17px; }
+      .score-num { font-size: 32px; }
+      .modal-box { padding: 28px 22px; min-width: 0; width: 86%; }
+      .modal-title { font-size: 22px; }
     }
   </style>
 </head>
 <body>
-  <canvas id="bg-canvas"></canvas>
+<canvas id="bg-canvas"></canvas>
 
-  <div class="page">
-    <div class="top-bar">
-      <a class="back-btn" href="index.html">← Back</a>
-      <h1>🏓 Pong</h1>
-      <div style="width:70px"></div>
+<div class="page">
+  <div class="top-bar">
+    <a class="back-btn" href="index.html">← Back</a>
+    <h1>🏓 Table Tennis</h1>
+    <div style="width:70px"></div>
+  </div>
+
+  <div class="score-bar">
+    <div class="score-side">
+      <div class="score-name" id="p1-name">Player 1</div>
+      <div class="score-num" id="p1-score">0</div>
     </div>
-
-    <div class="score-bar">
-      <div class="score-side">
-        <div class="score-name" id="p1-name">Player 1</div>
-        <div class="score-num" id="p1-score">0</div>
-      </div>
-      <div class="score-divider">|</div>
-      <div class="score-side">
-        <div class="score-name" id="p2-name">Player 2</div>
-        <div class="score-num" id="p2-score">0</div>
-      </div>
+    <div class="score-divider">:</div>
+    <div class="score-side">
+      <div class="score-name" id="p2-name">CPU</div>
+      <div class="score-num" id="p2-score">0</div>
     </div>
+  </div>
 
-    <div class="canvas-wrap">
-      <canvas id="game-canvas"></canvas>
+  <div class="canvas-wrap">
+    <canvas id="game-canvas"></canvas>
 
-      <!-- Start menu -->
-      <div class="modal" id="start-modal">
-        <div class="modal-box">
-          <div class="modal-title">🏓 Pong</div>
-          <div class="modal-sub">First to 5 points wins</div>
-          <div class="btn-group">
-            <button class="btn" id="btn-1p">1 Player</button>
-            <button class="btn secondary" id="btn-2p">2 Players</button>
-          </div>
-          <div class="hint">W/S to move your paddle</div>
+    <div class="modal" id="start-modal">
+      <div class="modal-box">
+        <div class="modal-title">🏓 Table Tennis</div>
+        <div class="modal-sub">First to 11 points wins</div>
+        <div class="btn-group">
+          <button class="btn" id="btn-1p">1 Player</button>
+          <button class="btn secondary" id="btn-2p">2 Players</button>
         </div>
+        <div class="hint">W / S to move your paddle</div>
       </div>
+    </div>
 
-      <!-- Winner screen -->
-      <div class="modal hidden" id="winner-modal">
-        <div class="modal-box">
-          <div class="winner-label">🏆 Winner</div>
-          <div class="winner-name" id="winner-name">Player 1</div>
-          <div class="btn-group">
-            <button class="btn" id="btn-again">Play Again</button>
-            <button class="btn secondary" id="btn-menu">Main Menu</button>
-          </div>
+    <div class="modal hidden" id="winner-modal">
+      <div class="modal-box">
+        <div class="winner-label">🏆 Winner</div>
+        <div class="winner-name" id="winner-name">Player 1</div>
+        <div class="btn-group">
+          <button class="btn" id="btn-again">Play Again</button>
+          <button class="btn secondary" id="btn-menu">Main Menu</button>
         </div>
       </div>
     </div>
   </div>
+</div>
 
-  <script>
-    // Stars
-    var bgCanvas = document.getElementById('bg-canvas');
-    var bgCtx = bgCanvas.getContext('2d');
-    var stars = [];
-    function resizeBg() { bgCanvas.width = window.innerWidth; bgCanvas.height = window.innerHeight; }
-    resizeBg();
-    window.addEventListener('resize', resizeBg);
-    for (var i = 0; i < 130; i++) {
-      stars.push({ x: Math.random(), y: Math.random(), r: Math.random() * 1.4 + 0.2,
-        speed: Math.random() * 0.01 + 0.003, phase: Math.random() * Math.PI * 2 });
-    }
-    function drawBg(t) {
-      bgCtx.clearRect(0, 0, bgCanvas.width, bgCanvas.height);
-      for (var i = 0; i < stars.length; i++) {
-        var s = stars[i];
-        var a = 0.25 + 0.6 * (0.5 + 0.5 * Math.sin(t * s.speed + s.phase));
-        bgCtx.beginPath();
-        bgCtx.arc(s.x * bgCanvas.width, s.y * bgCanvas.height, s.r, 0, Math.PI * 2);
-        bgCtx.fillStyle = 'rgba(255,255,255,' + a + ')';
-        bgCtx.fill();
-      }
-      requestAnimationFrame(drawBg);
-    }
-    requestAnimationFrame(drawBg);
-
-    // Game canvas sizing
-    var canvas = document.getElementById('game-canvas');
-    var ctx = canvas.getContext('2d');
-
-    var W, H;
-    function sizeCanvas() {
-      var maxW = Math.min(window.innerWidth - 32, 620);
-      var maxH = Math.min(window.innerHeight - 280, 420);
-      W = Math.floor(maxW);
-      H = Math.floor(maxH / 10) * 10;
-      canvas.width = W;
-      canvas.height = H;
-    }
-    sizeCanvas();
-
-    // Game constants (relative to canvas size)
-    var PADDLE_W = 12;
-    var PADDLE_H, BALL_SIZE, PADDLE_SPEED, BALL_SPEED_INIT, CPU_SPEED;
-
-    function updateConstants() {
-      PADDLE_H = Math.round(H * 0.22);
-      BALL_SIZE = Math.round(W * 0.018);
-      PADDLE_SPEED = H * 0.012;
-      BALL_SPEED_INIT = W * 0.007;
-      CPU_SPEED = H * 0.009;
-    }
-    updateConstants();
-
-    // State
-    var twoPlayer = false;
-    var running = false;
-    var p1Score, p2Score;
-    var p1Y, p2Y;
-    var ball;
-    var keys = {};
-    var raf;
-
-    function initRound() {
-      updateConstants();
-      p1Y = H / 2 - PADDLE_H / 2;
-      p2Y = H / 2 - PADDLE_H / 2;
-      var angle = (Math.random() * 60 - 30) * Math.PI / 180;
-      var dir = Math.random() < 0.5 ? 1 : -1;
-      ball = {
-        x: W / 2, y: H / 2,
-        vx: dir * BALL_SPEED_INIT * Math.cos(angle),
-        vy: BALL_SPEED_INIT * Math.sin(angle),
-        speed: BALL_SPEED_INIT
-      };
-    }
-
-    function startGame(two) {
-      twoPlayer = two;
-      p1Score = 0;
-      p2Score = 0;
-      document.getElementById('p1-score').textContent = '0';
-      document.getElementById('p2-score').textContent = '0';
-      document.getElementById('p1-name').textContent = 'Player 1';
-      document.getElementById('p2-name').textContent = twoPlayer ? 'Player 2' : 'CPU';
-      document.getElementById('start-modal').classList.add('hidden');
-      document.getElementById('winner-modal').classList.add('hidden');
-      initRound();
-      running = true;
-      cancelAnimationFrame(raf);
-      raf = requestAnimationFrame(loop);
-    }
-
-    function showMenu() {
-      running = false;
-      document.getElementById('start-modal').classList.remove('hidden');
-      document.getElementById('winner-modal').classList.add('hidden');
-    }
-
-    function endGame(winner) {
-      running = false;
-      document.getElementById('winner-name').textContent = winner;
-      document.getElementById('winner-modal').classList.remove('hidden');
-    }
-
-    function clamp(val, min, max) { return Math.max(min, Math.min(max, val)); }
-
-    function loop() {
-      if (!running) return;
-      update();
-      draw();
-      raf = requestAnimationFrame(loop);
-    }
-
-    function update() {
-      // P1 input (W/S)
-      if (keys['w'] || keys['W']) p1Y -= PADDLE_SPEED;
-      if (keys['s'] || keys['S']) p1Y += PADDLE_SPEED;
-      p1Y = clamp(p1Y, 0, H - PADDLE_H);
-
-      // P2 input or CPU
-      if (twoPlayer) {
-        if (keys['ArrowUp']) p2Y -= PADDLE_SPEED;
-        if (keys['ArrowDown']) p2Y += PADDLE_SPEED;
-        p2Y = clamp(p2Y, 0, H - PADDLE_H);
-      } else {
-        var cpuCenter = p2Y + PADDLE_H / 2;
-        var diff = ball.y - cpuCenter;
-        var move = clamp(diff, -CPU_SPEED, CPU_SPEED);
-        p2Y = clamp(p2Y + move, 0, H - PADDLE_H);
-      }
-
-      // Move ball
-      ball.x += ball.vx;
-      ball.y += ball.vy;
-
-      // Top / bottom walls
-      if (ball.y - BALL_SIZE < 0) { ball.y = BALL_SIZE; ball.vy = Math.abs(ball.vy); }
-      if (ball.y + BALL_SIZE > H) { ball.y = H - BALL_SIZE; ball.vy = -Math.abs(ball.vy); }
-
-      // Left paddle collision
-      var leftEdge = PADDLE_W + 10;
-      if (ball.vx < 0 && ball.x - BALL_SIZE <= leftEdge + PADDLE_W &&
-          ball.x + BALL_SIZE >= leftEdge &&
-          ball.y + BALL_SIZE >= p1Y && ball.y - BALL_SIZE <= p1Y + PADDLE_H) {
-        ball.x = leftEdge + PADDLE_W + BALL_SIZE;
-        var hitPos = (ball.y - (p1Y + PADDLE_H / 2)) / (PADDLE_H / 2);
-        var bounceAngle = hitPos * 60 * Math.PI / 180;
-        ball.speed = Math.min(ball.speed * 1.06, W * 0.018);
-        ball.vx = ball.speed * Math.cos(bounceAngle);
-        ball.vy = ball.speed * Math.sin(bounceAngle);
-      }
-
-      // Right paddle collision
-      var rightEdge = W - PADDLE_W - 10;
-      if (ball.vx > 0 && ball.x + BALL_SIZE >= rightEdge &&
-          ball.x - BALL_SIZE <= rightEdge + PADDLE_W &&
-          ball.y + BALL_SIZE >= p2Y && ball.y - BALL_SIZE <= p2Y + PADDLE_H) {
-        ball.x = rightEdge - BALL_SIZE;
-        var hitPos2 = (ball.y - (p2Y + PADDLE_H / 2)) / (PADDLE_H / 2);
-        var bounceAngle2 = hitPos2 * 60 * Math.PI / 180;
-        ball.speed = Math.min(ball.speed * 1.06, W * 0.018);
-        ball.vx = -ball.speed * Math.cos(bounceAngle2);
-        ball.vy = ball.speed * Math.sin(bounceAngle2);
-      }
-
-      // Score
-      if (ball.x < 0) {
-        p2Score++;
-        document.getElementById('p2-score').textContent = p2Score;
-        if (p2Score >= 5) { endGame(twoPlayer ? 'Player 2' : 'CPU'); return; }
-        initRound();
-      }
-      if (ball.x > W) {
-        p1Score++;
-        document.getElementById('p1-score').textContent = p1Score;
-        if (p1Score >= 5) { endGame('Player 1'); return; }
-        initRound();
-      }
-    }
-
-    function draw() {
-      ctx.fillStyle = '#050508';
-      ctx.fillRect(0, 0, W, H);
-
-      // Dashed center line
-      ctx.strokeStyle = 'rgba(255,255,255,0.12)';
-      ctx.lineWidth = 2;
-      ctx.setLineDash([12, 10]);
-      ctx.beginPath();
-      ctx.moveTo(W / 2, 0);
-      ctx.lineTo(W / 2, H);
-      ctx.stroke();
-      ctx.setLineDash([]);
-
-      // Paddles
-      ctx.fillStyle = 'white';
-      roundRect(ctx, 10, p1Y, PADDLE_W, PADDLE_H, 4);
-      ctx.fill();
-      roundRect(ctx, W - PADDLE_W - 10, p2Y, PADDLE_W, PADDLE_H, 4);
-      ctx.fill();
-
-      // Ball
-      ctx.beginPath();
-      ctx.arc(ball.x, ball.y, BALL_SIZE, 0, Math.PI * 2);
-      ctx.fillStyle = 'white';
-      ctx.fill();
-      // Ball glow
-      ctx.beginPath();
-      ctx.arc(ball.x, ball.y, BALL_SIZE * 2.2, 0, Math.PI * 2);
-      ctx.fillStyle = 'rgba(255,255,255,0.06)';
-      ctx.fill();
-    }
-
-    function roundRect(ctx, x, y, w, h, r) {
-      ctx.beginPath();
-      ctx.moveTo(x + r, y);
-      ctx.lineTo(x + w - r, y);
-      ctx.quadraticCurveTo(x + w, y, x + w, y + r);
-      ctx.lineTo(x + w, y + h - r);
-      ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
-      ctx.lineTo(x + r, y + h);
-      ctx.quadraticCurveTo(x, y + h, x, y + h - r);
-      ctx.lineTo(x, y + r);
-      ctx.quadraticCurveTo(x, y, x + r, y);
-      ctx.closePath();
-    }
-
-    // Draw idle state on load
-    updateConstants();
-    p1Y = H / 2 - (Math.round(H * 0.22)) / 2;
-    p2Y = p1Y;
-    ball = { x: W / 2, y: H / 2 };
-    ctx.fillStyle = '#050508'; ctx.fillRect(0, 0, W, H);
-
-    // Controls
-    document.addEventListener('keydown', function(e) {
-      keys[e.key] = true;
-      if (['ArrowUp','ArrowDown'].includes(e.key)) e.preventDefault();
+<script>
+  // ── Stars ──────────────────────────────────────────────────
+  var bgC = document.getElementById('bg-canvas'), bgX = bgC.getContext('2d'), stars = [];
+  function rsz() { bgC.width = innerWidth; bgC.height = innerHeight; }
+  rsz(); addEventListener('resize', rsz);
+  for (var i = 0; i < 130; i++) stars.push({ x: Math.random(), y: Math.random(),
+    r: Math.random()*1.4+0.2, sp: Math.random()*0.01+0.003, ph: Math.random()*Math.PI*2 });
+  function bgLoop(t) {
+    bgX.clearRect(0,0,bgC.width,bgC.height);
+    stars.forEach(function(s) {
+      var a = 0.25 + 0.6*(0.5+0.5*Math.sin(t*s.sp+s.ph));
+      bgX.beginPath(); bgX.arc(s.x*bgC.width, s.y*bgC.height, s.r, 0, Math.PI*2);
+      bgX.fillStyle = 'rgba(255,255,255,'+a+')'; bgX.fill();
     });
-    document.addEventListener('keyup', function(e) { keys[e.key] = false; });
+    requestAnimationFrame(bgLoop);
+  }
+  requestAnimationFrame(bgLoop);
 
-    document.getElementById('btn-1p').addEventListener('click', function() { startGame(false); });
-    document.getElementById('btn-2p').addEventListener('click', function() { startGame(true); });
-    document.getElementById('btn-again').addEventListener('click', function() { startGame(twoPlayer); });
-    document.getElementById('btn-menu').addEventListener('click', showMenu);
+  // ── Canvas & layout ────────────────────────────────────────
+  var cv = document.getElementById('game-canvas'), cx = cv.getContext('2d');
+  var W, H, TT = {}, PR, BR, P1F, P2F, PSPD, BSPD0, BMAX, CPUSPD0;
+  var EDGE_H = 14; // front edge 3D depth
 
-    window.addEventListener('resize', function() {
-      sizeCanvas();
-      if (!running) { ctx.fillStyle = '#050508'; ctx.fillRect(0, 0, W, H); }
-    });
-  </script>
+  function layout() {
+    var mw = Math.min(innerWidth - 32, 680);
+    var mh = Math.min(innerHeight - 240, 420);
+    W = Math.floor(mw); H = Math.floor(mh);
+    cv.width = W; cv.height = H;
+    var px = 28, py = 18;
+    TT.x = px; TT.y = py;
+    TT.w = W - px*2;
+    TT.h = H - py*2 - EDGE_H - 6;
+    PR       = Math.max(16, Math.round(TT.h * 0.13)); // paddle circle radius
+    BR       = Math.max(5,  Math.round(W * 0.011));   // ball radius
+    P1F      = TT.x + 6 + PR*2;                       // left paddle hitting face X
+    P2F      = TT.x + TT.w - 6 - PR*2;               // right paddle hitting face X
+    PSPD     = TT.h * 0.013;
+    BSPD0    = W * 0.0065;
+    BMAX     = W * 0.019;
+    CPUSPD0  = TT.h * 0.0065;
+  }
+  layout();
+
+  // ── Game state ─────────────────────────────────────────────
+  var p1Y, p2Y, ball, p1Sc, p2Sc, rally, twoP, running, scoreFlash;
+  var keys = {};
+  var raf;
+
+  function initRound(serveRight) {
+    p1Y = TT.y + TT.h/2;
+    p2Y = TT.y + TT.h/2;
+    rally = 0;
+    var ang = (Math.random()*36 - 18) * Math.PI/180;
+    var dir = serveRight ? 1 : -1;
+    ball = { x: TT.x + TT.w/2, y: TT.y + TT.h/2,
+             vx: dir * BSPD0 * Math.cos(ang),
+             vy: BSPD0 * Math.sin(ang), speed: BSPD0 };
+    scoreFlash = 0;
+  }
+
+  function startGame(two) {
+    twoP = two;
+    p1Sc = 0; p2Sc = 0;
+    document.getElementById('p1-score').textContent = '0';
+    document.getElementById('p2-score').textContent = '0';
+    document.getElementById('p1-name').textContent = 'Player 1';
+    document.getElementById('p2-name').textContent = two ? 'Player 2' : 'CPU';
+    document.getElementById('start-modal').classList.add('hidden');
+    document.getElementById('winner-modal').classList.add('hidden');
+    initRound(Math.random() < 0.5);
+    running = true;
+    cancelAnimationFrame(raf);
+    raf = requestAnimationFrame(gameLoop);
+  }
+
+  function showMenu() {
+    running = false;
+    document.getElementById('start-modal').classList.remove('hidden');
+    document.getElementById('winner-modal').classList.add('hidden');
+  }
+
+  function endGame(who) {
+    running = false;
+    document.getElementById('winner-name').textContent = who;
+    document.getElementById('winner-modal').classList.remove('hidden');
+  }
+
+  // ── Physics update ─────────────────────────────────────────
+  function clamp(v,a,b) { return Math.max(a, Math.min(b, v)); }
+
+  function paddleHit(isLeft, hitPos) {
+    rally++;
+    ball.speed = Math.min(BMAX, BSPD0 + rally * W * 0.00055);
+    var maxAng = 65 * Math.PI/180;
+    var ang = clamp(hitPos, -1, 1) * maxAng;
+    if (isLeft) {
+      ball.vx =  ball.speed * Math.cos(ang);
+      ball.vy =  ball.speed * Math.sin(ang);
+    } else {
+      ball.vx = -ball.speed * Math.cos(ang);
+      ball.vy =  ball.speed * Math.sin(ang);
+    }
+  }
+
+  function update() {
+    // Player 1
+    if (keys['w'] || keys['W']) p1Y -= PSPD;
+    if (keys['s'] || keys['S']) p1Y += PSPD;
+    p1Y = clamp(p1Y, TT.y + PR, TT.y + TT.h - PR);
+
+    // Player 2 or CPU
+    if (twoP) {
+      if (keys['ArrowUp'])   p2Y -= PSPD;
+      if (keys['ArrowDown']) p2Y += PSPD;
+      p2Y = clamp(p2Y, TT.y + PR, TT.y + TT.h - PR);
+    } else {
+      var diff = rally / 10; // 0→∞, cap at 1
+      var cpuSpd = CPUSPD0 + (PSPD*0.92 - CPUSPD0) * Math.min(1, diff * 0.12);
+      // Slight reaction lag at low rally
+      var target = ball.y + (diff < 1 ? (Math.random()-0.5) * TT.h * 0.08 * (1-diff) : 0);
+      p2Y += clamp(target - p2Y, -cpuSpd, cpuSpd);
+      p2Y = clamp(p2Y, TT.y + PR, TT.y + TT.h - PR);
+    }
+
+    // Move ball
+    ball.x += ball.vx;
+    ball.y += ball.vy;
+
+    // Top/bottom walls
+    if (ball.y - BR < TT.y)        { ball.y = TT.y + BR;        ball.vy = Math.abs(ball.vy); }
+    if (ball.y + BR > TT.y + TT.h) { ball.y = TT.y + TT.h - BR; ball.vy = -Math.abs(ball.vy); }
+
+    // Left paddle (P1)
+    if (ball.vx < 0 && ball.x - BR <= P1F && ball.x + BR >= P1F - 8) {
+      if (ball.y >= p1Y - PR - BR && ball.y <= p1Y + PR + BR) {
+        ball.x = P1F + BR;
+        paddleHit(true, (ball.y - p1Y) / PR);
+      }
+    }
+
+    // Right paddle (P2/CPU)
+    if (ball.vx > 0 && ball.x + BR >= P2F && ball.x - BR <= P2F + 8) {
+      if (ball.y >= p2Y - PR - BR && ball.y <= p2Y + PR + BR) {
+        ball.x = P2F - BR;
+        paddleHit(false, (ball.y - p2Y) / PR);
+      }
+    }
+
+    // Score
+    if (ball.x < TT.x - 20) {
+      p2Sc++; scoreFlash = 40;
+      document.getElementById('p2-score').textContent = p2Sc;
+      if (p2Sc >= 11) { endGame(twoP ? 'Player 2' : 'CPU'); return; }
+      setTimeout(function() { initRound(false); }, 600);
+      running = false; // pause briefly
+      setTimeout(function() { running = true; raf = requestAnimationFrame(gameLoop); }, 600);
+    }
+    if (ball.x > TT.x + TT.w + 20) {
+      p1Sc++; scoreFlash = 40;
+      document.getElementById('p1-score').textContent = p1Sc;
+      if (p1Sc >= 11) { endGame('Player 1'); return; }
+      setTimeout(function() { initRound(true); }, 600);
+      running = false;
+      setTimeout(function() { running = true; raf = requestAnimationFrame(gameLoop); }, 600);
+    }
+  }
+
+  // ── Draw helpers ───────────────────────────────────────────
+  function rr(x, y, w, h, r) {
+    cx.beginPath();
+    cx.moveTo(x+r, y); cx.lineTo(x+w-r, y);
+    cx.quadraticCurveTo(x+w, y, x+w, y+r);
+    cx.lineTo(x+w, y+h-r); cx.quadraticCurveTo(x+w, y+h, x+w-r, y+h);
+    cx.lineTo(x+r, y+h); cx.quadraticCurveTo(x, y+h, x, y+h-r);
+    cx.lineTo(x, y+r); cx.quadraticCurveTo(x, y, x+r, y);
+    cx.closePath();
+  }
+
+  // ── Draw scene ─────────────────────────────────────────────
+  function drawScene() {
+    var tx = TT.x, ty = TT.y, tw = TT.w, th = TT.h;
+
+    // ── Dark room background ──
+    cx.fillStyle = '#050508';
+    cx.fillRect(0, 0, W, H);
+
+    // Ambient ceiling light
+    var roomLight = cx.createRadialGradient(W/2, 0, 0, W/2, H/2, W*0.75);
+    roomLight.addColorStop(0, 'rgba(120,140,255,0.07)');
+    roomLight.addColorStop(1, 'rgba(0,0,0,0)');
+    cx.fillStyle = roomLight;
+    cx.fillRect(0, 0, W, H);
+
+    // ── Table shadow ──
+    cx.fillStyle = 'rgba(0,0,0,0.55)';
+    rr(tx+8, ty+8, tw, th+EDGE_H+2, 10);
+    cx.fill();
+
+    // ── Front 3D edge ──
+    // Trapezoid: bottom of table top → bottom of front face
+    cx.beginPath();
+    cx.moveTo(tx,    ty + th);
+    cx.lineTo(tx+tw, ty + th);
+    cx.lineTo(tx+tw - 4, ty + th + EDGE_H);
+    cx.lineTo(tx + 4,    ty + th + EDGE_H);
+    cx.closePath();
+    cx.fillStyle = '#0b3d6e';
+    cx.fill();
+
+    // Front edge highlight (top rim)
+    cx.beginPath();
+    cx.moveTo(tx, ty + th);
+    cx.lineTo(tx+tw, ty + th);
+    cx.strokeStyle = 'rgba(255,255,255,0.25)';
+    cx.lineWidth = 1.5;
+    cx.stroke();
+
+    // Right 3D side edge
+    cx.beginPath();
+    cx.moveTo(tx+tw, ty);
+    cx.lineTo(tx+tw+5, ty+4);
+    cx.lineTo(tx+tw+5, ty+th+EDGE_H);
+    cx.lineTo(tx+tw-4, ty+th+EDGE_H);
+    cx.lineTo(tx+tw, ty+th);
+    cx.closePath();
+    cx.fillStyle = '#0c4070';
+    cx.fill();
+
+    // ── Table surface ──
+    cx.fillStyle = '#1565c0';
+    rr(tx, ty, tw, th, 4);
+    cx.fill();
+
+    // Surface lighting (overhead spotlight effect)
+    var surfLight = cx.createRadialGradient(tx+tw/2, ty+th*0.4, 0, tx+tw/2, ty+th/2, tw*0.58);
+    surfLight.addColorStop(0,   'rgba(255,255,255,0.12)');
+    surfLight.addColorStop(0.55,'rgba(255,255,255,0.02)');
+    surfLight.addColorStop(1,   'rgba(0,0,0,0.2)');
+    cx.fillStyle = surfLight;
+    rr(tx, ty, tw, th, 4);
+    cx.fill();
+
+    // ── Table lines ──
+    // White border
+    cx.strokeStyle = 'rgba(255,255,255,0.9)';
+    cx.lineWidth = 2;
+    rr(tx, ty, tw, th, 4);
+    cx.stroke();
+
+    // Center service line (horizontal, for doubles look)
+    cx.strokeStyle = 'rgba(255,255,255,0.25)';
+    cx.lineWidth = 1;
+    cx.setLineDash([6, 6]);
+    cx.beginPath();
+    cx.moveTo(tx + tw/2, ty);
+    cx.lineTo(tx + tw/2, ty + th);
+    cx.stroke();
+    cx.setLineDash([]);
+
+    // ── Net ──
+    var nx = tx + tw/2, nNetW = 7;
+    // Net post (thin metal rod top and bottom)
+    cx.fillStyle = '#bbb';
+    cx.fillRect(nx - 2, ty - 8, 4, th + 16);
+
+    // Net mesh
+    cx.fillStyle = 'rgba(240,240,240,0.18)';
+    cx.fillRect(nx - nNetW/2, ty, nNetW, th);
+    cx.strokeStyle = 'rgba(255,255,255,0.65)';
+    cx.lineWidth = 0.6;
+    for (var ny2 = ty; ny2 <= ty + th; ny2 += 9) {
+      cx.beginPath(); cx.moveTo(nx - nNetW/2, ny2); cx.lineTo(nx + nNetW/2, ny2); cx.stroke();
+    }
+    cx.beginPath(); cx.moveTo(nx, ty - 8); cx.lineTo(nx, ty + th + 8);
+    cx.strokeStyle = 'rgba(255,255,255,0.5)'; cx.lineWidth = 1.5; cx.stroke();
+
+    // Net post caps
+    cx.fillStyle = '#999';
+    cx.beginPath(); cx.arc(nx, ty - 8, 4, 0, Math.PI*2); cx.fill();
+    cx.beginPath(); cx.arc(nx, ty + th + 8, 4, 0, Math.PI*2); cx.fill();
+
+    // ── Paddles ──
+    drawPaddle(true,  p1Y);
+    drawPaddle(false, p2Y);
+
+    // ── Ball ──
+    // Shadow on table
+    cx.beginPath();
+    cx.ellipse(ball.x + 3, ball.y + 4, BR*1.1, BR*0.6, 0, 0, Math.PI*2);
+    cx.fillStyle = 'rgba(0,0,0,0.4)';
+    cx.fill();
+
+    var ballGrad = cx.createRadialGradient(ball.x - BR*0.3, ball.y - BR*0.35, BR*0.05, ball.x, ball.y, BR);
+    ballGrad.addColorStop(0, '#ffffff');
+    ballGrad.addColorStop(0.6, '#f0f0f0');
+    ballGrad.addColorStop(1, '#d8d8d8');
+    cx.beginPath(); cx.arc(ball.x, ball.y, BR, 0, Math.PI*2);
+    cx.fillStyle = ballGrad; cx.fill();
+
+    // Ball seam line
+    cx.beginPath(); cx.arc(ball.x, ball.y, BR, Math.PI*0.1, Math.PI*0.9);
+    cx.strokeStyle = 'rgba(180,180,180,0.5)'; cx.lineWidth = 0.8; cx.stroke();
+  }
+
+  function drawPaddle(isLeft, py) {
+    var pcx = isLeft ? (TT.x + 6 + PR) : (TT.x + TT.w - 6 - PR);
+    var handleLen = PR * 1.6, handleH = PR * 0.38;
+
+    // Shadow
+    cx.beginPath(); cx.arc(pcx+3, py+3, PR, 0, Math.PI*2);
+    cx.fillStyle = 'rgba(0,0,0,0.45)'; cx.fill();
+
+    // Rubber face (red)
+    var rubberGrad = cx.createRadialGradient(pcx - PR*0.25, py - PR*0.3, PR*0.05, pcx, py, PR);
+    rubberGrad.addColorStop(0, '#e53935');
+    rubberGrad.addColorStop(0.7, '#c62828');
+    rubberGrad.addColorStop(1, '#b71c1c');
+    cx.beginPath(); cx.arc(pcx, py, PR, 0, Math.PI*2);
+    cx.fillStyle = rubberGrad; cx.fill();
+
+    // Black edge/border of paddle
+    cx.beginPath(); cx.arc(pcx, py, PR, 0, Math.PI*2);
+    cx.strokeStyle = '#111'; cx.lineWidth = 2.5; cx.stroke();
+
+    // Rubber highlight
+    cx.beginPath(); cx.arc(pcx - PR*0.28, py - PR*0.32, PR*0.38, 0, Math.PI*2);
+    cx.fillStyle = 'rgba(255,255,255,0.17)'; cx.fill();
+
+    // Handle shadow
+    var hx = isLeft ? pcx - PR - handleLen : pcx + PR;
+    cx.fillStyle = 'rgba(0,0,0,0.35)';
+    rr(hx+2, py - handleH/2 + 2, handleLen, handleH, 3);
+    cx.fill();
+
+    // Handle (brown wood)
+    var handleGrad = cx.createLinearGradient(hx, py - handleH/2, hx, py + handleH/2);
+    handleGrad.addColorStop(0, '#7B4F2E');
+    handleGrad.addColorStop(0.5, '#5D3A1A');
+    handleGrad.addColorStop(1, '#4A2C15');
+    cx.fillStyle = handleGrad;
+    rr(hx, py - handleH/2, handleLen, handleH, 3);
+    cx.fill();
+    cx.strokeStyle = '#3e2723'; cx.lineWidth = 1;
+    rr(hx, py - handleH/2, handleLen, handleH, 3);
+    cx.stroke();
+
+    // Grip lines on handle
+    cx.strokeStyle = 'rgba(0,0,0,0.3)'; cx.lineWidth = 0.8;
+    for (var g = 1; g <= 3; g++) {
+      var gx = hx + handleLen * g / 4;
+      cx.beginPath(); cx.moveTo(gx, py - handleH/2); cx.lineTo(gx, py + handleH/2); cx.stroke();
+    }
+  }
+
+  // ── Game loop ──────────────────────────────────────────────
+  function gameLoop() {
+    if (!running) return;
+    update();
+    if (running) {
+      drawScene();
+      raf = requestAnimationFrame(gameLoop);
+    }
+  }
+
+  // Initial idle render
+  p1Y = TT.y + TT.h/2; p2Y = TT.y + TT.h/2;
+  ball = { x: TT.x + TT.w/2, y: TT.y + TT.h/2 };
+  drawScene();
+
+  // ── Controls ───────────────────────────────────────────────
+  addEventListener('keydown', function(e) {
+    keys[e.key] = true;
+    if (['ArrowUp','ArrowDown',' '].includes(e.key)) e.preventDefault();
+  });
+  addEventListener('keyup', function(e) { delete keys[e.key]; });
+
+  document.getElementById('btn-1p').onclick    = function() { startGame(false); };
+  document.getElementById('btn-2p').onclick    = function() { startGame(true); };
+  document.getElementById('btn-again').onclick = function() { startGame(twoP); };
+  document.getElementById('btn-menu').onclick  = showMenu;
+
+  addEventListener('resize', function() {
+    layout();
+    if (!running) { p1Y = TT.y+TT.h/2; p2Y = TT.y+TT.h/2; ball = {x:TT.x+TT.w/2,y:TT.y+TT.h/2}; drawScene(); }
+  });
+</script>
 </body>
 </html>
