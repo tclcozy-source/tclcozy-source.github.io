@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Pong – Shahmeer's Game Hub</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #0a0a0f;
+      color: white;
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      overflow: hidden;
+      user-select: none;
+    }
+
+    #bg-canvas {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .page {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+      padding: 20px 16px 24px;
+      gap: 16px;
+    }
+
+    .top-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      max-width: 640px;
+    }
+
+    .back-btn {
+      text-decoration: none;
+      color: rgba(255,255,255,0.5);
+      font-size: 14px;
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.15);
+      padding: 6px 14px;
+      border-radius: 999px;
+      backdrop-filter: blur(10px);
+      transition: background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease, color 0.3s ease;
+    }
+    .back-btn:hover {
+      background: rgba(255,77,158,0.15);
+      border-color: rgba(168,85,247,0.6);
+      color: white;
+      transform: scale(1.08);
+      box-shadow: 0 0 18px rgba(255,77,158,0.35), 0 0 36px rgba(168,85,247,0.15);
+    }
+
+    h1 {
+      font-size: 24px;
+      font-weight: 900;
+      background: linear-gradient(90deg, #ff4d9e, #a855f7, #3b82f6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      letter-spacing: 2px;
+    }
+
+    /* Score bar */
+    .score-bar {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0;
+      width: 100%;
+      max-width: 640px;
+    }
+
+    .score-side {
+      flex: 1;
+      text-align: center;
+    }
+
+    .score-name {
+      font-size: 12px;
+      color: rgba(255,255,255,0.35);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 2px;
+    }
+
+    .score-num {
+      font-size: 48px;
+      font-weight: 900;
+      color: white;
+      line-height: 1;
+    }
+
+    .score-divider {
+      font-size: 32px;
+      color: rgba(255,255,255,0.15);
+      padding: 0 16px;
+      font-weight: 300;
+    }
+
+    /* Canvas */
+    #game-canvas {
+      border-radius: 12px;
+      display: block;
+      border: 1px solid rgba(255,255,255,0.08);
+      box-shadow: 0 0 40px rgba(255,255,255,0.04);
+    }
+
+    /* Overlays */
+    .canvas-wrap {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 12px;
+      background: rgba(5,5,8,0.88);
+      backdrop-filter: blur(8px);
+    }
+    .modal.hidden { display: none; }
+
+    .modal-box {
+      background: rgba(10,10,15,0.97);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 20px;
+      padding: 36px 44px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 18px;
+      min-width: 260px;
+    }
+
+    .modal-title {
+      font-size: 30px;
+      font-weight: 900;
+      background: linear-gradient(90deg, #ff4d9e, #a855f7);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      letter-spacing: 1px;
+    }
+
+    .modal-sub {
+      font-size: 15px;
+      color: rgba(255,255,255,0.45);
+      margin-top: -8px;
+    }
+
+    .btn-group {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      width: 100%;
+    }
+
+    .btn {
+      background: linear-gradient(135deg, #ff4d9e, #a855f7);
+      border: none;
+      color: white;
+      font-size: 16px;
+      font-weight: 800;
+      padding: 13px 32px;
+      border-radius: 999px;
+      cursor: pointer;
+      letter-spacing: 0.5px;
+      transition: transform 0.15s, opacity 0.15s;
+      width: 100%;
+    }
+    .btn:hover { transform: scale(1.04); opacity: 0.9; }
+
+    .btn.secondary {
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.15);
+    }
+    .btn.secondary:hover { background: rgba(255,255,255,0.14); }
+
+    .winner-label {
+      font-size: 18px;
+      color: rgba(255,255,255,0.6);
+    }
+    .winner-name {
+      font-size: 36px;
+      font-weight: 900;
+      color: #facc15;
+    }
+
+    .hint {
+      font-size: 12px;
+      color: rgba(255,255,255,0.2);
+      letter-spacing: 0.5px;
+    }
+
+    @media (max-width: 520px) {
+      h1 { font-size: 18px; }
+      .score-num { font-size: 36px; }
+      .modal-box { padding: 28px 24px; min-width: 0; width: 88%; }
+      .modal-title { font-size: 24px; }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="bg-canvas"></canvas>
+
+  <div class="page">
+    <div class="top-bar">
+      <a class="back-btn" href="index.html">← Back</a>
+      <h1>🏓 Pong</h1>
+      <div style="width:70px"></div>
+    </div>
+
+    <div class="score-bar">
+      <div class="score-side">
+        <div class="score-name" id="p1-name">Player 1</div>
+        <div class="score-num" id="p1-score">0</div>
+      </div>
+      <div class="score-divider">|</div>
+      <div class="score-side">
+        <div class="score-name" id="p2-name">Player 2</div>
+        <div class="score-num" id="p2-score">0</div>
+      </div>
+    </div>
+
+    <div class="canvas-wrap">
+      <canvas id="game-canvas"></canvas>
+
+      <!-- Start menu -->
+      <div class="modal" id="start-modal">
+        <div class="modal-box">
+          <div class="modal-title">🏓 Pong</div>
+          <div class="modal-sub">First to 5 points wins</div>
+          <div class="btn-group">
+            <button class="btn" id="btn-1p">1 Player</button>
+            <button class="btn secondary" id="btn-2p">2 Players</button>
+          </div>
+          <div class="hint">W/S to move your paddle</div>
+        </div>
+      </div>
+
+      <!-- Winner screen -->
+      <div class="modal hidden" id="winner-modal">
+        <div class="modal-box">
+          <div class="winner-label">🏆 Winner</div>
+          <div class="winner-name" id="winner-name">Player 1</div>
+          <div class="btn-group">
+            <button class="btn" id="btn-again">Play Again</button>
+            <button class="btn secondary" id="btn-menu">Main Menu</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Stars
+    var bgCanvas = document.getElementById('bg-canvas');
+    var bgCtx = bgCanvas.getContext('2d');
+    var stars = [];
+    function resizeBg() { bgCanvas.width = window.innerWidth; bgCanvas.height = window.innerHeight; }
+    resizeBg();
+    window.addEventListener('resize', resizeBg);
+    for (var i = 0; i < 130; i++) {
+      stars.push({ x: Math.random(), y: Math.random(), r: Math.random() * 1.4 + 0.2,
+        speed: Math.random() * 0.01 + 0.003, phase: Math.random() * Math.PI * 2 });
+    }
+    function drawBg(t) {
+      bgCtx.clearRect(0, 0, bgCanvas.width, bgCanvas.height);
+      for (var i = 0; i < stars.length; i++) {
+        var s = stars[i];
+        var a = 0.25 + 0.6 * (0.5 + 0.5 * Math.sin(t * s.speed + s.phase));
+        bgCtx.beginPath();
+        bgCtx.arc(s.x * bgCanvas.width, s.y * bgCanvas.height, s.r, 0, Math.PI * 2);
+        bgCtx.fillStyle = 'rgba(255,255,255,' + a + ')';
+        bgCtx.fill();
+      }
+      requestAnimationFrame(drawBg);
+    }
+    requestAnimationFrame(drawBg);
+
+    // Game canvas sizing
+    var canvas = document.getElementById('game-canvas');
+    var ctx = canvas.getContext('2d');
+
+    var W, H;
+    function sizeCanvas() {
+      var maxW = Math.min(window.innerWidth - 32, 620);
+      var maxH = Math.min(window.innerHeight - 280, 420);
+      W = Math.floor(maxW);
+      H = Math.floor(maxH / 10) * 10;
+      canvas.width = W;
+      canvas.height = H;
+    }
+    sizeCanvas();
+
+    // Game constants (relative to canvas size)
+    var PADDLE_W = 12;
+    var PADDLE_H, BALL_SIZE, PADDLE_SPEED, BALL_SPEED_INIT, CPU_SPEED;
+
+    function updateConstants() {
+      PADDLE_H = Math.round(H * 0.22);
+      BALL_SIZE = Math.round(W * 0.018);
+      PADDLE_SPEED = H * 0.012;
+      BALL_SPEED_INIT = W * 0.007;
+      CPU_SPEED = H * 0.009;
+    }
+    updateConstants();
+
+    // State
+    var twoPlayer = false;
+    var running = false;
+    var p1Score, p2Score;
+    var p1Y, p2Y;
+    var ball;
+    var keys = {};
+    var raf;
+
+    function initRound() {
+      updateConstants();
+      p1Y = H / 2 - PADDLE_H / 2;
+      p2Y = H / 2 - PADDLE_H / 2;
+      var angle = (Math.random() * 60 - 30) * Math.PI / 180;
+      var dir = Math.random() < 0.5 ? 1 : -1;
+      ball = {
+        x: W / 2, y: H / 2,
+        vx: dir * BALL_SPEED_INIT * Math.cos(angle),
+        vy: BALL_SPEED_INIT * Math.sin(angle),
+        speed: BALL_SPEED_INIT
+      };
+    }
+
+    function startGame(two) {
+      twoPlayer = two;
+      p1Score = 0;
+      p2Score = 0;
+      document.getElementById('p1-score').textContent = '0';
+      document.getElementById('p2-score').textContent = '0';
+      document.getElementById('p1-name').textContent = 'Player 1';
+      document.getElementById('p2-name').textContent = twoPlayer ? 'Player 2' : 'CPU';
+      document.getElementById('start-modal').classList.add('hidden');
+      document.getElementById('winner-modal').classList.add('hidden');
+      initRound();
+      running = true;
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(loop);
+    }
+
+    function showMenu() {
+      running = false;
+      document.getElementById('start-modal').classList.remove('hidden');
+      document.getElementById('winner-modal').classList.add('hidden');
+    }
+
+    function endGame(winner) {
+      running = false;
+      document.getElementById('winner-name').textContent = winner;
+      document.getElementById('winner-modal').classList.remove('hidden');
+    }
+
+    function clamp(val, min, max) { return Math.max(min, Math.min(max, val)); }
+
+    function loop() {
+      if (!running) return;
+      update();
+      draw();
+      raf = requestAnimationFrame(loop);
+    }
+
+    function update() {
+      // P1 input (W/S)
+      if (keys['w'] || keys['W']) p1Y -= PADDLE_SPEED;
+      if (keys['s'] || keys['S']) p1Y += PADDLE_SPEED;
+      p1Y = clamp(p1Y, 0, H - PADDLE_H);
+
+      // P2 input or CPU
+      if (twoPlayer) {
+        if (keys['ArrowUp']) p2Y -= PADDLE_SPEED;
+        if (keys['ArrowDown']) p2Y += PADDLE_SPEED;
+        p2Y = clamp(p2Y, 0, H - PADDLE_H);
+      } else {
+        var cpuCenter = p2Y + PADDLE_H / 2;
+        var diff = ball.y - cpuCenter;
+        var move = clamp(diff, -CPU_SPEED, CPU_SPEED);
+        p2Y = clamp(p2Y + move, 0, H - PADDLE_H);
+      }
+
+      // Move ball
+      ball.x += ball.vx;
+      ball.y += ball.vy;
+
+      // Top / bottom walls
+      if (ball.y - BALL_SIZE < 0) { ball.y = BALL_SIZE; ball.vy = Math.abs(ball.vy); }
+      if (ball.y + BALL_SIZE > H) { ball.y = H - BALL_SIZE; ball.vy = -Math.abs(ball.vy); }
+
+      // Left paddle collision
+      var leftEdge = PADDLE_W + 10;
+      if (ball.vx < 0 && ball.x - BALL_SIZE <= leftEdge + PADDLE_W &&
+          ball.x + BALL_SIZE >= leftEdge &&
+          ball.y + BALL_SIZE >= p1Y && ball.y - BALL_SIZE <= p1Y + PADDLE_H) {
+        ball.x = leftEdge + PADDLE_W + BALL_SIZE;
+        var hitPos = (ball.y - (p1Y + PADDLE_H / 2)) / (PADDLE_H / 2);
+        var bounceAngle = hitPos * 60 * Math.PI / 180;
+        ball.speed = Math.min(ball.speed * 1.06, W * 0.018);
+        ball.vx = ball.speed * Math.cos(bounceAngle);
+        ball.vy = ball.speed * Math.sin(bounceAngle);
+      }
+
+      // Right paddle collision
+      var rightEdge = W - PADDLE_W - 10;
+      if (ball.vx > 0 && ball.x + BALL_SIZE >= rightEdge &&
+          ball.x - BALL_SIZE <= rightEdge + PADDLE_W &&
+          ball.y + BALL_SIZE >= p2Y && ball.y - BALL_SIZE <= p2Y + PADDLE_H) {
+        ball.x = rightEdge - BALL_SIZE;
+        var hitPos2 = (ball.y - (p2Y + PADDLE_H / 2)) / (PADDLE_H / 2);
+        var bounceAngle2 = hitPos2 * 60 * Math.PI / 180;
+        ball.speed = Math.min(ball.speed * 1.06, W * 0.018);
+        ball.vx = -ball.speed * Math.cos(bounceAngle2);
+        ball.vy = ball.speed * Math.sin(bounceAngle2);
+      }
+
+      // Score
+      if (ball.x < 0) {
+        p2Score++;
+        document.getElementById('p2-score').textContent = p2Score;
+        if (p2Score >= 5) { endGame(twoPlayer ? 'Player 2' : 'CPU'); return; }
+        initRound();
+      }
+      if (ball.x > W) {
+        p1Score++;
+        document.getElementById('p1-score').textContent = p1Score;
+        if (p1Score >= 5) { endGame('Player 1'); return; }
+        initRound();
+      }
+    }
+
+    function draw() {
+      ctx.fillStyle = '#050508';
+      ctx.fillRect(0, 0, W, H);
+
+      // Dashed center line
+      ctx.strokeStyle = 'rgba(255,255,255,0.12)';
+      ctx.lineWidth = 2;
+      ctx.setLineDash([12, 10]);
+      ctx.beginPath();
+      ctx.moveTo(W / 2, 0);
+      ctx.lineTo(W / 2, H);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // Paddles
+      ctx.fillStyle = 'white';
+      roundRect(ctx, 10, p1Y, PADDLE_W, PADDLE_H, 4);
+      ctx.fill();
+      roundRect(ctx, W - PADDLE_W - 10, p2Y, PADDLE_W, PADDLE_H, 4);
+      ctx.fill();
+
+      // Ball
+      ctx.beginPath();
+      ctx.arc(ball.x, ball.y, BALL_SIZE, 0, Math.PI * 2);
+      ctx.fillStyle = 'white';
+      ctx.fill();
+      // Ball glow
+      ctx.beginPath();
+      ctx.arc(ball.x, ball.y, BALL_SIZE * 2.2, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(255,255,255,0.06)';
+      ctx.fill();
+    }
+
+    function roundRect(ctx, x, y, w, h, r) {
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.lineTo(x + w - r, y);
+      ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+      ctx.lineTo(x + w, y + h - r);
+      ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+      ctx.lineTo(x + r, y + h);
+      ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+      ctx.lineTo(x, y + r);
+      ctx.quadraticCurveTo(x, y, x + r, y);
+      ctx.closePath();
+    }
+
+    // Draw idle state on load
+    updateConstants();
+    p1Y = H / 2 - (Math.round(H * 0.22)) / 2;
+    p2Y = p1Y;
+    ball = { x: W / 2, y: H / 2 };
+    ctx.fillStyle = '#050508'; ctx.fillRect(0, 0, W, H);
+
+    // Controls
+    document.addEventListener('keydown', function(e) {
+      keys[e.key] = true;
+      if (['ArrowUp','ArrowDown'].includes(e.key)) e.preventDefault();
+    });
+    document.addEventListener('keyup', function(e) { keys[e.key] = false; });
+
+    document.getElementById('btn-1p').addEventListener('click', function() { startGame(false); });
+    document.getElementById('btn-2p').addEventListener('click', function() { startGame(true); });
+    document.getElementById('btn-again').addEventListener('click', function() { startGame(twoPlayer); });
+    document.getElementById('btn-menu').addEventListener('click', showMenu);
+
+    window.addEventListener('resize', function() {
+      sizeCanvas();
+      if (!running) { ctx.fillStyle = '#050508'; ctx.fillRect(0, 0, W, H); }
+    });
+  </script>
+</body>
+</html>
