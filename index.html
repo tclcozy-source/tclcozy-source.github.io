@@ -236,6 +236,7 @@
 </head>
 <body>
   <canvas id="stars"></canvas>
+  <button id="mute-btn" onclick="toggleMute()" title="Sound" style="position:fixed;top:14px;right:14px;z-index:9999;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);color:white;width:38px;height:38px;border-radius:50%;font-size:16px;cursor:pointer;backdrop-filter:blur(10px);transition:transform .15s"></button>
 
   <div id="redirect-msg">
     <p>Redirecting to <strong>shahmeer.me</strong>...</p>
@@ -290,6 +291,12 @@
         <div class="card-emoji">🏎️</div>
         <div class="card-title">Reaction Time</div>
         <div class="card-desc">F1 start lights reaction test. Wait for the lights to go out — how fast are you?</div>
+        <div class="play-btn">Play Now</div>
+      </a>
+      <a class="card" href="https://server.shahmeer.me/battleship.html">
+        <div class="card-emoji">🚢</div>
+        <div class="card-title">Battleship</div>
+        <div class="card-desc">Classic naval warfare! Place your ships and sink the enemy fleet before they sink yours!</div>
         <div class="play-btn">Play Now</div>
       </a>
 
@@ -350,6 +357,15 @@
         card.style.animationDelay = "0s";
       }, 300 + i * 180);
     });
+
+    // ── Audio ──────────────────────────────────────────────────────
+    var _ac=null,_muted=localStorage.getItem('sfx')==='1';
+    function _ctx(){return _ac||(_ac=new(window.AudioContext||window.webkitAudioContext)())}
+    function _sfx(f){if(!_muted)try{f(_ctx())}catch(e){}}
+    function toggleMute(){_muted=!_muted;localStorage.setItem('sfx',_muted?'1':'0');document.getElementById('mute-btn').textContent=_muted?'🔇':'🔊'}
+    function sndWhoosh(){_sfx(function(c){var o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);o.type='sine';o.frequency.setValueAtTime(600,c.currentTime);o.frequency.exponentialRampToValueAtTime(200,c.currentTime+.12);g.gain.setValueAtTime(.06,c.currentTime);g.gain.exponentialRampToValueAtTime(.001,c.currentTime+.12);o.start();o.stop(c.currentTime+.12)})}
+    document.getElementById('mute-btn').textContent=_muted?'🔇':'🔊';
+    document.querySelectorAll('.card').forEach(function(c){c.addEventListener('mouseenter',sndWhoosh)});
   </script>
 </body>
 </html>
