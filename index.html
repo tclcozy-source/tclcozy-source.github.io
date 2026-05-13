@@ -366,7 +366,8 @@
     function toggleMute(){_muted=!_muted;localStorage.setItem('sfx',_muted?'1':'0');document.getElementById('mute-btn').textContent=_muted?'🔇':'🔊'}
     function sndWhoosh(){_sfx(function(c){var o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);o.type='sine';o.frequency.setValueAtTime(600,c.currentTime);o.frequency.exponentialRampToValueAtTime(200,c.currentTime+.12);g.gain.setValueAtTime(.06,c.currentTime);g.gain.exponentialRampToValueAtTime(.001,c.currentTime+.12);o.start();o.stop(c.currentTime+.12)})}
     document.getElementById('mute-btn').textContent=_muted?'🔇':'🔊';
-    document.querySelectorAll('.card').forEach(function(c){c.addEventListener('mouseenter',sndWhoosh)});
+    // Delay attaching hover sounds until after all cards have animated in (last card = 300 + 6*180 = 1380ms)
+    setTimeout(function(){document.querySelectorAll('.card').forEach(function(c){c.addEventListener('mouseenter',sndWhoosh)})},1500);
   </script>
 </body>
 </html>
