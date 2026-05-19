@@ -648,6 +648,177 @@
     .route-arrow { color: var(--muted); font-size: 11px; }
 
     /* ─────────────────────────────────────
+       TABS
+    ───────────────────────────────────── */
+    .tab-bar { display:flex; gap:2px; border-bottom:1px solid var(--border); margin-bottom:22px; }
+    .tab-btn {
+      padding:9px 20px; background:transparent; border:none;
+      border-bottom:2px solid transparent; margin-bottom:-1px;
+      font-family:'Orbitron',monospace; font-size:9px; font-weight:700;
+      letter-spacing:2px; color:var(--muted); cursor:pointer;
+      text-transform:uppercase; transition:color 0.2s,border-color 0.2s;
+    }
+    .tab-btn:hover { color:var(--text); }
+    .tab-btn.active { color:var(--orange); border-bottom-color:var(--orange); }
+    .tab-panel { display:none; }
+    .tab-panel.active { display:block; }
+
+    /* ─────────────────────────────────────
+       STUDY PLAN
+    ───────────────────────────────────── */
+    .week-card {
+      background:var(--card); border:1px solid var(--border);
+      border-radius:12px; padding:18px 22px; margin-bottom:12px;
+      transition:border-color 0.25s;
+    }
+    .week-card.wk-current { border-color:rgba(255,124,0,0.4); box-shadow:0 0 22px rgba(255,124,0,0.05); }
+    .week-card.wk-passed  { border-color:rgba(34,197,94,0.25); }
+    .week-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
+    .week-head-l { display:flex; align-items:center; gap:12px; }
+    .week-num  { font-family:'Share Tech Mono',monospace; font-size:9px; letter-spacing:3px; color:var(--muted); }
+    .week-ttl  { font-family:'Orbitron',monospace; font-size:11px; font-weight:700; letter-spacing:2px; color:#fff; }
+    .week-bdg  {
+      padding:2px 10px; border-radius:999px; border:1px solid;
+      font-family:'Share Tech Mono',monospace; font-size:9px; letter-spacing:1.5px;
+      text-transform:uppercase;
+    }
+    .wbdg-passed  { background:rgba(34,197,94,0.1);  color:var(--green);  border-color:rgba(34,197,94,0.3); }
+    .wbdg-current { background:rgba(255,124,0,0.1);  color:var(--orange); border-color:rgba(255,124,0,0.3); animation:blink 2s infinite; }
+    .wbdg-upcoming{ background:rgba(78,96,112,0.08); color:var(--muted);  border-color:rgba(78,96,112,0.2); }
+    .week-prog-bar { height:2px; background:rgba(255,255,255,0.05); border-radius:1px; margin-bottom:14px; overflow:hidden; }
+    .week-prog-fill{ height:100%; background:linear-gradient(90deg,var(--orange),var(--blue)); border-radius:1px; transition:width 0.4s; }
+    .week-days { display:grid; grid-template-columns:repeat(7,1fr); gap:5px; }
+    .day-cell  {
+      text-align:center; padding:8px 4px;
+      background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.04);
+      border-radius:6px;
+    }
+    .day-cell.weekend { background:rgba(0,180,216,0.04); border-color:rgba(0,180,216,0.1); }
+    .day-lbl { font-family:'Share Tech Mono',monospace; font-size:7px; letter-spacing:1px; color:var(--muted); margin-bottom:5px; text-transform:uppercase; }
+    .day-cell.weekend .day-lbl { color:var(--blue); }
+    .day-txt { font-size:9px; color:rgba(221,228,238,0.5); line-height:1.3; }
+    .quiz-cell-btn {
+      margin-top:6px; padding:4px 6px; width:100%;
+      background:linear-gradient(135deg,var(--orange),#c93a00);
+      border:none; border-radius:4px;
+      font-family:'Share Tech Mono',monospace; font-size:8px; letter-spacing:1px;
+      color:#fff; cursor:pointer; transition:opacity 0.2s;
+    }
+    .quiz-cell-btn:hover { opacity:0.8; }
+    .quiz-cell-btn.qpassed { background:var(--green); cursor:default; }
+
+    /* ─────────────────────────────────────
+       MODAL BASE
+    ───────────────────────────────────── */
+    .modal-overlay {
+      position:fixed; inset:0; background:rgba(0,0,0,0.78);
+      display:none; align-items:center; justify-content:center;
+      z-index:8000; backdrop-filter:blur(5px); padding:20px;
+    }
+    .modal-overlay.open { display:flex; }
+    .modal-box {
+      background:#0b1320; border:1px solid var(--border);
+      border-radius:16px; width:100%; max-width:520px;
+      max-height:88vh; overflow-y:auto;
+      box-shadow:0 0 80px rgba(0,0,0,0.85),inset 0 0 0 1px rgba(255,255,255,0.03);
+      animation:modal-in 0.2s ease;
+    }
+    @keyframes modal-in { from{opacity:0;transform:scale(0.94) translateY(8px)} to{opacity:1;transform:none} }
+    .modal-hdr {
+      display:flex; align-items:flex-start; justify-content:space-between;
+      padding:20px 22px 16px; border-bottom:1px solid var(--border);
+    }
+    .modal-hdr-cat  { font-size:8px; letter-spacing:3px; color:var(--blue); text-transform:uppercase; margin-bottom:5px; }
+    .modal-hdr-ttl  { font-family:'Orbitron',monospace; font-size:14px; font-weight:700; letter-spacing:2px; color:#fff; }
+    .modal-x {
+      background:rgba(255,255,255,0.05); border:1px solid var(--border);
+      border-radius:50%; width:28px; height:28px; flex-shrink:0; margin-left:12px;
+      color:var(--muted); cursor:pointer; font-size:11px;
+      display:flex; align-items:center; justify-content:center;
+      transition:all 0.15s;
+    }
+    .modal-x:hover { border-color:var(--red); color:var(--red); }
+    .modal-body { padding:20px 22px; }
+    .modal-desc { font-size:13px; color:rgba(221,228,238,0.82); line-height:1.72; margin-bottom:18px; }
+    .modal-res-link {
+      display:inline-flex; align-items:center; gap:6px;
+      padding:8px 14px;
+      background:rgba(0,180,216,0.07); border:1px solid rgba(0,180,216,0.2);
+      border-radius:6px; text-decoration:none;
+      font-family:'Share Tech Mono',monospace; font-size:10px; letter-spacing:1.5px; color:var(--blue);
+      transition:background 0.2s,border-color 0.2s;
+    }
+    .modal-res-link:hover { background:rgba(0,180,216,0.14); border-color:rgba(0,180,216,0.4); }
+    .modal-ftr { display:flex; gap:10px; padding:16px 22px; border-top:1px solid var(--border); }
+    .modal-mark-btn {
+      flex:1; padding:11px; border:none; border-radius:7px;
+      font-family:'Orbitron',monospace; font-size:10px; font-weight:700; letter-spacing:2px; color:#fff;
+      cursor:pointer; transition:opacity 0.2s;
+      background:linear-gradient(135deg,var(--green),#16a34a);
+    }
+    .modal-mark-btn:hover { opacity:0.85; }
+    .modal-mark-btn.is-done {
+      background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.3);
+      color:var(--red);
+    }
+    .modal-cancel-btn {
+      padding:11px 18px; background:transparent; border:1px solid var(--border);
+      border-radius:7px; font-family:'Share Tech Mono',monospace;
+      font-size:10px; letter-spacing:2px; color:var(--muted); cursor:pointer;
+      transition:border-color 0.2s,color 0.2s;
+    }
+    .modal-cancel-btn:hover { border-color:rgba(221,228,238,0.2); color:var(--text); }
+
+    /* ─────────────────────────────────────
+       QUIZ MODAL
+    ───────────────────────────────────── */
+    .quiz-modal-box { max-width:600px; }
+    .quiz-prog-bar {
+      display:flex; align-items:center; justify-content:space-between;
+      padding:12px 22px; border-bottom:1px solid var(--border);
+      font-family:'Share Tech Mono',monospace; font-size:10px; letter-spacing:2px; color:var(--muted);
+    }
+    .quiz-dots { display:flex; gap:5px; }
+    .qdot { width:8px; height:8px; border-radius:50%; background:var(--border); transition:background 0.2s; }
+    .qdot.active  { background:var(--orange); }
+    .qdot.correct { background:var(--green); }
+    .qdot.wrong   { background:var(--red); }
+    .quiz-body    { padding:26px 22px; }
+    .quiz-q-txt   { font-size:15px; font-weight:500; color:#fff; line-height:1.55; margin-bottom:20px; }
+    .quiz-opts    { display:flex; flex-direction:column; gap:8px; }
+    .quiz-opt-btn {
+      padding:12px 16px; background:rgba(0,0,0,0.2); border:1px solid var(--border);
+      border-radius:8px; cursor:pointer; font-size:13px; color:rgba(221,228,238,0.7);
+      text-align:left; transition:all 0.15s; width:100%;
+    }
+    .quiz-opt-btn:hover:not([disabled]) { border-color:rgba(255,124,0,0.4); background:rgba(255,124,0,0.06); color:#fff; }
+    .quiz-opt-btn.selected { border-color:var(--orange); background:rgba(255,124,0,0.1); color:#fff; }
+    .quiz-opt-btn.correct  { border-color:var(--green)!important; background:rgba(34,197,94,0.12)!important; color:var(--green)!important; }
+    .quiz-opt-btn.wrong    { border-color:var(--red)!important; background:rgba(239,68,68,0.1)!important; color:var(--red)!important; }
+    .quiz-opt-btn[disabled]{ cursor:default; }
+    .quiz-next-row { display:flex; justify-content:flex-end; margin-top:20px; }
+    .quiz-next-btn {
+      padding:10px 24px; background:linear-gradient(135deg,var(--orange),#c93a00);
+      border:none; border-radius:6px; font-family:'Orbitron',monospace;
+      font-size:10px; font-weight:700; letter-spacing:3px; color:#fff; cursor:pointer;
+      transition:opacity 0.2s;
+    }
+    .quiz-next-btn:hover { opacity:0.85; }
+    .quiz-result { padding:34px 22px; text-align:center; }
+    .qr-score {
+      font-family:'Orbitron',monospace; font-size:60px; font-weight:900;
+      line-height:1; margin-bottom:8px;
+    }
+    .qr-score.passed { color:var(--green); text-shadow:0 0 30px rgba(34,197,94,0.4); }
+    .qr-score.failed { color:var(--red);   text-shadow:0 0 30px rgba(239,68,68,0.35); }
+    .qr-msg  { font-size:14px; font-weight:600; color:#fff; margin-bottom:5px; }
+    .qr-sub  { font-family:'Share Tech Mono',monospace; font-size:10px; letter-spacing:2px; color:var(--muted); margin-bottom:26px; }
+    .qr-btns { display:flex; gap:10px; justify-content:center; }
+    .qr-retry { padding:10px 20px; background:transparent; border:1px solid var(--border); border-radius:6px; font-family:'Share Tech Mono',monospace; font-size:10px; letter-spacing:2px; color:var(--muted); cursor:pointer; transition:all 0.2s; }
+    .qr-retry:hover { border-color:var(--orange); color:var(--orange); }
+    .qr-close { padding:10px 20px; background:linear-gradient(135deg,var(--orange),#c93a00); border:none; border-radius:6px; font-family:'Orbitron',monospace; font-size:10px; font-weight:700; letter-spacing:2px; color:#fff; cursor:pointer; }
+
+    /* ─────────────────────────────────────
        COMPASS (decorative)
     ───────────────────────────────────── */
     #compass-rose {
@@ -811,9 +982,14 @@
     <div class="section" id="sec-theory">
       <div class="page-header">
         <h2>Theory Tracker</h2>
-        <p>Ground School · Check Off Each Topic as You Study</p>
+        <p>Ground School · Tap a Topic to Learn &amp; Mark Complete</p>
       </div>
-      <div id="theory-list"></div>
+      <div class="tab-bar">
+        <button class="tab-btn active" onclick="switchTab('topics',this)">📋 &nbsp;Topics</button>
+        <button class="tab-btn"        onclick="switchTab('studyplan',this)">📅 &nbsp;Study Plan</button>
+      </div>
+      <div id="tab-topics"    class="tab-panel active"><div id="theory-list"></div></div>
+      <div id="tab-studyplan" class="tab-panel"><div id="study-plan-list"></div></div>
     </div>
 
     <!-- ── MILESTONES ── -->
@@ -927,6 +1103,39 @@
     </div>
 
   </div><!-- /content -->
+
+  <!-- ── TOPIC INFO MODAL ── -->
+  <div id="topic-modal" class="modal-overlay" onclick="if(event.target===this)closeTopicModal()">
+    <div class="modal-box">
+      <div class="modal-hdr">
+        <div>
+          <div class="modal-hdr-cat" id="tm-cat"></div>
+          <div class="modal-hdr-ttl" id="tm-title"></div>
+        </div>
+        <button class="modal-x" onclick="closeTopicModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="modal-desc" id="tm-desc"></div>
+        <a class="modal-res-link" id="tm-link" target="_blank" rel="noopener">📖 &nbsp;<span id="tm-link-text">Study Resource</span> →</a>
+      </div>
+      <div class="modal-ftr">
+        <button class="modal-mark-btn" id="tm-mark-btn" onclick="toggleFromModal()"></button>
+        <button class="modal-cancel-btn" onclick="closeTopicModal()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── QUIZ MODAL ── -->
+  <div id="quiz-modal" class="modal-overlay" onclick="if(event.target===this&&!quizLocked)closeQuiz()">
+    <div class="modal-box quiz-modal-box">
+      <div class="modal-hdr">
+        <div class="modal-hdr-ttl" id="qm-title">Week Quiz</div>
+        <button class="modal-x" onclick="closeQuiz()">✕</button>
+      </div>
+      <div id="quiz-content"></div>
+    </div>
+  </div>
+
 </div><!-- /app -->
 
 <!-- Compass Rose (decorative) -->
@@ -996,6 +1205,120 @@ const CAT_ICON = {
   "Radio Comms": "📡", "Aircraft Systems": "⚙️", "Regulations": "📋",
 };
 
+// ════════════════════════════════════════
+//  TOPIC INFO DATA
+// ════════════════════════════════════════
+const TOPIC_INFO = {
+  'Aerodynamics|Lift':               { desc:'Lift is the upward aerodynamic force that keeps an aircraft airborne. It is generated as air flows over the curved upper wing surface faster than the lower surface, creating lower pressure above and higher pressure below. The pressure difference produces an upward force. Formula: L = CL × ½ρv² × S (CL = lift coefficient, ρ = air density, v = airspeed, S = wing area).', link:'https://skybrary.aero/articles/aerodynamic-lift', lt:'SKYbrary — Aerodynamic Lift' },
+  'Aerodynamics|Drag':               { desc:'Drag is the aerodynamic force that opposes an aircraft\'s motion through the air. There are two main types: parasite drag (caused by the aircraft\'s shape and surface friction — increases with speed) and induced drag (a by-product of lift generation — decreases with speed). Reducing drag is key to fuel efficiency and performance.', link:'https://skybrary.aero/articles/drag', lt:'SKYbrary — Drag' },
+  'Aerodynamics|Thrust':             { desc:'Thrust is the forward force produced by the engine(s) to overcome drag and accelerate the aircraft. In piston aircraft, a propeller converts engine power into thrust. In jet engines, thrust comes from accelerating a mass of air rearward (Newton\'s Third Law: every action has an equal and opposite reaction).', link:'https://skybrary.aero/articles/thrust', lt:'SKYbrary — Thrust' },
+  'Aerodynamics|Weight':             { desc:'Weight is the downward force of gravity acting on the aircraft\'s total mass (airframe + fuel + passengers + cargo). It must be overcome by lift for flight. Weight acts through the centre of gravity (CG). Proper weight and balance is critical — CG must remain within the approved limits for safe, controllable flight.', link:'https://skybrary.aero/articles/weight-and-balance', lt:'SKYbrary — Weight & Balance' },
+  'Aerodynamics|Bernoulli Principle':{ desc:'Bernoulli\'s Principle states that in a flowing fluid, an increase in velocity results in a decrease in pressure. Applied to wings: the aerofoil\'s curved upper surface causes air to travel faster, creating lower pressure above the wing. Combined with the angle of attack effect, this pressure difference generates lift.', link:'https://www.faa.gov/regulations_policies/handbooks_manuals/aviation/phak/media/06_phak_ch4.pdf', lt:'FAA PHAK Chapter 4 — Aerodynamics' },
+  'Aerodynamics|Aerofoil':           { desc:'An aerofoil (airfoil) is a shape designed to generate an aerodynamic force when moving through air. The cross-section of a wing is an aerofoil — typically curved on top (cambered) and flatter below. Key measurements: chord (front-to-back length), camber (curvature), thickness, and leading/trailing edges.', link:'https://skybrary.aero/articles/aerofoil', lt:'SKYbrary — Aerofoil' },
+  'Aerodynamics|Stall':              { desc:'A stall occurs when the angle of attack exceeds the critical angle (~15°), causing the smooth airflow over the wing to break down (separate). Lift drops suddenly and drag increases dramatically. Critically: a stall is about angle of attack, NOT airspeed — it can occur at any speed. Recovery: reduce AoA immediately, apply power.', link:'https://skybrary.aero/articles/stall', lt:'SKYbrary — Stall' },
+  'Aerodynamics|Angle of Attack':    { desc:'Angle of Attack (AoA) is the angle between the wing\'s chord line and the oncoming relative airflow (relative wind). Increasing AoA increases lift and drag — up to the critical angle (~15°). Beyond critical AoA, the wing stalls. AoA is the single most important concept in understanding lift, stall, and aircraft performance.', link:'https://skybrary.aero/articles/angle-attack', lt:'SKYbrary — Angle of Attack' },
+  'Navigation|VOR':                  { desc:'VHF Omnidirectional Range (VOR) is a ground-based radio navigation aid operating on 108–117.95 MHz. It transmits signals in all directions that an aircraft\'s receiver decodes to give a magnetic bearing (radial) to/from the station. VORs are accurate within ~40 NM at low altitude and are the backbone of the airway system.', link:'https://skybrary.aero/articles/vor', lt:'SKYbrary — VOR' },
+  'Navigation|NDB':                  { desc:'Non-Directional Beacon (NDB) broadcasts LF/MF radio waves in all directions. An Automatic Direction Finder (ADF) in the aircraft shows the relative bearing TO the station — the needle always points toward the NDB. Less accurate than VOR and affected by thunderstorms, coastlines, and terrain, but widely installed worldwide.', link:'https://skybrary.aero/articles/ndb', lt:'SKYbrary — NDB' },
+  'Navigation|GPS':                  { desc:'GPS (Global Positioning System) uses a constellation of 24+ satellites to provide precise 3D position, velocity, and time. Aviation GPS (GNSS) is extremely accurate and has largely replaced older navaids for navigation. IFR use requires integrity monitoring (RAIM). WAAS/SBAS augmentation enables GPS approach procedures.', link:'https://skybrary.aero/articles/global-navigation-satellite-system-gnss', lt:'SKYbrary — GNSS/GPS' },
+  'Navigation|Charts':               { desc:'Aviation charts show terrain, airspace, navaids, airports, restricted areas, and other information needed for flight planning and navigation. VFR pilots use sectional charts (1:500,000 scale). IFR pilots use en-route low/high charts and approach plates. Always use current, up-to-date editions — charts are updated every 56 days.', link:'https://www.faa.gov/air_traffic/flight_info/aeronav/digital_products/vfr/', lt:'FAA — VFR Sectional Charts' },
+  'Navigation|Waypoints':            { desc:'A waypoint is a specific geographical location defined by coordinates (latitude/longitude) used as a navigation reference. Named waypoints (5-letter ICAO codes, e.g. ALPHA) are used in flight plans and ATC clearances. GPS waypoints form the basis of modern area navigation (RNAV) routes and instrument approaches.', link:'https://skybrary.aero/articles/waypoint', lt:'SKYbrary — Waypoints' },
+  'Navigation|Airspace Classes':     { desc:'ICAO divides airspace into Classes A–G. Class A: controlled, IFR only, all aircraft separated by ATC. Class B/C/D: controlled around major/regional airports with varying ATC service. Class E: controlled for IFR, uncontrolled for VFR. Class F: advisory service. Class G: completely uncontrolled (uncontrolled or "open" airspace). Pakistan follows ICAO classifications.', link:'https://skybrary.aero/articles/icao-airspace-classes', lt:'SKYbrary — Airspace Classes' },
+  'Navigation|VFR':                  { desc:'Visual Flight Rules (VFR) allow pilots to fly using outside visual references — they must be able to see where they\'re going. Requires minimum visibility (typically 5 km) and specified cloud clearance for each airspace class. Most student and private pilot training is conducted under VFR. VMC = Visual Meteorological Conditions.', link:'https://skybrary.aero/articles/vfr-flight', lt:'SKYbrary — VFR' },
+  'Navigation|IFR':                  { desc:'Instrument Flight Rules (IFR) allow flight in clouds and poor visibility using only cockpit instruments for navigation. Requires additional training, ratings, and equipment. IFR flights operate in controlled airspace and receive ATC separation services throughout the flight. IMC = Instrument Meteorological Conditions.', link:'https://skybrary.aero/articles/ifr-flight', lt:'SKYbrary — IFR' },
+  'Meteorology|Clouds':              { desc:'Clouds are classified by altitude and form. High (above 20,000 ft): cirrus, cirrostratus, cirrocumulus. Middle (6,500–20,000 ft): altocumulus, altostratus. Low (surface–6,500 ft): stratus, nimbostratus. Vertical: cumulus, cumulonimbus (CB). CBs are the most dangerous — associated with severe turbulence, icing, hail, lightning, and microbursts. Always avoid CBs.', link:'https://skybrary.aero/articles/cloud-types', lt:'SKYbrary — Cloud Types' },
+  'Meteorology|Wind':                { desc:'Wind is the movement of air caused by atmospheric pressure differences. Key concepts: wind direction is where it comes FROM (a 270° wind blows from the west). Headwind reduces groundspeed; tailwind increases it. Crosswind requires correction on takeoff/landing. Wind shear (sudden change in wind speed/direction) is extremely hazardous near the ground.', link:'https://skybrary.aero/articles/wind', lt:'SKYbrary — Wind' },
+  'Meteorology|Pressure':            { desc:'Atmospheric pressure decreases with altitude (~1 hPa per 27 ft near sea level). Altimeters measure air pressure to indicate altitude — pilots must set the correct QNH (sea-level pressure) for accurate readings. High pressure (anticyclone) = generally fair weather. Low pressure (depression/cyclone) = poor weather, clouds and rain.', link:'https://skybrary.aero/articles/atmospheric-pressure', lt:'SKYbrary — Atmospheric Pressure' },
+  'Meteorology|Fronts':              { desc:'A weather front is a boundary between two air masses of different temperature/humidity. Cold front: cold air mass advances, forcing warm air steeply upward — brings sudden storms, heavy rain, then rapid clearing. Warm front: warm air gradually overriding cold air — brings extensive cloud, prolonged rain or drizzle, low visibility. Both fronts are hazardous to flight.', link:'https://skybrary.aero/articles/frontal-weather', lt:'SKYbrary — Frontal Weather' },
+  'Meteorology|Turbulence':          { desc:'Turbulence is irregular, rapid fluctuations of airflow causing aircraft to pitch, roll, and yaw. Types: mechanical (over mountains/terrain), thermal (rising warm air thermals), frontal (near weather fronts), Clear Air Turbulence/CAT (at high altitude with no visible clouds), and wake turbulence (in the wake of larger aircraft). Intensities: Light, Moderate, Severe, Extreme.', link:'https://skybrary.aero/articles/turbulence', lt:'SKYbrary — Turbulence' },
+  'Meteorology|Icing':               { desc:'Structural icing occurs when supercooled water droplets (liquid below 0°C) freeze on contact with the aircraft. This changes the aerofoil\'s shape (reducing lift and increasing drag), adds weight, and can block pitot tubes and control surfaces. Rime ice: rough/milky. Clear ice: smooth, heavier, harder to remove. Most dangerous zone: in cloud at 0°C to -20°C.', link:'https://skybrary.aero/articles/icing-aircraft', lt:'SKYbrary — Aircraft Icing' },
+  'Meteorology|METAR':               { desc:'METAR (Meteorological Aerodrome Report) is a standardised coded weather observation updated every hour. Format: ICAO code · Date/Time (UTC) · Wind (direction/speed/gusts) · Visibility · Weather phenomena · Cloud (amount/base height) · Temperature/Dew point · QNH. Example: OPRN 120600Z 27010KT 9999 FEW030 25/14 Q1013 NOSIG.', link:'https://skybrary.aero/articles/metar', lt:'SKYbrary — METAR' },
+  'Meteorology|TAF':                 { desc:'TAF (Terminal Aerodrome Forecast) is a weather forecast for an airport, typically valid 24–30 hours. Uses similar format to METAR with change groups: BECMG (becoming — gradual change), TEMPO (temporary fluctuations), FM (from — abrupt change). Essential for pre-flight planning. Always check the TAF for your destination and alternates.', link:'https://skybrary.aero/articles/taf', lt:'SKYbrary — TAF' },
+  'Radio Comms|Phraseology':         { desc:'Standard aviation phraseology ensures clear, unambiguous communication. Essential words: "Roger" (message received), "Wilco" (will comply), "Affirmative/Negative" (yes/no), "Say again" (repeat), "Stand by" (wait), "Confirm" (verify), "Correction" (I made an error). Distress: "Mayday Mayday Mayday". Urgency: "Pan-Pan Pan-Pan Pan-Pan". Speak clearly, concisely.', link:'https://skybrary.aero/articles/radiotelephony', lt:'SKYbrary — Radiotelephony' },
+  'Radio Comms|Frequencies':         { desc:'VHF aviation communication uses 118.000–136.975 MHz. Key frequencies: 121.5 MHz = international emergency/guard (always monitored), 123.45 MHz = air-to-air, 122.8 MHz = CTAF (common traffic advisory). Each airport, approach, en-route centre, and ATIS broadcast has its own assigned frequency found on sectional charts and approach plates.', link:'https://skybrary.aero/articles/vhf-radio-communication', lt:'SKYbrary — VHF Communications' },
+  'Radio Comms|ATC Instructions':    { desc:'ATC (Air Traffic Control) provides aircraft separation, traffic information, weather, and clearances. Pilots must comply with ATC instructions unless safety is compromised. Common clearances: taxi routes, takeoff/landing clearances, assigned headings (vectors), altitudes, speeds, and holding instructions. Understand before complying — always ask for clarification if unsure.', link:'https://skybrary.aero/articles/air-traffic-control-atc', lt:'SKYbrary — ATC' },
+  'Radio Comms|Readback':            { desc:'Readback means the pilot repeats critical ATC instructions to confirm correct understanding. ICAO requires readback of: runway in use, clearances to enter/land/cross/backtrack a runway, holding instructions, SSR transponder codes, altimeter settings, flight levels/altitudes, heading and speed instructions. This two-way check catches and corrects errors before they happen.', link:'https://skybrary.aero/articles/read-back-hear-back', lt:'SKYbrary — Read-Back/Hear-Back' },
+  'Radio Comms|Squawk Codes':        { desc:'Squawk codes are 4-digit octal transponder codes (0000–7777) assigned by ATC. The transponder sends the code plus altitude (Mode C) to ATC radar for identification and separation. Emergency codes: 7700 = Mayday emergency, 7600 = Radio failure (NORDO), 7500 = Unlawful interference/hijack. 1200 = VFR in the USA. Always readback the assigned code.', link:'https://skybrary.aero/articles/transponder', lt:'SKYbrary — Transponder' },
+  'Aircraft Systems|Engines':        { desc:'Light training aircraft typically use air-cooled, horizontally-opposed piston engines (Lycoming O-320, Continental O-200). They run on a 4-stroke cycle: intake, compression, power, exhaust. Key parameters to monitor: RPM (tachometer), manifold pressure, oil temperature, oil pressure, and cylinder head temperature (CHT). Always complete engine checks before flight.', link:'https://www.faa.gov/regulations_policies/handbooks_manuals/aviation/phak/media/12_phak_ch10.pdf', lt:'FAA PHAK — Powerplant' },
+  'Aircraft Systems|Fuel':           { desc:'Piston aircraft use AVGAS (aviation gasoline), typically 100LL (low lead, blue coloured). Turbine aircraft use Jet-A (kerosene, clear/straw coloured). NEVER mix fuel types. Before every flight: check fuel quantity on gauges AND visually (dip-stick), drain fuel sumps to check for water contamination. Fuel starvation (mismanagement) causes more accidents than fuel exhaustion (running out).', link:'https://www.faa.gov/regulations_policies/handbooks_manuals/aviation/phak/media/12_phak_ch10.pdf', lt:'FAA PHAK — Fuel Systems' },
+  'Aircraft Systems|Hydraulics':     { desc:'Hydraulic systems use pressurised fluid (typically MIL-H-5606 red fluid) to operate landing gear, flaps, wheel brakes, and flight controls on larger aircraft. Components: reservoir, pump (engine-driven or electric), actuators, and relief valves. Simple light aircraft may use cable/pushrod mechanical systems instead. Hydraulic failure requires use of backup/manual/emergency systems.', link:'https://skybrary.aero/articles/hydraulic-power', lt:'SKYbrary — Hydraulic Power' },
+  'Aircraft Systems|Electrical':     { desc:'Aircraft electrical systems power instruments, avionics, lights, and electric actuators. Main components: battery (backup/start), engine-driven alternator or generator (primary power in flight), bus bars (distribution), circuit breakers (protection). Most light aircraft use 14V or 28V DC systems. Monitor ammeter (or loadmeter) and voltmeter; a discharge indicates alternator failure.', link:'https://www.faa.gov/regulations_policies/handbooks_manuals/aviation/phak/media/16_phak_ch14.pdf', lt:'FAA PHAK — Electrical Systems' },
+  'Aircraft Systems|Instruments':    { desc:'The "Basic Six" (or T-arrangement) instruments: Airspeed Indicator (ASI) — pitot-static, shows airspeed. Attitude Indicator (AI) — gyroscopic, shows pitch and bank. Altimeter — static, shows altitude. Turn Coordinator — gyroscopic, shows rate of turn. Heading Indicator/DI — gyroscopic, shows magnetic heading. Vertical Speed Indicator (VSI) — static, shows rate of climb/descent.', link:'https://www.faa.gov/regulations_policies/handbooks_manuals/aviation/phak/media/10_phak_ch8.pdf', lt:'FAA PHAK — Flight Instruments' },
+  'Aircraft Systems|Pitot Static':   { desc:'The pitot-static system uses two pressure inputs: the pitot tube (faces forward, measures dynamic/ram air pressure) and the static port (measures ambient static pressure). ASI uses BOTH pitot and static. Altimeter and VSI use static only. Blocked pitot: ASI fails (shows incorrect speed). Blocked static: ASI, altimeter, and VSI all fail. Use the alternate static source if available.', link:'https://skybrary.aero/articles/pitot-static-system', lt:'SKYbrary — Pitot-Static System' },
+  'Regulations|ICAO Rules':          { desc:'ICAO (International Civil Aviation Organisation) is a UN specialised agency that sets global aviation standards (SARPs — Standards and Recommended Practices), published in 19 Annexes. Pakistan, as an ICAO contracting state (since 1947), implements these standards through PCAA. Key annexes: Annex 1 (Personnel Licensing), Annex 2 (Rules of the Air), Annex 6 (Aircraft Operations).', link:'https://skybrary.aero/articles/icao', lt:'SKYbrary — ICAO' },
+  'Regulations|Pakistani CAA Rules': { desc:'Pakistan Civil Aviation Authority (PCAA) regulates all civil aviation in Pakistan under the Civil Aviation Ordinance 1960 and Civil Aviation Rules (CARs). PCAA issues pilot licences (SPL, PPL, CPL, ATPL), registers aircraft (AP- prefix), certifies airports and maintenance organisations. Student Pilot Licence requires minimum age 16, Class 2 medical, and ground school.', link:'https://www.pcaa.gov.pk', lt:'PCAA — Official Website' },
+  'Regulations|Flight Rules':        { desc:'Two sets of rules govern flight: Visual Flight Rules (VFR) — flying with visual reference to the ground/horizon, and Instrument Flight Rules (IFR) — navigating by instruments. Rules cover minimum visibility, cloud clearance requirements, cruising altitude conventions (odd/even thousand feet), right-of-way, and filing flight plans. Defined in ICAO Annex 2 and local PCAA regulations.', link:'https://skybrary.aero/articles/rules-air', lt:'SKYbrary — Rules of the Air' },
+  'Regulations|PPL':                 { desc:'Private Pilot Licence (PPL) allows flight for non-commercial purposes (recreational, business travel at own cost). Requirements: minimum age 17, Class 2 medical, pass 9 theory exams, complete 45 flight hours (including 25 dual instruction + 10 solo hours), and a practical skills test. PPL is the foundation for all advanced licences. No salary flying permitted.', link:'https://skybrary.aero/articles/private-pilot-licence-ppl', lt:'SKYbrary — PPL' },
+  'Regulations|CPL':                 { desc:'Commercial Pilot Licence (CPL) allows a pilot to be paid to fly. Requirements: minimum age 18, Class 1 medical, 200 total flight hours (including PPL hours), advanced CPL theory exams, and CPL skills test. CPL holders can work as flight instructors, charter pilots, survey pilots, and airline co-pilots (First Officers on smaller aircraft types).', link:'https://skybrary.aero/articles/commercial-pilot-licence-cpl', lt:'SKYbrary — CPL' },
+  'Regulations|ATPL':                { desc:'Airline Transport Pilot Licence (ATPL) is the highest level of pilot certification — required to be Pilot in Command (Captain) of airline transport aircraft. Requirements: minimum age 21, Class 1 medical, 1,500 total flight hours, pass 14 ATPL theoretical knowledge exams (the hardest pilot exams), and an ATPL skills test in a multi-engine aircraft. This is the licence that gets you to Emirates.', link:'https://skybrary.aero/articles/airline-transport-pilot-licence-atpl', lt:'SKYbrary — ATPL' },
+};
+
+// ════════════════════════════════════════
+//  STUDY PLAN DAYS DATA
+// ════════════════════════════════════════
+const STUDY_PLAN = [
+  { w:1, title:'Aerodynamics', cat:'Aerodynamics',
+    days:['Aerodynamics basics — 4 forces of flight','Lift & drag — how wings work','Thrust & weight','Bernoulli principle','Aerofoil, stall & angle of attack','Revision','Weekend Quiz'] },
+  { w:2, title:'Navigation', cat:'Navigation',
+    days:['VOR & NDB — radio navaids','GPS & charts','Waypoints & airspace classes','VFR & IFR rules','Revision','Revision','Weekend Quiz'] },
+  { w:3, title:'Meteorology', cat:'Meteorology',
+    days:['Clouds & wind','Pressure & fronts','Turbulence & icing','METAR & TAF','Revision','Revision','Weekend Quiz'] },
+  { w:4, title:'Radio Comms', cat:'Radio Comms',
+    days:['Phraseology basics','Frequencies & radio use','ATC instructions','Readback & squawk codes','Revision','Revision','Weekend Quiz'] },
+  { w:5, title:'Aircraft Systems', cat:'Aircraft Systems',
+    days:['Engines & fuel','Hydraulics & electrical','Instruments — the basic six','Pitot-static system','Revision','Revision','Weekend Quiz'] },
+  { w:6, title:'Regulations', cat:'Regulations',
+    days:['ICAO rules & standards','Pakistani CAA rules','Flight rules VFR/IFR','Pilot licences PPL/CPL/ATPL','Revision','Revision','Final Quiz'] },
+];
+const DAY_LABELS = ['MON','TUE','WED','THU','FRI','SAT','SUN'];
+
+// ════════════════════════════════════════
+//  QUIZ DATA
+// ════════════════════════════════════════
+const QUIZ_DATA = {
+  1:[
+    { q:'What primarily creates lift on an aircraft wing?', opts:['Engine thrust pulling the aircraft upward','Pressure difference — lower pressure above the wing than below','The weight of the aircraft pushing down','Drag forces acting sideways'], ans:1 },
+    { q:'At approximately what angle of attack does a wing stall?', opts:['5°','10°','15°','30°'], ans:2 },
+    { q:'Which principle states that faster airflow creates lower pressure?', opts:['Newton\'s Third Law','Pascal\'s Law','Bernoulli\'s Principle','Boyle\'s Law'], ans:2 },
+    { q:'What are the four forces acting on an aircraft in flight?', opts:['Lift, Drag, Thrust, Speed','Lift, Weight, Thrust, Drag','Up, Down, Forward, Back','Lift, Weight, Fuel, Power'], ans:1 },
+    { q:'Drag is best described as:', opts:['The upward force on a wing','Forward force from the engine','Aerodynamic resistance opposing the aircraft\'s motion through air','The downward force of gravity'], ans:2 },
+  ],
+  2:[
+    { q:'What does VOR stand for?', opts:['Very Omnidirectional Radio','VHF Omnidirectional Range','Visual Orientation Radar','Variable Omni Range'], ans:1 },
+    { q:'With an NDB and ADF, the needle always points:', opts:['Away from the station','TO the NDB station','North','In the direction of travel'], ans:1 },
+    { q:'VFR stands for:', opts:['Very Fast Routing','Visual Flight Rules','Verified Flight Record','VHF Frequency Radio'], ans:1 },
+    { q:'ICAO airspace Class A is:', opts:['Uncontrolled — no ATC service','IFR only — all aircraft separated by ATC','VFR only — no IFR permitted','Military use only'], ans:1 },
+    { q:'A waypoint is:', opts:['A type of cockpit instrument','A fixed geographical navigation reference point','A weather reporting station','An emergency landing site'], ans:1 },
+  ],
+  3:[
+    { q:'Which cloud type poses the greatest hazard to pilots?', opts:['Cirrus','Stratus','Cumulonimbus (CB)','Altocumulus'], ans:2 },
+    { q:'A cold front typically brings:', opts:['Gradual warming and slow clearing','Sudden storms, heavy rain, and rapid weather change','Calm, stable fog and light drizzle','Warm, clear conditions'], ans:1 },
+    { q:'METAR is best described as:', opts:['A monthly temperature report','A standardised aviation routine weather observation','A weather forecast for an airport','A turbulence advisory'], ans:1 },
+    { q:'Aircraft structural icing is most dangerous because it:', opts:['Makes the cockpit uncomfortably cold','Changes the aerofoil shape, increases weight, and can block pitot tubes','Slightly reduces fuel efficiency','Affects UHF radio signal strength'], ans:1 },
+    { q:'A TAF provides:', opts:['A real-time weather observation','A turbulence analysis at altitude','A weather forecast for an aerodrome valid 24–30 hours','A temperature and fog report'], ans:2 },
+  ],
+  4:[
+    { q:'What does "Wilco" mean in aviation radio?', opts:['Message received, no action required','Will comply with the instruction','Say again please','I cannot comply'], ans:1 },
+    { q:'Squawk code 7700 indicates:', opts:['Radio communication failure','Unlawful interference (hijack)','Emergency — Mayday','Standard VFR flight'], ans:2 },
+    { q:'Why must pilots read back ATC instructions?', opts:['It is optional — only needed when unsure','To confirm correct understanding and catch errors before they occur','Only required to record in the pilot logbook','To prove attentiveness to the controller'], ans:1 },
+    { q:'VHF aviation communication frequencies are in the range of:', opts:['88–108 MHz (FM broadcast band)','118–137 MHz','200–400 MHz','406–512 MHz'], ans:1 },
+    { q:'Squawk 7600 means:', opts:['Emergency — Mayday','Hijack','Radio failure — NORDO','Standard IFR flight'], ans:2 },
+  ],
+  5:[
+    { q:'What is the primary purpose of the pitot tube?', opts:['Measures engine exhaust temperature','Senses dynamic air pressure to drive the airspeed indicator','Provides altitude information to the altimeter','Measures fuel flow rate'], ans:1 },
+    { q:'The aircraft "Basic Six" flight instruments are:', opts:['ASI, Attitude Indicator, Altimeter, Turn Coordinator, Heading Indicator, VSI','Six engine temperature gauges','ASI, Compass, Clock, Fuel, Oil temp, EGT','Six separate navigation radios'], ans:0 },
+    { q:'AVGAS 100LL is used in:', opts:['Jet airliners and turboprops','Piston-engine light aircraft','All aircraft types','Helicopters only'], ans:1 },
+    { q:'If the pitot tube becomes blocked, which instrument is primarily affected?', opts:['Altimeter','Attitude Indicator','Airspeed Indicator (ASI)','Heading Indicator'], ans:2 },
+    { q:'The battery and alternator are part of the aircraft\'s:', opts:['Hydraulic system','Fuel system','Electrical system','Pitot-static system'], ans:2 },
+  ],
+  6:[
+    { q:'What does ICAO stand for?', opts:['International Commercial Aviation Operations','International Civil Aviation Organisation','Institute for Commercial Airline Operations','International Committee for Air Operations'], ans:1 },
+    { q:'The minimum age for a Private Pilot Licence (PPL) in most ICAO countries is:', opts:['14 years','16 years','17 years','21 years'], ans:2 },
+    { q:'Which licence allows a pilot to be paid to fly passengers commercially?', opts:['Student Pilot Licence (SPL)','Private Pilot Licence (PPL)','Commercial Pilot Licence (CPL)','Recreational Pilot Licence'], ans:2 },
+    { q:'Under VFR, a pilot must:', opts:['File an IFR flight plan before every departure','Maintain visual reference and remain clear of cloud','Only fly above 10,000 feet','Have ATC radar contact at all times'], ans:1 },
+    { q:'An ATPL is required to act as:', opts:['A student pilot under instruction','A private recreational pilot','Pilot in Command (Captain) of an airline transport aircraft','A flight instructor only'], ans:2 },
+  ],
+};
+
 const DEFAULT_MS = [
   { y: "NOW — 2026 · AGE 12",  t: "Begin studying aviation theory — ground school",       s: "active"   },
   { y: "2027 · AGE 13",        t: "Complete ground school basics",                         s: "upcoming" },
@@ -1019,6 +1342,15 @@ const TARGET_DATE = new Date('2030-03-16T00:00:00').getTime();
 let checked    = JSON.parse(localStorage.getItem('pilot_theory')     || '{}');
 let milestones = JSON.parse(localStorage.getItem('pilot_milestones_v3') || 'null')
                  || DEFAULT_MS.map(m => ({...m}));
+
+// Modal state
+let modalCat = null, modalTopic = null;
+
+// Quiz state
+let quizScores = JSON.parse(localStorage.getItem('pilot_quiz') || '{}');
+// { '1': { score:5, passed:true }, ... }
+let quizState  = { week:null, q:0, answers:[], locked:false };
+let quizLocked = false; // prevent overlay-click dismiss during quiz
 
 // ════════════════════════════════════════
 //  LOGIN / LOGOUT
@@ -1060,6 +1392,7 @@ function init() {
   updateStats();
   tickClock();
   setInterval(tickClock, 1000);
+  buildStudyPlan();
 }
 
 // ════════════════════════════════════════
@@ -1112,7 +1445,7 @@ function buildTheory() {
       <div class="topic-grid">
         ${topics.map(t => {
           const k = cat+'|'+t, ok = !!checked[k];
-          return `<div class="topic-item${ok?' done':''}" onclick="toggle('${cat}','${t}',this)">
+          return `<div class="topic-item${ok?' done':''}" onclick="openTopicModal('${cat}','${t}')">
             <div class="topic-chk">${ok?'✓':''}</div>
             <div class="topic-name">${t}</div>
           </div>`;
@@ -1150,6 +1483,210 @@ function updateStats() {
   document.getElementById('stat-total').textContent = total;
   document.getElementById('stat-pct').textContent   = pct + '%';
   document.getElementById('theory-badge').textContent = pct + '%';
+}
+
+// ════════════════════════════════════════
+//  TAB SWITCH
+// ════════════════════════════════════════
+function switchTab(id, btn) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + id).classList.add('active');
+  btn.classList.add('active');
+  if (id === 'studyplan') buildStudyPlan();
+}
+
+// ════════════════════════════════════════
+//  TOPIC MODAL
+// ════════════════════════════════════════
+function openTopicModal(cat, topic) {
+  modalCat   = cat;
+  modalTopic = topic;
+  const info = TOPIC_INFO[cat + '|' + topic] || { desc: 'No description available.', link: 'https://skybrary.aero', lt: 'SKYbrary' };
+  document.getElementById('tm-cat').textContent       = cat;
+  document.getElementById('tm-title').textContent     = topic;
+  document.getElementById('tm-desc').textContent      = info.desc;
+  document.getElementById('tm-link').href             = info.link;
+  document.getElementById('tm-link-text').textContent = info.lt;
+  updateModalBtn();
+  document.getElementById('topic-modal').classList.add('open');
+}
+function closeTopicModal() {
+  document.getElementById('topic-modal').classList.remove('open');
+  modalCat = modalTopic = null;
+}
+function updateModalBtn() {
+  if (!modalCat) return;
+  const done = !!checked[modalCat + '|' + modalTopic];
+  const btn  = document.getElementById('tm-mark-btn');
+  btn.textContent = done ? '✗  Mark as Incomplete' : '✓  Mark as Complete';
+  btn.className   = 'modal-mark-btn' + (done ? ' is-done' : '');
+}
+function toggleFromModal() {
+  const k = modalCat + '|' + modalTopic;
+  checked[k] = !checked[k];
+  localStorage.setItem('pilot_theory', JSON.stringify(checked));
+  buildTheory();
+  buildStudyPlan();
+  updateStats();
+  updateModalBtn();
+}
+
+// ════════════════════════════════════════
+//  STUDY PLAN
+// ════════════════════════════════════════
+function getCurrentWeek() {
+  for (let i = 0; i < STUDY_PLAN.length; i++) {
+    if (!quizScores[STUDY_PLAN[i].w]?.passed) return i;
+  }
+  return STUDY_PLAN.length - 1;
+}
+
+function buildStudyPlan() {
+  const wrap   = document.getElementById('study-plan-list');
+  if (!wrap) return;
+  const curIdx = getCurrentWeek();
+  wrap.innerHTML = '';
+
+  STUDY_PLAN.forEach((wk, idx) => {
+    const topics  = THEORY[wk.cat] || [];
+    const done    = topics.filter(t => checked[wk.cat + '|' + t]).length;
+    const pct     = topics.length ? Math.round(done / topics.length * 100) : 0;
+    const qpassed = !!quizScores[wk.w]?.passed;
+    const isCur   = idx === curIdx;
+    const wkClass = qpassed ? 'wk-passed' : isCur ? 'wk-current' : '';
+    const bdgClass= qpassed ? 'wbdg-passed' : isCur ? 'wbdg-current' : 'wbdg-upcoming';
+    const bdgTxt  = qpassed ? '✅ PASSED' : isCur ? '▶ CURRENT WEEK' : '⏳ UPCOMING';
+
+    const daysHtml = wk.days.map((txt, di) => {
+      const isQuizDay = di === 6;
+      const isSat     = di === 5;
+      const qScore    = quizScores[wk.w];
+      let inner = `<div class="day-lbl">${DAY_LABELS[di]}</div>`;
+      if (isQuizDay) {
+        const btnClass = qpassed ? 'quiz-cell-btn qpassed' : 'quiz-cell-btn';
+        const btnTxt   = qpassed ? `✅ ${qScore.score}/5` : 'Take Quiz';
+        inner += `<div class="day-txt">${txt}</div>
+          <button class="${btnClass}" onclick="openQuiz(${wk.w})" ${qpassed&&!isCur?'':''}>${btnTxt}</button>`;
+      } else {
+        inner += `<div class="day-txt">${txt}</div>`;
+      }
+      return `<div class="day-cell${(isQuizDay||isSat)?' weekend':''}">${inner}</div>`;
+    }).join('');
+
+    const card = document.createElement('div');
+    card.className = 'week-card ' + wkClass;
+    card.innerHTML = `
+      <div class="week-head">
+        <div class="week-head-l">
+          <div class="week-num">WEEK ${wk.w}</div>
+          <div class="week-ttl">${wk.title}</div>
+        </div>
+        <div class="week-bdg ${bdgClass}">${bdgTxt}</div>
+      </div>
+      <div class="week-prog-bar"><div class="week-prog-fill" style="width:${pct}%"></div></div>
+      <div class="week-days">${daysHtml}</div>`;
+    wrap.appendChild(card);
+  });
+}
+
+// ════════════════════════════════════════
+//  QUIZ
+// ════════════════════════════════════════
+function openQuiz(weekNum) {
+  quizState = { week: weekNum, q: 0, answers: new Array(5).fill(null), locked: false };
+  quizLocked = true;
+  document.getElementById('qm-title').textContent =
+    'WEEK ' + weekNum + ' QUIZ — ' + (STUDY_PLAN[weekNum-1]?.title || '').toUpperCase();
+  renderQuestion();
+  document.getElementById('quiz-modal').classList.add('open');
+}
+function closeQuiz() {
+  document.getElementById('quiz-modal').classList.remove('open');
+  quizLocked = false;
+}
+function renderQuestion() {
+  const { week, q, answers } = quizState;
+  const questions = QUIZ_DATA[week];
+  if (!questions) return;
+
+  const dotsHtml = questions.map((_, i) => {
+    let cls = 'qdot';
+    if (i < q) cls += answers[i] === questions[i].ans ? ' correct' : ' wrong';
+    else if (i === q) cls += ' active';
+    return `<div class="${cls}"></div>`;
+  }).join('');
+
+  const qData = questions[q];
+  const optsHtml = qData.opts.map((opt, i) =>
+    `<button class="quiz-opt-btn" onclick="selectAnswer(${i})">${opt}</button>`
+  ).join('');
+
+  document.getElementById('quiz-content').innerHTML = `
+    <div class="quiz-prog-bar">
+      <span>QUESTION <span style="color:var(--orange)">${q+1}</span> OF 5</span>
+      <div class="quiz-dots">${dotsHtml}</div>
+    </div>
+    <div class="quiz-body">
+      <div class="quiz-q-txt">${qData.q}</div>
+      <div class="quiz-opts">${optsHtml}</div>
+      <div class="quiz-next-row" id="quiz-next-row" style="display:none">
+        <button class="quiz-next-btn" onclick="nextQuestion()">
+          ${q < 4 ? 'NEXT QUESTION →' : 'SEE RESULTS →'}
+        </button>
+      </div>
+    </div>`;
+}
+function selectAnswer(idx) {
+  if (quizState.locked) return;
+  quizState.locked = true;
+  quizState.answers[quizState.q] = idx;
+  const correct = QUIZ_DATA[quizState.week][quizState.q].ans;
+  const btns    = document.querySelectorAll('.quiz-opt-btn');
+  btns.forEach((b, i) => {
+    b.disabled = true;
+    if (i === correct) b.classList.add('correct');
+    if (i === idx && idx !== correct) b.classList.add('wrong');
+  });
+  document.getElementById('quiz-next-row').style.display = 'flex';
+}
+function nextQuestion() {
+  quizState.q++;
+  quizState.locked = false;
+  if (quizState.q >= 5) { showQuizResult(); return; }
+  renderQuestion();
+}
+function showQuizResult() {
+  const { week, answers } = quizState;
+  const questions = QUIZ_DATA[week];
+  const score  = answers.filter((a, i) => a === questions[i].ans).length;
+  const passed = score >= 4;
+
+  // Save score
+  quizScores[week] = { score, passed };
+  localStorage.setItem('pilot_quiz', JSON.stringify(quizScores));
+
+  const dotsHtml = answers.map((a, i) => {
+    const cls = a === questions[i].ans ? 'qdot correct' : 'qdot wrong';
+    return `<div class="${cls}"></div>`;
+  }).join('');
+
+  document.getElementById('quiz-content').innerHTML = `
+    <div class="quiz-prog-bar">
+      <span>QUIZ COMPLETE</span>
+      <div class="quiz-dots">${dotsHtml}</div>
+    </div>
+    <div class="quiz-result">
+      <div class="qr-score ${passed?'passed':'failed'}">${score}/5</div>
+      <div class="qr-msg">${passed ? '🎉 Well done, Cadet Shahmeer!' : '📖 Keep studying — you\'ve got this!'}</div>
+      <div class="qr-sub">${passed ? 'WEEK COMPLETE — MINIMUM SCORE ACHIEVED' : 'NEED 4/5 TO PASS — RETAKE WHEN READY'}</div>
+      <div class="qr-btns">
+        <button class="qr-retry" onclick="openQuiz(${week})">Retake Quiz</button>
+        <button class="qr-close" onclick="closeQuiz();buildStudyPlan()">
+          ${passed ? 'CONTINUE →' : 'CLOSE'}
+        </button>
+      </div>
+    </div>`;
 }
 
 // ════════════════════════════════════════
