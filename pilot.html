@@ -1,0 +1,1309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pilot Academy — Flight Deck</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:        #07090d;
+      --panel:     #0c1118;
+      --card:      #101820;
+      --border:    #1a2535;
+      --orange:    #ff7c00;
+      --orange-d:  rgba(255,124,0,0.12);
+      --blue:      #00b4d8;
+      --blue-d:    rgba(0,180,216,0.1);
+      --green:     #22c55e;
+      --red:       #ef4444;
+      --amber:     #fbbf24;
+      --text:      #dde4ee;
+      --muted:     #4e6070;
+      --sidebar-w: 226px;
+    }
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* ════════════════════════════════════════
+       GATE — LOGIN SCREEN
+    ════════════════════════════════════════ */
+    #gate {
+      position: fixed; inset: 0;
+      background: #040608;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+    }
+    #gate::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: repeating-linear-gradient(
+        0deg, transparent, transparent 2px,
+        rgba(0,180,216,0.015) 2px, rgba(0,180,216,0.015) 4px
+      );
+      pointer-events: none;
+    }
+    #gate::after {
+      content: '';
+      position: absolute; inset: 0;
+      background:
+        radial-gradient(ellipse 60% 50% at 50% 50%, rgba(0,60,90,0.25) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .gate-content { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; }
+    .gate-icao {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 10px; letter-spacing: 6px;
+      color: rgba(0,180,216,0.5);
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+    .gate-plane { font-size: 64px; margin-bottom: 18px; filter: drop-shadow(0 0 24px rgba(0,180,216,0.45)); animation: hover 3s ease-in-out infinite; }
+    @keyframes hover { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+    .gate-title {
+      font-family: 'Orbitron', monospace;
+      font-size: 30px; font-weight: 900; letter-spacing: 6px;
+      color: #fff; margin-bottom: 6px;
+    }
+    .gate-sub {
+      font-size: 11px; letter-spacing: 4px; color: var(--muted);
+      text-transform: uppercase; margin-bottom: 50px;
+    }
+    .gate-panel {
+      background: linear-gradient(160deg, #0e1620, #0a0f16);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 36px 40px 32px;
+      width: 380px;
+      box-shadow: 0 0 60px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.03) inset;
+    }
+    .gate-status {
+      display: flex; align-items: center; gap: 9px;
+      margin-bottom: 26px;
+    }
+    .gate-status-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--orange);
+      box-shadow: 0 0 8px var(--orange);
+      animation: blink 1.5s ease infinite;
+    }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.25} }
+    .gate-status-text {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 10px; letter-spacing: 3px; color: var(--orange);
+      text-transform: uppercase;
+    }
+    .gate-divider { height: 1px; background: var(--border); margin-bottom: 24px; }
+    .gate-label {
+      font-size: 9px; letter-spacing: 3px; color: var(--muted);
+      text-transform: uppercase; margin-bottom: 9px;
+    }
+    .gate-input {
+      width: 100%;
+      background: rgba(0,0,0,0.45);
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      padding: 13px 16px;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 18px; letter-spacing: 6px; color: #fff;
+      outline: none; margin-bottom: 18px;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .gate-input::placeholder { font-size: 14px; letter-spacing: 4px; color: var(--muted); }
+    .gate-input:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(0,180,216,0.1); }
+    .gate-input.shake { animation: shake 0.35s ease; border-color: var(--red); }
+    @keyframes shake { 0%,100%{transform:translateX(0)} 20%,60%{transform:translateX(-7px)} 40%,80%{transform:translateX(7px)} }
+    .gate-btn {
+      width: 100%;
+      background: linear-gradient(135deg, #ff7c00, #d94c00);
+      border: none; border-radius: 7px;
+      padding: 14px;
+      font-family: 'Orbitron', monospace;
+      font-size: 12px; font-weight: 700; letter-spacing: 4px;
+      color: #fff; cursor: pointer;
+      transition: opacity 0.2s, transform 0.15s;
+      box-shadow: 0 4px 20px rgba(255,124,0,0.3);
+    }
+    .gate-btn:hover { opacity: 0.9; transform: translateY(-1px); }
+    .gate-btn:active { transform: translateY(0); }
+    .gate-error {
+      margin-top: 12px; min-height: 18px; text-align: center;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 11px; letter-spacing: 2px; color: var(--red);
+    }
+    .gate-footer {
+      margin-top: 44px;
+      font-size: 10px; letter-spacing: 3px; color: rgba(78,96,112,0.5);
+      text-align: center;
+    }
+
+    /* ════════════════════════════════════════
+       APP SHELL
+    ════════════════════════════════════════ */
+    #app { display: none; height: 100vh; }
+    #app.visible { display: flex; }
+
+    /* ── TOPBAR ── */
+    #topbar {
+      position: fixed; top: 0;
+      left: var(--sidebar-w); right: 0;
+      height: 46px;
+      background: rgba(12,17,24,0.96);
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center;
+      justify-content: space-between;
+      padding: 0 28px;
+      z-index: 200;
+      backdrop-filter: blur(12px);
+    }
+    .topbar-id {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 10px; letter-spacing: 4px; color: var(--muted);
+    }
+    .topbar-id span { color: var(--orange); }
+    .topbar-right { display: flex; align-items: center; gap: 22px; }
+    .topbar-live {
+      display: flex; align-items: center; gap: 6px;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 10px; letter-spacing: 2px; color: var(--green);
+    }
+    .topbar-live-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--green); animation: blink 2s ease infinite;
+    }
+    #topbar-clock {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 10px; letter-spacing: 2px; color: var(--muted);
+    }
+    .topbar-logout {
+      padding: 4px 12px;
+      background: transparent;
+      border: 1px solid rgba(239,68,68,0.25);
+      border-radius: 4px;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 9px; letter-spacing: 2px; color: rgba(239,68,68,0.5);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .topbar-logout:hover { border-color: var(--red); color: var(--red); }
+
+    /* ── SIDEBAR ── */
+    #sidebar {
+      width: var(--sidebar-w); min-width: var(--sidebar-w);
+      background: var(--panel);
+      border-right: 1px solid var(--border);
+      height: 100vh;
+      display: flex; flex-direction: column;
+      overflow-y: auto;
+    }
+    #sidebar::-webkit-scrollbar { width: 3px; }
+    #sidebar::-webkit-scrollbar-thumb { background: var(--border); }
+    .sidebar-logo {
+      padding: 22px 20px 18px;
+      border-bottom: 1px solid var(--border);
+    }
+    .sidebar-callsign {
+      font-family: 'Orbitron', monospace;
+      font-size: 13px; font-weight: 900; letter-spacing: 2px;
+      color: var(--orange);
+    }
+    .sidebar-name {
+      font-size: 10px; color: var(--muted);
+      margin-top: 3px; letter-spacing: 1px;
+    }
+    .sidebar-rank {
+      display: inline-block;
+      margin-top: 8px;
+      padding: 2px 9px;
+      border-radius: 999px;
+      background: rgba(0,180,216,0.1);
+      border: 1px solid rgba(0,180,216,0.2);
+      font-size: 9px; letter-spacing: 2px; color: var(--blue);
+      text-transform: uppercase;
+    }
+    .nav-section {
+      font-size: 8px; letter-spacing: 4px;
+      color: rgba(78,96,112,0.6);
+      text-transform: uppercase;
+      padding: 16px 20px 6px;
+    }
+    .nav-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 11px 20px;
+      cursor: pointer;
+      border-left: 3px solid transparent;
+      font-size: 12px; font-weight: 500;
+      color: rgba(221,228,238,0.45);
+      transition: all 0.18s;
+      user-select: none;
+    }
+    .nav-item:hover { background: rgba(255,255,255,0.02); color: var(--text); }
+    .nav-item.active {
+      background: rgba(255,124,0,0.07);
+      border-left-color: var(--orange);
+      color: #fff;
+    }
+    .nav-icon { font-size: 15px; }
+    .nav-label { flex: 1; }
+    .nav-badge {
+      font-size: 9px; font-family: 'Share Tech Mono', monospace;
+      background: rgba(255,124,0,0.2);
+      color: var(--orange);
+      border-radius: 999px;
+      padding: 1px 7px;
+      letter-spacing: 0;
+    }
+    .sidebar-foot {
+      margin-top: auto;
+      padding: 16px 20px;
+      border-top: 1px solid var(--border);
+    }
+    .sidebar-foot-label {
+      font-size: 8px; letter-spacing: 3px;
+      color: var(--muted); text-transform: uppercase;
+      margin-bottom: 5px;
+    }
+    #sidebar-days {
+      font-family: 'Orbitron', monospace;
+      font-size: 22px; font-weight: 700; color: var(--orange);
+    }
+    .sidebar-days-unit { font-size: 9px; color: var(--muted); letter-spacing: 2px; }
+
+    /* ── CONTENT AREA ── */
+    #content {
+      flex: 1; height: 100vh;
+      overflow-y: auto;
+      padding: 72px 32px 40px;
+    }
+    #content::-webkit-scrollbar { width: 4px; }
+    #content::-webkit-scrollbar-track { background: transparent; }
+    #content::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+    /* ── SECTIONS ── */
+    .section { display: none; }
+    .section.active { display: block; }
+
+    .page-header { margin-bottom: 26px; }
+    .page-header h2 {
+      font-family: 'Orbitron', monospace;
+      font-size: 16px; font-weight: 700; letter-spacing: 4px;
+      color: #fff; text-transform: uppercase;
+    }
+    .page-header p {
+      font-size: 10px; letter-spacing: 2.5px;
+      color: var(--muted); margin-top: 5px;
+      text-transform: uppercase;
+    }
+
+    /* ── CARDS ── */
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 22px 24px;
+    }
+    .card-label {
+      font-size: 9px; letter-spacing: 3px;
+      text-transform: uppercase; color: var(--muted);
+      margin-bottom: 12px;
+    }
+
+    /* ─────────────────────────────────────
+       OVERVIEW
+    ───────────────────────────────────── */
+    .quote-card {
+      background: linear-gradient(135deg, rgba(255,124,0,0.07), rgba(0,180,216,0.05));
+      border: 1px solid rgba(255,124,0,0.18);
+      border-radius: 12px;
+      padding: 20px 26px 18px;
+      margin-bottom: 18px;
+      position: relative; overflow: hidden;
+    }
+    .quote-card::before {
+      content: '"';
+      position: absolute; top: -18px; left: 14px;
+      font-size: 130px; color: rgba(255,124,0,0.06);
+      font-family: Georgia, serif; line-height: 1; pointer-events: none;
+    }
+    .quote-text {
+      font-size: 14px; font-style: italic;
+      color: rgba(221,228,238,0.85);
+      line-height: 1.65; position: relative;
+    }
+    .quote-author {
+      font-size: 10px; letter-spacing: 2.5px;
+      color: var(--orange); margin-top: 9px;
+      text-transform: uppercase;
+    }
+
+    .countdown-card {
+      background: linear-gradient(160deg, #090e15, #0c1520);
+      border: 1px solid rgba(0,180,216,0.2);
+      border-radius: 12px;
+      padding: 28px 24px 24px;
+      text-align: center;
+      margin-bottom: 18px;
+      position: relative; overflow: hidden;
+    }
+    .countdown-card::after {
+      content: '';
+      position: absolute; bottom: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--blue), transparent);
+    }
+    .countdown-tag {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 9px; letter-spacing: 5px; color: var(--blue);
+      text-transform: uppercase; margin-bottom: 18px;
+    }
+    .countdown-row {
+      display: flex; justify-content: center; align-items: flex-start;
+      gap: 10px; margin-bottom: 14px;
+    }
+    .cd-unit { text-align: center; }
+    .cd-num {
+      font-family: 'Orbitron', monospace;
+      font-size: 58px; font-weight: 900; color: #fff; line-height: 1;
+      text-shadow: 0 0 30px rgba(0,180,216,0.35);
+    }
+    .cd-sep {
+      font-family: 'Orbitron', monospace;
+      font-size: 44px; color: var(--muted);
+      line-height: 1.05; padding-top: 4px;
+    }
+    .cd-lbl {
+      font-size: 8px; letter-spacing: 3px;
+      color: var(--muted); text-transform: uppercase; margin-top: 5px;
+    }
+    .countdown-target {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 10px; letter-spacing: 2px; color: var(--muted);
+    }
+    .countdown-target b { color: var(--orange); }
+
+    .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+    .stat-card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 10px; padding: 18px 18px 16px;
+    }
+    .stat-val {
+      font-family: 'Orbitron', monospace;
+      font-size: 34px; font-weight: 700; line-height: 1;
+    }
+    .stat-val.o { color: var(--orange); }
+    .stat-val.b { color: var(--blue); }
+    .stat-val.g { color: var(--green); }
+    .stat-lbl {
+      font-size: 9px; letter-spacing: 2px;
+      color: var(--muted); text-transform: uppercase; margin-top: 7px;
+    }
+
+    /* ─────────────────────────────────────
+       THEORY TRACKER
+    ───────────────────────────────────── */
+    .cat-block {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 12px; padding: 20px 22px;
+      margin-bottom: 14px;
+    }
+    .cat-head {
+      display: flex; align-items: center;
+      justify-content: space-between; margin-bottom: 10px;
+    }
+    .cat-name {
+      font-family: 'Orbitron', monospace;
+      font-size: 10px; font-weight: 700; letter-spacing: 2.5px;
+      text-transform: uppercase; color: var(--blue);
+    }
+    .cat-pct {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 11px; color: var(--orange);
+    }
+    .prog-bar {
+      height: 3px; background: rgba(255,255,255,0.05);
+      border-radius: 2px; margin-bottom: 14px; overflow: hidden;
+    }
+    .prog-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--orange), var(--blue));
+      border-radius: 2px; transition: width 0.4s ease;
+    }
+    .topic-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+      gap: 7px;
+    }
+    .topic-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 8px 12px;
+      background: rgba(0,0,0,0.2);
+      border: 1px solid rgba(255,255,255,0.04);
+      border-radius: 6px; cursor: pointer;
+      transition: all 0.15s;
+    }
+    .topic-item:hover { border-color: rgba(255,124,0,0.3); background: rgba(255,124,0,0.04); }
+    .topic-item.done { border-color: rgba(34,197,94,0.2); background: rgba(34,197,94,0.03); }
+    .topic-chk {
+      width: 16px; height: 16px;
+      border: 1.5px solid var(--muted); border-radius: 3px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; font-size: 9px;
+      transition: all 0.15s;
+    }
+    .topic-item.done .topic-chk { background: var(--green); border-color: var(--green); color: #fff; }
+    .topic-name {
+      font-size: 12px; color: rgba(221,228,238,0.65);
+      transition: color 0.15s;
+    }
+    .topic-item.done .topic-name { color: rgba(221,228,238,0.35); text-decoration: line-through; }
+
+    /* ─────────────────────────────────────
+       MILESTONES
+    ───────────────────────────────────── */
+    .timeline { padding-left: 44px; position: relative; }
+    .timeline::before {
+      content: '';
+      position: absolute; left: 17px; top: 6px; bottom: 6px;
+      width: 2px;
+      background: linear-gradient(180deg, var(--orange), var(--blue), rgba(0,180,216,0.05));
+    }
+    .ms {
+      position: relative; padding: 0 0 28px 20px;
+    }
+    .ms::before {
+      content: '';
+      position: absolute; left: -31px; top: 4px;
+      width: 12px; height: 12px; border-radius: 50%;
+      border: 2px solid var(--muted); background: var(--bg);
+      transition: all 0.25s;
+    }
+    .ms.done::before     { background: var(--green); border-color: var(--green); box-shadow: 0 0 10px rgba(34,197,94,0.5); }
+    .ms.active::before   { background: var(--orange); border-color: var(--orange); box-shadow: 0 0 10px rgba(255,124,0,0.5); animation: pulse 2s infinite; }
+    .ms.upcoming::before { background: var(--bg); border-color: var(--muted); }
+    @keyframes pulse { 0%,100%{box-shadow:0 0 8px rgba(255,124,0,0.4)} 50%{box-shadow:0 0 18px rgba(255,124,0,0.85)} }
+    .ms-year {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 9px; letter-spacing: 3px; margin-bottom: 4px;
+    }
+    .ms.done     .ms-year { color: var(--green); }
+    .ms.active   .ms-year { color: var(--orange); }
+    .ms.upcoming .ms-year { color: var(--muted); }
+    .ms-text {
+      font-size: 13px; font-weight: 500; color: #fff; margin-bottom: 7px;
+    }
+    .ms.upcoming .ms-text { color: rgba(221,228,238,0.4); }
+    .ms-btn {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 3px 10px; border-radius: 999px;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase;
+      cursor: pointer; border: 1px solid;
+      transition: opacity 0.2s;
+    }
+    .ms-btn:hover { opacity: 0.7; }
+    .ms.done     .ms-btn { background: rgba(34,197,94,0.1);  color: var(--green); border-color: rgba(34,197,94,0.25); }
+    .ms.active   .ms-btn { background: rgba(255,124,0,0.1);  color: var(--orange); border-color: rgba(255,124,0,0.25); }
+    .ms.upcoming .ms-btn { background: rgba(78,96,112,0.1);  color: var(--muted);  border-color: rgba(78,96,112,0.2); }
+
+    /* ─────────────────────────────────────
+       NOTES
+    ───────────────────────────────────── */
+    .notes-ta {
+      width: 100%; min-height: 380px;
+      background: rgba(0,0,0,0.35);
+      border: 1px solid var(--border); border-radius: 8px;
+      padding: 16px 18px;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 13px; color: var(--text);
+      line-height: 1.75; resize: vertical; outline: none;
+      transition: border-color 0.2s;
+    }
+    .notes-ta::placeholder { color: var(--muted); }
+    .notes-ta:focus { border-color: rgba(0,180,216,0.35); }
+    .notes-actions { display: flex; align-items: center; gap: 14px; margin-top: 13px; }
+    .notes-save {
+      padding: 10px 22px;
+      background: linear-gradient(135deg, var(--orange), #d94c00);
+      border: none; border-radius: 6px;
+      font-family: 'Orbitron', monospace;
+      font-size: 10px; font-weight: 700; letter-spacing: 3px;
+      color: #fff; cursor: pointer;
+      transition: opacity 0.2s, transform 0.15s;
+      box-shadow: 0 3px 14px rgba(255,124,0,0.25);
+    }
+    .notes-save:hover { opacity: 0.88; transform: translateY(-1px); }
+    #notes-ok {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 10px; letter-spacing: 2px; color: var(--green);
+      opacity: 0; transition: opacity 0.3s;
+    }
+    #notes-ok.show { opacity: 1; }
+
+    /* ─────────────────────────────────────
+       WEATHER
+    ───────────────────────────────────── */
+    .wx-loading {
+      text-align: center; padding: 50px;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 11px; letter-spacing: 3px; color: var(--muted);
+    }
+    .wx-main { display: flex; align-items: center; gap: 22px; margin-bottom: 22px; }
+    .wx-icon { font-size: 58px; }
+    .wx-temp {
+      font-family: 'Orbitron', monospace;
+      font-size: 68px; font-weight: 900; line-height: 1;
+    }
+    .wx-info-wrap { margin-left: 4px; }
+    .wx-cond { font-size: 16px; font-weight: 600; color: #fff; margin-bottom: 5px; }
+    .wx-loc { font-size: 10px; letter-spacing: 2px; color: var(--muted); }
+    .wx-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      gap: 10px; margin-bottom: 16px;
+    }
+    .wx-cell {
+      background: rgba(0,0,0,0.25); border: 1px solid var(--border);
+      border-radius: 8px; padding: 12px 14px;
+    }
+    .wx-cell-lbl { font-size: 8px; letter-spacing: 2.5px; color: var(--muted); text-transform: uppercase; margin-bottom: 6px; }
+    .wx-cell-val { font-family: 'Share Tech Mono', monospace; font-size: 20px; color: #fff; }
+    .wx-cell-unit { font-size: 9px; color: var(--muted); margin-left: 3px; }
+    .vfr-pill {
+      padding: 13px 18px; border-radius: 8px;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 11px; letter-spacing: 2.5px; text-align: center;
+    }
+    .vfr-ok       { background: rgba(34,197,94,0.08); border: 1px solid rgba(34,197,94,0.25); color: var(--green); }
+    .vfr-marginal { background: rgba(251,191,36,0.08); border: 1px solid rgba(251,191,36,0.25); color: var(--amber); }
+    .vfr-ifr      { background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.25); color: var(--red); }
+    .wx-refresh {
+      margin-top: 14px;
+      padding: 7px 18px;
+      background: transparent; border: 1px solid var(--border);
+      border-radius: 6px; font-size: 10px; letter-spacing: 2px;
+      color: var(--muted); cursor: pointer;
+      font-family: 'Share Tech Mono', monospace;
+      transition: border-color 0.2s, color 0.2s;
+    }
+    .wx-refresh:hover { border-color: var(--blue); color: var(--blue); }
+
+    /* ─────────────────────────────────────
+       FLYING CLUB
+    ───────────────────────────────────── */
+    .club-head {
+      display: flex; align-items: center; gap: 20px; margin-bottom: 22px;
+    }
+    .club-emblem { font-size: 52px; filter: drop-shadow(0 0 14px rgba(255,124,0,0.35)); }
+    .club-ttl {
+      font-family: 'Orbitron', monospace;
+      font-size: 15px; font-weight: 700; letter-spacing: 3px; color: #fff;
+      margin-bottom: 7px;
+    }
+    .club-home {
+      display: inline-block; padding: 3px 11px;
+      background: rgba(255,124,0,0.1); border: 1px solid rgba(255,124,0,0.3);
+      border-radius: 999px; font-size: 9px; letter-spacing: 2px;
+      color: var(--orange); text-transform: uppercase;
+    }
+    .info-row {
+      display: flex; gap: 14px; padding: 11px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      font-size: 12px;
+    }
+    .info-row:last-child { border-bottom: none; }
+    .info-key {
+      width: 110px; flex-shrink: 0;
+      font-size: 9px; letter-spacing: 2px;
+      color: var(--muted); text-transform: uppercase;
+      padding-top: 2px;
+    }
+    .info-val { color: rgba(221,228,238,0.8); line-height: 1.5; }
+    .dream-card {
+      background: linear-gradient(135deg, rgba(255,124,0,0.05), rgba(0,180,216,0.05));
+      border: 1px solid rgba(255,124,0,0.15);
+      border-radius: 10px; padding: 18px 20px;
+      margin-top: 16px;
+      font-size: 13px; color: rgba(221,228,238,0.75); line-height: 1.65;
+    }
+    .dream-card strong { color: var(--orange); }
+    .dream-card .route {
+      display: flex; flex-wrap: wrap; gap: 6px;
+      align-items: center; margin-top: 12px;
+    }
+    .route-step {
+      padding: 4px 12px;
+      background: rgba(0,180,216,0.08); border: 1px solid rgba(0,180,216,0.2);
+      border-radius: 6px; font-size: 10px; letter-spacing: 1px;
+      color: var(--blue); font-family: 'Share Tech Mono', monospace;
+    }
+    .route-arrow { color: var(--muted); font-size: 11px; }
+
+    /* ─────────────────────────────────────
+       COMPASS (decorative)
+    ───────────────────────────────────── */
+    #compass-rose {
+      position: fixed; bottom: 22px; right: 26px;
+      opacity: 0.055; pointer-events: none; z-index: 0;
+      animation: spin-slow 120s linear infinite;
+    }
+    @keyframes spin-slow { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+  </style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════
+     GATE — SECURITY CHECKPOINT
+══════════════════════════════════════════ -->
+<div id="gate">
+  <div class="gate-content">
+    <div class="gate-icao">Pakistan CAA · Pilot Training System · OPRN</div>
+    <div class="gate-plane">✈️</div>
+    <div class="gate-title">FLIGHT DECK</div>
+    <div class="gate-sub">Authorized Flight Crew Only · Restricted Access</div>
+    <div class="gate-panel">
+      <div class="gate-status">
+        <div class="gate-status-dot"></div>
+        <div class="gate-status-text">Security Checkpoint Alpha · Awaiting Clearance</div>
+      </div>
+      <div class="gate-divider"></div>
+      <div class="gate-label">Pilot Access Code</div>
+      <input type="password" id="pwd" class="gate-input" placeholder="● ● ● ● ● ● ● ●" autocomplete="off" spellcheck="false">
+      <button class="gate-btn" onclick="tryLogin()">CLEARED FOR TAKEOFF &nbsp;↗</button>
+      <div class="gate-error" id="gate-err"></div>
+    </div>
+    <div class="gate-footer">FLIGHT DECK v1.0 · STUDENT PILOT PORTAL · RAWALPINDI FLYING CLUB</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     MAIN APP
+══════════════════════════════════════════ -->
+<div id="app">
+
+  <!-- Topbar -->
+  <div id="topbar">
+    <div class="topbar-id">✈ FLIGHT DECK &nbsp;·&nbsp; <span>CADET NURKHAN-16</span></div>
+    <div class="topbar-right">
+      <div class="topbar-live"><div class="topbar-live-dot"></div>SYSTEMS NOMINAL</div>
+      <div id="topbar-clock">--:-- UTC</div>
+      <button class="topbar-logout" onclick="logout()">LOGOUT</button>
+    </div>
+  </div>
+
+  <!-- Sidebar -->
+  <div id="sidebar">
+    <div class="sidebar-logo">
+      <div class="sidebar-callsign">NURKHAN-16</div>
+      <div class="sidebar-name">Student Pilot Dashboard</div>
+      <div class="sidebar-rank">✈ Cadet Rank</div>
+    </div>
+
+    <nav>
+      <div class="nav-section">Navigation</div>
+
+      <div class="nav-item active" onclick="nav('overview',this)">
+        <span class="nav-icon">🏠</span>
+        <span class="nav-label">Overview</span>
+      </div>
+      <div class="nav-item" onclick="nav('theory',this)">
+        <span class="nav-icon">📚</span>
+        <span class="nav-label">Theory Tracker</span>
+        <span class="nav-badge" id="theory-badge">0%</span>
+      </div>
+      <div class="nav-item" onclick="nav('milestones',this)">
+        <span class="nav-icon">🎯</span>
+        <span class="nav-label">Milestones</span>
+      </div>
+      <div class="nav-item" onclick="nav('notes',this)">
+        <span class="nav-icon">📝</span>
+        <span class="nav-label">Flight Notes</span>
+      </div>
+
+      <div class="nav-section">External</div>
+      <div class="nav-item" onclick="nav('weather',this)">
+        <span class="nav-icon">🌤️</span>
+        <span class="nav-label">Met Office</span>
+      </div>
+      <div class="nav-item" onclick="nav('club',this)">
+        <span class="nav-icon">🛫</span>
+        <span class="nav-label">Flying Club</span>
+      </div>
+    </nav>
+
+    <div class="sidebar-foot">
+      <div class="sidebar-foot-label">Days to First Flight</div>
+      <div id="sidebar-days">—</div>
+      <div class="sidebar-days-unit">DAYS REMAINING</div>
+    </div>
+  </div>
+
+  <!-- Content -->
+  <div id="content">
+
+    <!-- ── OVERVIEW ── -->
+    <div class="section active" id="sec-overview">
+      <div class="page-header">
+        <h2>Overview</h2>
+        <p>Mission Control · Your Pilot Journey at a Glance</p>
+      </div>
+
+      <div class="quote-card">
+        <div class="quote-text" id="qt-text">Loading quote...</div>
+        <div class="quote-author" id="qt-auth"></div>
+      </div>
+
+      <div class="countdown-card">
+        <div class="countdown-tag">⏱ T-MINUS · Time to First Flight Eligibility</div>
+        <div class="countdown-row">
+          <div class="cd-unit">
+            <div class="cd-num" id="cd-d">000</div>
+            <div class="cd-lbl">Days</div>
+          </div>
+          <div class="cd-sep">:</div>
+          <div class="cd-unit">
+            <div class="cd-num" id="cd-h">00</div>
+            <div class="cd-lbl">Hours</div>
+          </div>
+          <div class="cd-sep">:</div>
+          <div class="cd-unit">
+            <div class="cd-num" id="cd-m">00</div>
+            <div class="cd-lbl">Minutes</div>
+          </div>
+          <div class="cd-sep">:</div>
+          <div class="cd-unit">
+            <div class="cd-num" id="cd-s">00</div>
+            <div class="cd-lbl">Seconds</div>
+          </div>
+        </div>
+        <div class="countdown-target">Target: <b>1 August 2028 · Rawalpindi Flying Club · Age 16</b></div>
+      </div>
+
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-val o" id="stat-done">0</div>
+          <div class="stat-lbl">Topics Completed</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-val" id="stat-total">0</div>
+          <div class="stat-lbl">Total Topics</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-val b" id="stat-pct">0%</div>
+          <div class="stat-lbl">Ground School</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-val g" id="stat-days">—</div>
+          <div class="stat-lbl">Days to Go</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── THEORY TRACKER ── -->
+    <div class="section" id="sec-theory">
+      <div class="page-header">
+        <h2>Theory Tracker</h2>
+        <p>Ground School · Check Off Each Topic as You Study</p>
+      </div>
+      <div id="theory-list"></div>
+    </div>
+
+    <!-- ── MILESTONES ── -->
+    <div class="section" id="sec-milestones">
+      <div class="page-header">
+        <h2>Milestones</h2>
+        <p>Flight Plan · Your Path to the Cockpit</p>
+      </div>
+      <div class="card">
+        <div class="card-label">Click a milestone to cycle its status</div>
+        <div class="timeline" id="ms-list"></div>
+      </div>
+    </div>
+
+    <!-- ── NOTES ── -->
+    <div class="section" id="sec-notes">
+      <div class="page-header">
+        <h2>Flight Notes</h2>
+        <p>Captain's Log · Your Personal Aviation Notebook</p>
+      </div>
+      <div class="card">
+        <div class="card-label">Personal notes — saved to this device</div>
+        <textarea id="notes-ta" class="notes-ta" placeholder="Write your aviation notes here…&#10;&#10;e.g. Key formulas, concepts, ATC phrases, things to remember…&#10;&#10;Lift = CL × ½ρv² × S&#10;Stall: AoA exceeds critical angle (~15°)&#10;METAR format: ICAO Date/Time Wind Visibility Weather Cloud Temp/Dew QNH&#10;&#10;VOR = VHF Omnidirectional Range — gives magnetic bearing to station&#10;NDB = Non-Directional Beacon — ADF needle points TO the station&#10;…"></textarea>
+        <div class="notes-actions">
+          <button class="notes-save" onclick="saveNotes()">SAVE LOG</button>
+          <span id="notes-ok">✓ SAVED</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── WEATHER ── -->
+    <div class="section" id="sec-weather">
+      <div class="page-header">
+        <h2>Met Office</h2>
+        <p>Meteorological Report · Rawalpindi / Nur Khan Airbase (OPRN)</p>
+      </div>
+      <div class="card">
+        <div id="wx-wrap"><div class="wx-loading">⏳ &nbsp; FETCHING WEATHER DATA FROM OPEN-METEO...</div></div>
+      </div>
+    </div>
+
+    <!-- ── FLYING CLUB ── -->
+    <div class="section" id="sec-club">
+      <div class="page-header">
+        <h2>Flying Club</h2>
+        <p>Home Base · Rawalpindi Flying Club</p>
+      </div>
+      <div class="card">
+        <div class="club-head">
+          <div class="club-emblem">🛩️</div>
+          <div>
+            <div class="club-ttl">RAWALPINDI FLYING CLUB</div>
+            <div class="club-home">⭐ Your Future Home</div>
+          </div>
+        </div>
+
+        <div class="info-row">
+          <div class="info-key">Location</div>
+          <div class="info-val">Near Nur Khan Airbase (PAF Base Chaklala), Rawalpindi, Punjab, Pakistan</div>
+        </div>
+        <div class="info-row">
+          <div class="info-key">Airbase</div>
+          <div class="info-val">Nur Khan Airbase — PAF Base Chaklala, adjacent to New Islamabad Intl Airport</div>
+        </div>
+        <div class="info-row">
+          <div class="info-key">Coordinates</div>
+          <div class="info-val">33.6° N, 73.0° E &nbsp;·&nbsp; Elevation ~1,589 ft (484 m) MSL</div>
+        </div>
+        <div class="info-row">
+          <div class="info-key">Licenses</div>
+          <div class="info-val">Student Pilot License (SPL) · Private Pilot License (PPL) · Recreational Flying</div>
+        </div>
+        <div class="info-row">
+          <div class="info-key">Min Age</div>
+          <div class="info-val">16 years for Student Pilot License — Pakistan CAA regulations (PCAA)</div>
+        </div>
+        <div class="info-row">
+          <div class="info-key">Aircraft</div>
+          <div class="info-val">Cessna 152 · Cessna 172 Skyhawk · Light sport aircraft</div>
+        </div>
+        <div class="info-row">
+          <div class="info-key">Medical</div>
+          <div class="info-val">Class 2 Medical Certificate required for SPL — arrange before applying</div>
+        </div>
+        <div class="info-row">
+          <div class="info-key">Regulator</div>
+          <div class="info-val">Pakistan Civil Aviation Authority (PCAA) · pcaa.gov.pk</div>
+        </div>
+      </div>
+
+      <div class="dream-card">
+        <strong>🌟 The Dream Route:</strong><br><br>
+        Every great pilot started exactly where you are — studying theory, dreaming of the sky.
+        Pakistan needs passionate young aviators. Your journey begins on <strong>1 August 2028</strong>,
+        the day you turn 16 and walk through those gates for the first time.
+        Every topic you master today brings that moment closer.
+        <div class="route">
+          <span class="route-step">SPL · Age 16</span>
+          <span class="route-arrow">→</span>
+          <span class="route-step">First Solo</span>
+          <span class="route-arrow">→</span>
+          <span class="route-step">PPL · Age 17</span>
+          <span class="route-arrow">→</span>
+          <span class="route-step">CPL</span>
+          <span class="route-arrow">→</span>
+          <span class="route-step">ATPL</span>
+          <span class="route-arrow">→</span>
+          <span class="route-step">✈ Emirates Pilot</span>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /app -->
+
+<!-- Compass Rose (decorative) -->
+<svg id="compass-rose" width="200" height="200" viewBox="0 0 100 100">
+  <circle cx="50" cy="50" r="47" fill="none" stroke="white" stroke-width="0.6"/>
+  <circle cx="50" cy="50" r="38" fill="none" stroke="white" stroke-width="0.3"/>
+  <circle cx="50" cy="50" r="4" fill="white"/>
+  <!-- N cardinal — orange -->
+  <polygon points="50,3 46,20 50,15 54,20" fill="white"/>
+  <!-- S -->
+  <polygon points="50,97 46,80 50,85 54,80" fill="white" opacity="0.4"/>
+  <!-- E -->
+  <polygon points="97,50 80,46 85,50 80,54" fill="white" opacity="0.5"/>
+  <!-- W -->
+  <polygon points="3,50 20,46 15,50 20,54" fill="white" opacity="0.5"/>
+  <!-- intercardinals -->
+  <line x1="17" y1="17" x2="25" y2="25" stroke="white" stroke-width="0.5" opacity="0.3"/>
+  <line x1="83" y1="17" x2="75" y2="25" stroke="white" stroke-width="0.5" opacity="0.3"/>
+  <line x1="17" y1="83" x2="25" y2="75" stroke="white" stroke-width="0.5" opacity="0.3"/>
+  <line x1="83" y1="83" x2="75" y2="75" stroke="white" stroke-width="0.5" opacity="0.3"/>
+  <!-- axis lines -->
+  <line x1="50" y1="3"  x2="50" y2="97" stroke="white" stroke-width="0.2" opacity="0.15"/>
+  <line x1="3"  y1="50" x2="97" y2="50" stroke="white" stroke-width="0.2" opacity="0.15"/>
+  <!-- labels -->
+  <text x="50" y="10"  text-anchor="middle" fill="white" font-size="7" font-weight="bold" font-family="Arial">N</text>
+  <text x="50" y="95"  text-anchor="middle" fill="white" font-size="5" opacity="0.4" font-family="Arial">S</text>
+  <text x="92" y="53"  text-anchor="middle" fill="white" font-size="5" opacity="0.4" font-family="Arial">E</text>
+  <text x="8"  y="53"  text-anchor="middle" fill="white" font-size="5" opacity="0.4" font-family="Arial">W</text>
+  <!-- tick marks -->
+  <g stroke="white" stroke-width="0.4" opacity="0.25">
+    <line x1="50" y1="3"  x2="50" y2="7"/>
+    <line x1="50" y1="93" x2="50" y2="97"/>
+    <line x1="3"  y1="50" x2="7"  y2="50"/>
+    <line x1="93" y1="50" x2="97" y2="50"/>
+  </g>
+</svg>
+
+<script>
+// ════════════════════════════════════════
+//  DATA
+// ════════════════════════════════════════
+const PASSWORD = 'NurKhan16';
+
+const QUOTES = [
+  { t: "The engine is the heart of an aeroplane, but the pilot is its soul.", a: "Walter Raleigh" },
+  { t: "Once you have tasted flight, you will forever walk the earth with your eyes turned skyward.", a: "Leonardo da Vinci" },
+  { t: "Aviation is proof that given the will, we have the capacity to achieve the impossible.", a: "Eddie Rickenbacker" },
+  { t: "The moment you doubt whether you can fly, you cease forever to be able to do it.", a: "J. M. Barrie" },
+  { t: "You will find the wind only if you fly against it. The kite rises highest against the wind, not with it.", a: "Winston Churchill" },
+  { t: "The sky is not the limit. Your mind is.", a: "Marilyn Monroe" },
+  { t: "To most people the sky is the limit. To those who love aviation, the sky is home.", a: "Jerry Crawford" },
+  { t: "Dream big. Start small. Act now. Every great pilot was once a student who refused to quit.", a: "Unknown" },
+  { t: "A good pilot is always learning — never perfectly satisfied with their own performance.", a: "Wolfgang Langewiesche" },
+];
+
+const THEORY = {
+  "Aerodynamics":       ["Lift", "Drag", "Thrust", "Weight", "Bernoulli Principle", "Aerofoil", "Stall", "Angle of Attack"],
+  "Navigation":         ["VOR", "NDB", "GPS", "Charts", "Waypoints", "Airspace Classes", "VFR", "IFR"],
+  "Meteorology":        ["Clouds", "Wind", "Pressure", "Fronts", "Turbulence", "Icing", "METAR", "TAF"],
+  "Radio Comms":        ["Phraseology", "Frequencies", "ATC Instructions", "Readback", "Squawk Codes"],
+  "Aircraft Systems":   ["Engines", "Fuel", "Hydraulics", "Electrical", "Instruments", "Pitot Static"],
+  "Regulations":        ["ICAO Rules", "Pakistani CAA Rules", "Flight Rules", "PPL", "CPL", "ATPL"],
+};
+
+const CAT_ICON = {
+  "Aerodynamics": "💨", "Navigation": "🗺️", "Meteorology": "⛅",
+  "Radio Comms": "📡", "Aircraft Systems": "⚙️", "Regulations": "📋",
+};
+
+const DEFAULT_MS = [
+  { y: "NOW — 2025",        t: "Begin studying aviation theory — ground school",       s: "active"   },
+  { y: "2026",              t: "Complete all ground school theory categories",          s: "upcoming" },
+  { y: "2027",              t: "Visit and get familiar with Rawalpindi Flying Club",    s: "upcoming" },
+  { y: "2028 — AGE 16",     t: "Apply for Student Pilot License (SPL) at PCAA",        s: "upcoming" },
+  { y: "2029",              t: "Complete first supervised solo flight",                 s: "upcoming" },
+  { y: "2030",              t: "Earn PPL — Private Pilot License",                     s: "upcoming" },
+  { y: "FUTURE",            t: "CPL  →  ATPL  →  Emirates First Officer  →  Captain",  s: "upcoming" },
+];
+
+const MS_CYCLE  = ['upcoming', 'active', 'done'];
+const MS_ICON   = { done: '✅', active: '🔄', upcoming: '⏳' };
+const MS_LABEL  = { done: 'COMPLETE', active: 'IN PROGRESS', upcoming: 'UPCOMING' };
+
+const TARGET_DATE = new Date('2028-08-01T00:00:00').getTime();
+
+// ════════════════════════════════════════
+//  STATE
+// ════════════════════════════════════════
+let checked    = JSON.parse(localStorage.getItem('pilot_theory')     || '{}');
+let milestones = JSON.parse(localStorage.getItem('pilot_milestones') || 'null')
+                 || DEFAULT_MS.map(m => ({...m}));
+
+// ════════════════════════════════════════
+//  LOGIN / LOGOUT
+// ════════════════════════════════════════
+const pwdEl  = document.getElementById('pwd');
+const errEl  = document.getElementById('gate-err');
+pwdEl.addEventListener('keydown', e => { if (e.key === 'Enter') tryLogin(); });
+window.addEventListener('load', () => pwdEl.focus());
+
+function tryLogin() {
+  if (pwdEl.value === PASSWORD) {
+    document.getElementById('gate').style.display = 'none';
+    document.getElementById('app').classList.add('visible');
+    init();
+  } else {
+    errEl.textContent = '⛔  ACCESS DENIED — INVALID CLEARANCE CODE';
+    pwdEl.classList.add('shake');
+    setTimeout(() => { pwdEl.classList.remove('shake'); errEl.textContent = ''; }, 1400);
+    pwdEl.value = '';
+    pwdEl.focus();
+  }
+}
+
+function logout() {
+  document.getElementById('app').classList.remove('visible');
+  document.getElementById('gate').style.display = 'flex';
+  pwdEl.value = ''; pwdEl.focus();
+}
+
+// ════════════════════════════════════════
+//  INIT
+// ════════════════════════════════════════
+function init() {
+  setQuote();
+  startCountdown();
+  buildTheory();
+  buildMilestones();
+  loadNotes();
+  updateStats();
+  tickClock();
+  setInterval(tickClock, 1000);
+}
+
+// ════════════════════════════════════════
+//  QUOTE
+// ════════════════════════════════════════
+function setQuote() {
+  const q = QUOTES[Math.floor(Date.now() / 86400000) % QUOTES.length];
+  document.getElementById('qt-text').textContent = q.t;
+  document.getElementById('qt-auth').textContent = '— ' + q.a;
+}
+
+// ════════════════════════════════════════
+//  COUNTDOWN
+// ════════════════════════════════════════
+function startCountdown() {
+  tick(); setInterval(tick, 1000);
+}
+function tick() {
+  const diff = Math.max(0, TARGET_DATE - Date.now());
+  const d = Math.floor(diff / 86400000);
+  const h = Math.floor((diff % 86400000) / 3600000);
+  const m = Math.floor((diff % 3600000) / 60000);
+  const s = Math.floor((diff % 60000) / 1000);
+  document.getElementById('cd-d').textContent = String(d).padStart(3,'0');
+  document.getElementById('cd-h').textContent = String(h).padStart(2,'0');
+  document.getElementById('cd-m').textContent = String(m).padStart(2,'0');
+  document.getElementById('cd-s').textContent = String(s).padStart(2,'0');
+  const dStr = d.toLocaleString();
+  document.getElementById('stat-days').textContent   = dStr;
+  document.getElementById('sidebar-days').textContent = dStr;
+}
+
+// ════════════════════════════════════════
+//  THEORY TRACKER
+// ════════════════════════════════════════
+function buildTheory() {
+  const wrap = document.getElementById('theory-list');
+  wrap.innerHTML = '';
+  for (const [cat, topics] of Object.entries(THEORY)) {
+    const done  = topics.filter(t => checked[cat+'|'+t]).length;
+    const pct   = topics.length ? Math.round(done / topics.length * 100) : 0;
+    const block = document.createElement('div');
+    block.className = 'cat-block';
+    block.innerHTML = `
+      <div class="cat-head">
+        <div class="cat-name">${CAT_ICON[cat]||'📌'} ${cat}</div>
+        <div class="cat-pct" id="pct-${cat}">${done}/${topics.length} — ${pct}%</div>
+      </div>
+      <div class="prog-bar"><div class="prog-fill" id="bar-${cat}" style="width:${pct}%"></div></div>
+      <div class="topic-grid">
+        ${topics.map(t => {
+          const k = cat+'|'+t, ok = !!checked[k];
+          return `<div class="topic-item${ok?' done':''}" onclick="toggle('${cat}','${t}',this)">
+            <div class="topic-chk">${ok?'✓':''}</div>
+            <div class="topic-name">${t}</div>
+          </div>`;
+        }).join('')}
+      </div>`;
+    wrap.appendChild(block);
+  }
+}
+
+function toggle(cat, topic, el) {
+  const k = cat+'|'+topic;
+  checked[k] = !checked[k];
+  localStorage.setItem('pilot_theory', JSON.stringify(checked));
+  const ok = checked[k];
+  el.classList.toggle('done', ok);
+  el.querySelector('.topic-chk').textContent = ok ? '✓' : '';
+  // Update progress bar
+  const topics = THEORY[cat];
+  const done   = topics.filter(t => checked[cat+'|'+t]).length;
+  const pct    = Math.round(done / topics.length * 100);
+  const block  = el.closest('.cat-block');
+  block.querySelector('.cat-pct').textContent = `${done}/${topics.length} — ${pct}%`;
+  block.querySelector('.prog-fill').style.width = pct + '%';
+  updateStats();
+}
+
+function updateStats() {
+  let total = 0, done = 0;
+  for (const [cat, topics] of Object.entries(THEORY)) {
+    total += topics.length;
+    done  += topics.filter(t => checked[cat+'|'+t]).length;
+  }
+  const pct = total ? Math.round(done / total * 100) : 0;
+  document.getElementById('stat-done').textContent  = done;
+  document.getElementById('stat-total').textContent = total;
+  document.getElementById('stat-pct').textContent   = pct + '%';
+  document.getElementById('theory-badge').textContent = pct + '%';
+}
+
+// ════════════════════════════════════════
+//  MILESTONES
+// ════════════════════════════════════════
+function buildMilestones() {
+  const list = document.getElementById('ms-list');
+  list.innerHTML = '';
+  milestones.forEach((m, i) => {
+    const div = document.createElement('div');
+    div.className = 'ms ' + m.s;
+    div.innerHTML = `
+      <div class="ms-year">${m.y}</div>
+      <div class="ms-text">${m.t}</div>
+      <button class="ms-btn" onclick="cycleMilestone(${i})">
+        ${MS_ICON[m.s]} ${MS_LABEL[m.s]}
+      </button>`;
+    list.appendChild(div);
+  });
+}
+
+function cycleMilestone(i) {
+  const cur = MS_CYCLE.indexOf(milestones[i].s);
+  milestones[i].s = MS_CYCLE[(cur + 1) % MS_CYCLE.length];
+  localStorage.setItem('pilot_milestones', JSON.stringify(milestones));
+  buildMilestones();
+}
+
+// ════════════════════════════════════════
+//  NOTES
+// ════════════════════════════════════════
+function loadNotes() {
+  const v = localStorage.getItem('pilot_notes');
+  if (v) document.getElementById('notes-ta').value = v;
+}
+function saveNotes() {
+  localStorage.setItem('pilot_notes', document.getElementById('notes-ta').value);
+  const ok = document.getElementById('notes-ok');
+  ok.classList.add('show');
+  setTimeout(() => ok.classList.remove('show'), 2200);
+}
+
+// ════════════════════════════════════════
+//  WEATHER (open-meteo)
+// ════════════════════════════════════════
+const WMO = {
+  0:  ['Clear Sky',             '☀️'],  1: ['Mainly Clear',         '🌤️'],
+  2:  ['Partly Cloudy',         '⛅'],  3: ['Overcast',              '☁️'],
+  45: ['Fog',                   '🌫️'], 48: ['Rime Fog',              '🌫️'],
+  51: ['Light Drizzle',         '🌦️'], 53: ['Moderate Drizzle',     '🌦️'],
+  55: ['Dense Drizzle',         '🌧️'], 61: ['Slight Rain',           '🌧️'],
+  63: ['Moderate Rain',         '🌧️'], 65: ['Heavy Rain',            '🌧️'],
+  71: ['Slight Snow',           '🌨️'], 73: ['Moderate Snow',         '❄️'],
+  75: ['Heavy Snow',            '❄️'], 80: ['Rain Showers',          '🌦️'],
+  81: ['Moderate Showers',      '🌧️'], 82: ['Violent Showers',       '⛈️'],
+  95: ['Thunderstorm',          '⛈️'], 96: ['Thunderstorm + Hail',   '⛈️'],
+  99: ['Heavy Thunderstorm',    '⛈️'],
+};
+
+const DIRS = ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'];
+function degToCard(d) { return DIRS[Math.round(d / 22.5) % 16]; }
+
+function vfrClass(code, kts) {
+  if ([95,96,99,65,75,82].includes(code)) return 'vfr-ifr';
+  if (code >= 45 && code <= 55)           return 'vfr-ifr';
+  if (kts > 25 || code >= 60)            return 'vfr-marginal';
+  if (kts > 15)                           return 'vfr-marginal';
+  return 'vfr-ok';
+}
+function vfrText(cls) {
+  if (cls === 'vfr-ok')       return '✈️ &nbsp; VFR CONDITIONS — CLEAR FOR GENERAL AVIATION';
+  if (cls === 'vfr-marginal') return '⚠️ &nbsp; MARGINAL VFR — EXERCISE CAUTION';
+  return '🚫 &nbsp; IFR CONDITIONS — VFR FLIGHT NOT RECOMMENDED';
+}
+
+async function loadWeather() {
+  document.getElementById('wx-wrap').innerHTML = '<div class="wx-loading">⏳ &nbsp; FETCHING WEATHER DATA...</div>';
+  try {
+    const url = 'https://api.open-meteo.com/v1/forecast?latitude=33.6&longitude=73.0' +
+      '&current=temperature_2m,apparent_temperature,windspeed_10m,winddirection_10m,' +
+      'weathercode,relative_humidity_2m&windspeed_unit=kn&timezone=Asia/Karachi';
+    const r   = await fetch(url);
+    const d   = await r.json();
+    const c   = d.current;
+    const code = c.weathercode;
+    const temp = Math.round(c.temperature_2m);
+    const feel = Math.round(c.apparent_temperature);
+    const wind = Math.round(c.windspeed_10m);
+    const wdir = c.winddirection_10m;
+    const hum  = c.relative_humidity_2m;
+    const wi   = WMO[code] || ['Unknown','❓'];
+    const cls  = vfrClass(code, wind);
+    const now  = new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}).toUpperCase();
+
+    document.getElementById('wx-wrap').innerHTML = `
+      <div class="wx-main">
+        <div class="wx-icon">${wi[1]}</div>
+        <div class="wx-temp">${temp}°</div>
+        <div class="wx-info-wrap">
+          <div class="wx-cond">${wi[0]}</div>
+          <div class="wx-loc">📍 RAWALPINDI · NUR KHAN (OPRN) · ${now}</div>
+        </div>
+      </div>
+      <div class="wx-grid">
+        <div class="wx-cell">
+          <div class="wx-cell-lbl">Wind Speed</div>
+          <div class="wx-cell-val">${wind}<span class="wx-cell-unit">KT</span></div>
+        </div>
+        <div class="wx-cell">
+          <div class="wx-cell-lbl">Wind Direction</div>
+          <div class="wx-cell-val">${degToCard(wdir)} <span class="wx-cell-unit">${wdir}°</span></div>
+        </div>
+        <div class="wx-cell">
+          <div class="wx-cell-lbl">Feels Like</div>
+          <div class="wx-cell-val">${feel}<span class="wx-cell-unit">°C</span></div>
+        </div>
+        <div class="wx-cell">
+          <div class="wx-cell-lbl">Humidity</div>
+          <div class="wx-cell-val">${hum}<span class="wx-cell-unit">%</span></div>
+        </div>
+        <div class="wx-cell">
+          <div class="wx-cell-lbl">Elevation</div>
+          <div class="wx-cell-val">484<span class="wx-cell-unit">m MSL</span></div>
+        </div>
+        <div class="wx-cell">
+          <div class="wx-cell-lbl">WMO Code</div>
+          <div class="wx-cell-val">${code}<span class="wx-cell-unit">WW</span></div>
+        </div>
+      </div>
+      <div class="vfr-pill ${cls}">${vfrText(cls)}</div>
+      <button class="wx-refresh" onclick="loadWeather()">🔄 &nbsp; REFRESH</button>
+    `;
+  } catch (e) {
+    document.getElementById('wx-wrap').innerHTML =
+      '<div class="wx-loading">⚠️ &nbsp; UNABLE TO FETCH WEATHER — CHECK CONNECTION</div>';
+  }
+}
+
+// ════════════════════════════════════════
+//  NAVIGATION
+// ════════════════════════════════════════
+function nav(id, el) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('sec-' + id).classList.add('active');
+  el.classList.add('active');
+  if (id === 'weather') loadWeather();
+}
+
+// ════════════════════════════════════════
+//  CLOCK
+// ════════════════════════════════════════
+function tickClock() {
+  const utc = new Date().toUTCString().slice(17, 22);
+  document.getElementById('topbar-clock').textContent = utc + ' UTC';
+}
+</script>
+</body>
+</html>
