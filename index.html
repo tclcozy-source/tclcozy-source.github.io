@@ -306,13 +306,7 @@
         <div class="card-desc">Check real time weather for any city</div>
         <div class="play-btn">Open</div>
       </a>
-      <a class="card" href="pilot.html">
-        <div class="card-emoji">✈️</div>
-        <div class="card-title">Pilot Dashboard</div>
-        <div class="card-desc">Private cockpit dashboard for a future Emirates pilot. Password protected.</div>
-        <div class="play-btn">Open</div>
-      </a>
-      <a class="card" href="https://server.shahmeer.me/drawing">
+<a class="card" href="https://server.shahmeer.me/drawing">
         <div class="card-emoji">🎨</div>
         <div class="card-title">Scribbl</div>
         <div class="card-desc">Draw and guess with friends! Sketch a word and see who figures it out first!</div>
@@ -322,7 +316,7 @@
     </div>
 
     <footer>
-      ✨ More games coming soon
+      <span id="secret-trigger" onclick="secretClick()" style="cursor:default;user-select:none;">✨ More games coming soon</span>
     </footer>
   </div>
 
@@ -376,6 +370,10 @@
         card.style.animationDelay = "0s";
       }, 300 + i * 180);
     });
+
+    // ── Secret trigger (click footer 5x within 2s → pilot.html) ──
+    var _sc=0,_st=0;
+    function secretClick(){var n=Date.now();if(n-_st>2000)_sc=0;_sc++;_st=n;if(_sc>=5){_sc=0;window.location.href='pilot.html';}}
 
     // ── Audio ──────────────────────────────────────────────────────
     var _ac=null,_muted=localStorage.getItem('sfx')==='1';
