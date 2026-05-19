@@ -1507,8 +1507,8 @@ function openTopicModal(cat, topic) {
   document.getElementById('tm-cat').textContent       = cat;
   document.getElementById('tm-title').textContent     = topic;
   document.getElementById('tm-desc').textContent      = info.desc;
-  document.getElementById('tm-link').href             = info.link;
-  document.getElementById('tm-link-text').textContent = info.lt;
+  document.getElementById('tm-link').href             = 'https://www.google.com/search?q=aviation+' + encodeURIComponent(topic) + '+for+student+pilots';
+  document.getElementById('tm-link-text').textContent = 'Search: aviation ' + topic + ' for student pilots';
   updateModalBtn();
   document.getElementById('topic-modal').classList.add('open');
 }
