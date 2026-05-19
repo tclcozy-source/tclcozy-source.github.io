@@ -997,11 +997,13 @@ const CAT_ICON = {
 };
 
 const DEFAULT_MS = [
-  { y: "NOW — 2026 · AGE 14",  t: "Begin studying aviation theory — ground school",       s: "active"   },
-  { y: "2027 · AGE 15",        t: "Complete ground school · visit Rawalpindi Flying Club", s: "upcoming" },
-  { y: "2028 · AGE 16",        t: "Apply for Student Pilot License (SPL) at PCAA",        s: "upcoming" },
-  { y: "2029 · AGE 17",        t: "Complete first supervised solo flight",                 s: "upcoming" },
-  { y: "2030 · AGE 18",        t: "Earn PPL — Private Pilot License",                     s: "upcoming" },
+  { y: "NOW — 2026 · AGE 12",  t: "Begin studying aviation theory — ground school",       s: "active"   },
+  { y: "2027 · AGE 13",        t: "Complete ground school basics",                         s: "upcoming" },
+  { y: "2028 · AGE 14",        t: "Visit and get familiar with Rawalpindi Flying Club",    s: "upcoming" },
+  { y: "2029 · AGE 15",        t: "Prepare medical certificate · final SPL prep",          s: "upcoming" },
+  { y: "2030 · AGE 16",        t: "Apply for Student Pilot License (SPL) at PCAA",        s: "upcoming" },
+  { y: "2031 · AGE 17",        t: "Complete first supervised solo flight",                 s: "upcoming" },
+  { y: "2032 · AGE 18",        t: "Earn PPL — Private Pilot License",                     s: "upcoming" },
   { y: "FUTURE",               t: "CPL  →  ATPL  →  Emirates First Officer  →  Captain",  s: "upcoming" },
 ];
 
@@ -1015,7 +1017,7 @@ const TARGET_DATE = new Date('2030-03-16T00:00:00').getTime();
 //  STATE
 // ════════════════════════════════════════
 let checked    = JSON.parse(localStorage.getItem('pilot_theory')     || '{}');
-let milestones = JSON.parse(localStorage.getItem('pilot_milestones_v2') || 'null')
+let milestones = JSON.parse(localStorage.getItem('pilot_milestones_v3') || 'null')
                  || DEFAULT_MS.map(m => ({...m}));
 
 // ════════════════════════════════════════
@@ -1172,7 +1174,7 @@ function buildMilestones() {
 function cycleMilestone(i) {
   const cur = MS_CYCLE.indexOf(milestones[i].s);
   milestones[i].s = MS_CYCLE[(cur + 1) % MS_CYCLE.length];
-  localStorage.setItem('pilot_milestones_v2', JSON.stringify(milestones));
+  localStorage.setItem('pilot_milestones_v3', JSON.stringify(milestones));
   buildMilestones();
 }
 
