@@ -735,15 +735,18 @@ let sessionSaved       = false;
 
 // ── Password screen ──
 (function() {
-  if (sessionStorage.getItem('archeryAccess') === 'true') {
+  if (sessionStorage.getItem('archeryPw') === 'true') {
     document.getElementById('pw-screen').style.display = 'none';
+  } else {
+    // Focus input when screen is visible
+    setTimeout(() => { const el = document.getElementById('pw-input'); if (el) el.focus(); }, 100);
   }
 })();
 
 function submitPassword() {
   const val = document.getElementById('pw-input').value;
   if (val === 'X9Recurve') {
-    sessionStorage.setItem('archeryAccess', 'true');
+    sessionStorage.setItem('archeryPw', 'true');
     const screen = document.getElementById('pw-screen');
     screen.classList.add('hidden');
     setTimeout(() => { screen.style.display = 'none'; }, 420);
@@ -765,6 +768,7 @@ renderRecords();
 // ── Logout ──
 function logout() {
   sessionStorage.removeItem('archeryAccess');
+  sessionStorage.removeItem('archeryPw');
   window.location.replace('https://shahmeer.me');
 }
 
