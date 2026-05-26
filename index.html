@@ -246,7 +246,7 @@
 
   <div class="content">
     <header>
-      <h1>🎮 Shahmeer's Game Hub</h1>
+      <h1 onclick="archeryClick()" style="cursor:default;user-select:none;">🎮 Shahmeer's Game Hub</h1>
       <p>Made by a 12 year old developer</p>
       <span class="badge">⚡ Built with HTML, CSS &amp; JS</span>
     </header>
@@ -306,7 +306,7 @@
         <div class="card-desc">Check real time weather for any city</div>
         <div class="play-btn">Open</div>
       </a>
-<a class="card" href="chess.html">
+      <a class="card" href="chess.html">
         <div class="card-emoji">♟️</div>
         <div class="card-title">Chess vs AI</div>
         <div class="card-desc">Play chess against Claude AI. Full rules, move hints, captured pieces &amp; move history!</div>
@@ -317,6 +317,12 @@
         <div class="card-title">Scribbl</div>
         <div class="card-desc">Draw and guess with friends! Sketch a word and see who figures it out first!</div>
         <div class="play-btn">Play Now</div>
+      </a>
+      <a class="card" href="archery.html">
+        <div class="card-emoji">🏹</div>
+        <div class="card-title">Archery Coach AI</div>
+        <div class="card-desc">Upload a photo of your form and get expert AI coaching for your recurve technique!</div>
+        <div class="play-btn">Open</div>
       </a>
 
     </div>
@@ -380,6 +386,10 @@
     // ── Secret trigger (click footer 5x within 2s → pilot.html) ──
     var _sc=0,_st=0;
     function secretClick(){var n=Date.now();if(n-_st>2000)_sc=0;_sc++;_st=n;if(_sc>=5){_sc=0;sessionStorage.setItem('pilotAccess','true');window.location.href='pilot.html';}}
+
+    // ── Archery easter egg (click header h1 5x within 2s → archery.html) ──
+    var _ah=0,_at=0;
+    function archeryClick(){var n=Date.now();if(n-_at>2000)_ah=0;_ah++;_at=n;if(_ah>=5){_ah=0;sessionStorage.setItem('archeryAccess','true');window.location.href='archery.html';}}
 
     // ── Audio ──────────────────────────────────────────────────────
     var _ac=null,_muted=localStorage.getItem('sfx')==='1';
