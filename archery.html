@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Archery Coach AI — Form Analysis</title>
-  <script>if(sessionStorage.getItem('archeryAccess')!=='true'){window.location.replace('https://shahmeer.me');}</script>
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
@@ -311,22 +310,79 @@
     .save-session-btn:hover { background: rgba(34,197,94,0.18); border-color: rgba(74,222,128,0.5); }
     .save-session-btn:disabled { opacity: 0.4; cursor: default; }
 
-    /* ── API KEY CARD ── */
-    .api-input {
+    /* ── PASSWORD SCREEN ── */
+    #pw-screen {
+      position: fixed; inset: 0;
+      background: #020802;
+      background-image: radial-gradient(ellipse 60% 60% at 50% 50%, rgba(34,197,94,0.08) 0%, transparent 70%);
+      z-index: 9999;
+      display: flex; align-items: center; justify-content: center;
+      padding: 20px;
+      transition: opacity 0.4s;
+    }
+    #pw-screen.hidden { opacity: 0; pointer-events: none; }
+    .pw-box {
+      background: #050f05;
+      border: 1px solid rgba(34,197,94,0.25);
+      border-radius: 20px;
+      padding: 44px 40px 36px;
+      max-width: 380px; width: 100%;
+      text-align: center;
+      box-shadow: 0 0 60px rgba(34,197,94,0.07), 0 0 120px rgba(34,197,94,0.04);
+    }
+    .pw-icon { font-size: 48px; margin-bottom: 20px; filter: drop-shadow(0 0 14px rgba(34,197,94,0.5)); display: block; }
+    .pw-title {
+      font-family: 'Orbitron', monospace;
+      font-size: 14px; font-weight: 900; letter-spacing: 5px;
+      background: linear-gradient(90deg, #4ade80, #22c55e);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+      margin-bottom: 6px;
+    }
+    .pw-sub {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 9px; letter-spacing: 4px; color: var(--muted);
+      text-transform: uppercase; margin-bottom: 28px;
+    }
+    .pw-input {
       width: 100%;
       background: rgba(255,255,255,0.04);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 8px 10px;
+      border: 1px solid rgba(34,197,94,0.25);
+      border-radius: 10px;
+      padding: 12px 16px;
       color: var(--text);
-      font-family: 'Share Tech Mono', monospace; font-size: 11px;
-      outline: none; transition: border-color 0.2s;
+      font-family: 'Share Tech Mono', monospace; font-size: 14px;
+      letter-spacing: 3px;
+      outline: none; transition: border-color 0.2s, box-shadow 0.2s;
+      text-align: center; margin-bottom: 14px;
     }
-    .api-input:focus { border-color: rgba(74,222,128,0.45); }
-    .api-input::placeholder { color: rgba(255,255,255,0.2); }
-    .api-hint {
-      font-size: 10px; color: var(--muted);
-      margin-top: 5px; line-height: 1.5;
+    .pw-input:focus { border-color: rgba(74,222,128,0.6); box-shadow: 0 0 0 3px rgba(34,197,94,0.08); }
+    .pw-input.shake { animation: pwShake 0.3s; border-color: rgba(239,68,68,0.5); }
+    @keyframes pwShake {
+      0%,100%{transform:translateX(0)} 25%{transform:translateX(-8px)} 75%{transform:translateX(8px)}
+    }
+    .pw-btn {
+      width: 100%;
+      padding: 12px;
+      background: linear-gradient(135deg, #16a34a, #22c55e);
+      border: none; border-radius: 10px;
+      color: white;
+      font-family: 'Orbitron', monospace;
+      font-size: 11px; font-weight: 700; letter-spacing: 4px;
+      cursor: pointer;
+      transition: opacity 0.2s, box-shadow 0.2s;
+      box-shadow: 0 4px 16px rgba(34,197,94,0.25);
+    }
+    .pw-btn:hover { opacity: 0.9; box-shadow: 0 4px 24px rgba(34,197,94,0.4); }
+    .pw-error {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 10px; letter-spacing: 2px;
+      color: #fca5a5;
+      margin-top: 12px; min-height: 16px;
+    }
+    .pw-footer {
+      margin-top: 24px;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 9px; letter-spacing: 2px; color: rgba(34,197,94,0.2);
     }
 
     /* ── PAST SESSIONS ── */
@@ -531,6 +587,21 @@
 </head>
 <body>
 
+<!-- Password Screen -->
+<div id="pw-screen">
+  <div class="pw-box">
+    <span class="pw-icon">🏹</span>
+    <div class="pw-title">SECURE ACCESS</div>
+    <div class="pw-sub">Archery Coach AI · Restricted</div>
+    <input class="pw-input" type="password" id="pw-input"
+           placeholder="Enter passphrase"
+           onkeydown="if(event.key==='Enter')submitPassword()">
+    <button class="pw-btn" onclick="submitPassword()">AUTHENTICATE</button>
+    <div class="pw-error" id="pw-error"></div>
+    <div class="pw-footer">X9 RECURVE SYSTEM · ENCRYPTED</div>
+  </div>
+</div>
+
 <header>
   <div class="header-inner">
     <div class="header-logo">🏹</div>
@@ -606,20 +677,6 @@
   <!-- RIGHT — sidebar -->
   <div style="display:flex;flex-direction:column;gap:14px;">
 
-    <!-- API Key -->
-    <div class="card">
-      <div class="card-hdr">
-        <span class="card-hdr-icon">🔑</span>
-        <span class="card-hdr-title">API Key</span>
-      </div>
-      <div class="card-body">
-        <input class="api-input" type="password" id="api-key"
-               placeholder="sk-ant-api03-..."
-               oninput="localStorage.setItem('chessApiKey',this.value)">
-        <div class="api-hint">Anthropic API key · stored locally only.<br>Required for AI analysis.</div>
-      </div>
-    </div>
-
     <!-- Past Sessions -->
     <div class="card">
       <div class="card-hdr">
@@ -676,8 +733,30 @@ let currentImageType   = null;
 let currentFeedback    = null;
 let sessionSaved       = false;
 
+// ── Password screen ──
+(function() {
+  if (sessionStorage.getItem('archeryAccess') === 'true') {
+    document.getElementById('pw-screen').style.display = 'none';
+  }
+})();
+
+function submitPassword() {
+  const val = document.getElementById('pw-input').value;
+  if (val === 'X9Recurve') {
+    sessionStorage.setItem('archeryAccess', 'true');
+    const screen = document.getElementById('pw-screen');
+    screen.classList.add('hidden');
+    setTimeout(() => { screen.style.display = 'none'; }, 420);
+  } else {
+    const input = document.getElementById('pw-input');
+    const err   = document.getElementById('pw-error');
+    input.classList.add('shake');
+    err.textContent = 'ACCESS DENIED — INCORRECT PASSPHRASE';
+    setTimeout(() => { input.classList.remove('shake'); input.value = ''; input.focus(); }, 500);
+  }
+}
+
 // ── Init ──
-document.getElementById('api-key').value = localStorage.getItem('chessApiKey') || '';
 // Set today as default record date
 document.getElementById('rec-date').value = new Date().toISOString().slice(0,10);
 renderSessions();
@@ -764,7 +843,6 @@ function resizeImage(file, maxDim=1200) {
 async function analyseForm() {
   if (!currentImageBase64) return;
   const apiKey = localStorage.getItem('chessApiKey') || '';
-  if (!apiKey) { showError('Please enter your Anthropic API key in the sidebar.'); return; }
 
   setLoading(true);
   currentFeedback = null;
