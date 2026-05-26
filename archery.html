@@ -1,0 +1,1060 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Archery Coach AI — Form Analysis</title>
+  <script>if(sessionStorage.getItem('archeryAccess')!=='true'){window.location.replace('https://shahmeer.me');}</script>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:      #020802;
+      --panel:   #050f05;
+      --card:    #081408;
+      --border:  rgba(34,197,94,0.16);
+      --green:   #22c55e;
+      --bright:  #4ade80;
+      --green-d: rgba(34,197,94,0.10);
+      --gold:    #fbbf24;
+      --gold-d:  rgba(251,191,36,0.12);
+      --text:    #d0e8cc;
+      --muted:   #4a6646;
+      --red:     #ef4444;
+    }
+    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+      background-image:
+        radial-gradient(ellipse 80% 50% at 50% -10%, rgba(34,197,94,0.06) 0%, transparent 70%);
+    }
+
+    /* ── HEADER ── */
+    header {
+      border-bottom: 1px solid var(--border);
+      padding: 0 28px;
+      background: rgba(5,15,5,0.95);
+      backdrop-filter: blur(12px);
+      position: sticky; top: 0; z-index: 50;
+    }
+    .header-inner {
+      max-width: 1100px; margin: 0 auto;
+      display: flex; align-items: center; gap: 16px;
+      padding: 13px 0;
+    }
+    .header-logo {
+      font-size: 28px;
+      filter: drop-shadow(0 0 10px rgba(34,197,94,0.5));
+    }
+    .header-titles { flex: 1; }
+    .header-main {
+      font-family: 'Orbitron', monospace;
+      font-size: 17px; font-weight: 900;
+      letter-spacing: 3px;
+      background: linear-gradient(90deg, #4ade80, #22c55e, #16a34a);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .header-sub {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 9px; letter-spacing: 4px;
+      color: var(--muted); margin-top: 2px;
+      text-transform: uppercase;
+    }
+    .header-bow {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 10px; letter-spacing: 2px;
+      color: rgba(74,222,128,0.45);
+      border: 1px solid rgba(34,197,94,0.2);
+      padding: 4px 10px; border-radius: 4px;
+      text-transform: uppercase;
+    }
+    .logout-btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 9px; letter-spacing: 2px;
+      padding: 6px 12px; border-radius: 4px;
+      cursor: pointer; transition: border-color 0.2s, color 0.2s;
+    }
+    .logout-btn:hover { border-color: rgba(239,68,68,0.4); color: var(--red); }
+
+    /* ── LAYOUT ── */
+    .app {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 22px 28px 40px;
+      display: grid;
+      grid-template-columns: 1fr 280px;
+      gap: 20px;
+      align-items: start;
+    }
+
+    /* ── CARDS ── */
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+    }
+    .card-hdr {
+      padding: 13px 18px 11px;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 10px;
+    }
+    .card-hdr-icon { font-size: 18px; }
+    .card-hdr-title {
+      font-family: 'Orbitron', monospace;
+      font-size: 10px; font-weight: 700;
+      letter-spacing: 3px; color: var(--bright);
+      text-transform: uppercase;
+    }
+    .card-body { padding: 18px; }
+
+    /* ── UPLOAD ZONE ── */
+    .upload-zone {
+      border: 2px dashed rgba(34,197,94,0.3);
+      border-radius: 12px;
+      padding: 32px 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+      position: relative;
+      background: var(--green-d);
+    }
+    .upload-zone:hover, .upload-zone.drag-over {
+      border-color: rgba(74,222,128,0.6);
+      background: rgba(34,197,94,0.07);
+    }
+    .upload-zone input[type="file"] {
+      position: absolute; inset: 0; opacity: 0; cursor: pointer; z-index: 1;
+    }
+    .upload-icon { font-size: 42px; margin-bottom: 10px; display: block; }
+    .upload-title { font-size: 14px; font-weight: 600; color: var(--bright); margin-bottom: 4px; }
+    .upload-hint  { font-size: 11px; color: var(--muted); }
+
+    .preview-wrap {
+      display: none;
+      margin-top: 16px;
+      position: relative;
+    }
+    .preview-wrap.show { display: block; }
+    .preview-img {
+      width: 100%; max-height: 380px;
+      object-fit: contain;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: #020802;
+      display: block;
+    }
+    .preview-clear {
+      position: absolute; top: 8px; right: 8px;
+      background: rgba(0,0,0,0.7);
+      border: 1px solid rgba(255,255,255,0.15);
+      color: white;
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      font-size: 12px;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.15s;
+    }
+    .preview-clear:hover { background: rgba(239,68,68,0.6); }
+
+    .analyse-btn {
+      width: 100%;
+      margin-top: 14px;
+      padding: 13px;
+      background: linear-gradient(135deg, #16a34a, #22c55e);
+      border: none;
+      border-radius: 10px;
+      color: white;
+      font-family: 'Orbitron', monospace;
+      font-size: 11px; font-weight: 700; letter-spacing: 3px;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.1s, box-shadow 0.2s;
+      box-shadow: 0 4px 16px rgba(34,197,94,0.25);
+    }
+    .analyse-btn:hover  { opacity: 0.9; box-shadow: 0 4px 24px rgba(34,197,94,0.4); }
+    .analyse-btn:active { transform: scale(0.98); }
+    .analyse-btn:disabled {
+      background: rgba(255,255,255,0.08);
+      box-shadow: none; color: var(--muted); cursor: default;
+    }
+
+    /* ── SPINNER ── */
+    .spinner-wrap {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      padding: 32px 0;
+      gap: 16px;
+    }
+    .spinner-wrap.show { display: flex; }
+    .target-spinner {
+      width: 60px; height: 60px;
+      position: relative;
+    }
+    .target-ring {
+      position: absolute; inset: 0;
+      border-radius: 50%;
+      border: 3px solid transparent;
+    }
+    .target-ring:nth-child(1) {
+      border-top-color: var(--bright);
+      animation: spin 0.9s linear infinite;
+    }
+    .target-ring:nth-child(2) {
+      inset: 8px;
+      border-top-color: rgba(34,197,94,0.5);
+      animation: spin 1.4s linear infinite reverse;
+    }
+    .target-ring:nth-child(3) {
+      inset: 16px;
+      border-top-color: rgba(74,222,128,0.3);
+      animation: spin 2s linear infinite;
+    }
+    .target-dot {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%,-50%);
+      width: 8px; height: 8px;
+      background: var(--green);
+      border-radius: 50%;
+      box-shadow: 0 0 8px var(--green);
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .spinner-label {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 11px; letter-spacing: 3px;
+      color: var(--bright);
+      animation: pulse-op 1.5s infinite;
+    }
+    @keyframes pulse-op { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+    /* ── FEEDBACK SECTIONS ── */
+    .feedback-wrap { display: none; margin-top: 0; }
+    .feedback-wrap.show { display: block; }
+    .feedback-hdr {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 14px;
+    }
+    .feedback-hdr-title {
+      font-family: 'Orbitron', monospace;
+      font-size: 10px; letter-spacing: 3px;
+      color: var(--bright); text-transform: uppercase;
+    }
+    .feedback-score {
+      font-family: 'Orbitron', monospace;
+      font-size: 10px; letter-spacing: 2px;
+      color: var(--muted);
+    }
+
+    .aspect-cards { display: flex; flex-direction: column; gap: 10px; }
+    .aspect-card {
+      background: rgba(8,20,8,0.8);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--green);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .aspect-card:nth-child(2n) { border-left-color: #16a34a; }
+    .aspect-card:nth-child(3n) { border-left-color: #4ade80; }
+    .aspect-hdr {
+      padding: 9px 14px;
+      display: flex; align-items: center; gap: 9px;
+      border-bottom: 1px solid rgba(34,197,94,0.08);
+      cursor: pointer;
+      background: rgba(34,197,94,0.04);
+      transition: background 0.15s;
+    }
+    .aspect-hdr:hover { background: rgba(34,197,94,0.08); }
+    .aspect-icon { font-size: 16px; }
+    .aspect-title {
+      font-family: 'Orbitron', monospace;
+      font-size: 9px; font-weight: 700;
+      letter-spacing: 2px; color: var(--bright);
+      text-transform: uppercase; flex: 1;
+    }
+    .aspect-chevron {
+      font-size: 10px; color: var(--muted);
+      transition: transform 0.2s;
+    }
+    .aspect-card.open .aspect-chevron { transform: rotate(90deg); }
+    .aspect-body {
+      display: none;
+      padding: 12px 14px;
+      font-size: 13px;
+      line-height: 1.75;
+      color: var(--text);
+    }
+    .aspect-card.open .aspect-body { display: block; }
+
+    .save-session-btn {
+      margin-top: 14px;
+      width: 100%;
+      padding: 10px;
+      background: rgba(34,197,94,0.1);
+      border: 1px solid rgba(34,197,94,0.3);
+      border-radius: 8px;
+      color: var(--bright);
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 10px; letter-spacing: 2px;
+      cursor: pointer;
+      transition: background 0.2s, border-color 0.2s;
+    }
+    .save-session-btn:hover { background: rgba(34,197,94,0.18); border-color: rgba(74,222,128,0.5); }
+    .save-session-btn:disabled { opacity: 0.4; cursor: default; }
+
+    /* ── API KEY CARD ── */
+    .api-input {
+      width: 100%;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 10px;
+      color: var(--text);
+      font-family: 'Share Tech Mono', monospace; font-size: 11px;
+      outline: none; transition: border-color 0.2s;
+    }
+    .api-input:focus { border-color: rgba(74,222,128,0.45); }
+    .api-input::placeholder { color: rgba(255,255,255,0.2); }
+    .api-hint {
+      font-size: 10px; color: var(--muted);
+      margin-top: 5px; line-height: 1.5;
+    }
+
+    /* ── PAST SESSIONS ── */
+    .session-list { display: flex; flex-direction: column; gap: 8px; }
+    .session-item {
+      display: flex; gap: 10px; align-items: flex-start;
+      padding: 9px 0;
+      border-bottom: 1px solid rgba(34,197,94,0.08);
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+    .session-item:last-child { border-bottom: none; }
+    .session-item:hover { opacity: 0.8; }
+    .session-thumb {
+      width: 44px; height: 44px; flex-shrink: 0;
+      border-radius: 6px;
+      object-fit: cover;
+      border: 1px solid var(--border);
+      background: var(--bg);
+    }
+    .session-thumb-placeholder {
+      width: 44px; height: 44px; flex-shrink: 0;
+      border-radius: 6px;
+      background: var(--green-d);
+      border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px;
+    }
+    .session-info { flex: 1; min-width: 0; }
+    .session-date {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 9px; letter-spacing: 2px; color: var(--muted);
+      margin-bottom: 2px;
+    }
+    .session-preview {
+      font-size: 11px; color: var(--text);
+      overflow: hidden;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      line-height: 1.4;
+    }
+    .no-sessions {
+      font-size: 11px; color: var(--muted);
+      font-family: 'Share Tech Mono', monospace;
+      letter-spacing: 1px;
+      text-align: center; padding: 10px 0;
+    }
+
+    /* ── PERSONAL RECORDS ── */
+    .rec-form { display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; }
+    .rec-row   { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .rec-input {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      padding: 7px 10px;
+      color: var(--text);
+      font-size: 12px; font-family: 'Inter', sans-serif;
+      outline: none; transition: border-color 0.2s; width: 100%;
+    }
+    .rec-input:focus { border-color: rgba(74,222,128,0.45); }
+    .rec-input::placeholder { color: rgba(255,255,255,0.2); }
+    .add-rec-btn {
+      padding: 8px;
+      background: linear-gradient(135deg, #14532d, #16a34a);
+      border: none; border-radius: 7px;
+      color: white; font-family: 'Orbitron', monospace;
+      font-size: 9px; font-weight: 700; letter-spacing: 2px;
+      cursor: pointer; transition: opacity 0.2s;
+    }
+    .add-rec-btn:hover { opacity: 0.85; }
+
+    .rec-list { display: flex; flex-direction: column; gap: 6px; }
+    .rec-item {
+      padding: 9px 12px;
+      background: rgba(8,20,8,0.6);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      display: grid;
+      grid-template-columns: 1fr auto auto auto;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      transition: border-color 0.2s;
+    }
+    .rec-item.best {
+      border-color: rgba(251,191,36,0.4);
+      background: rgba(251,191,36,0.05);
+    }
+    .rec-item.best .rec-score {
+      color: var(--gold);
+      text-shadow: 0 0 8px rgba(251,191,36,0.5);
+    }
+    .rec-comp { color: var(--text); font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .rec-dist {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 10px; color: var(--muted);
+      background: rgba(34,197,94,0.08);
+      border: 1px solid var(--border);
+      padding: 2px 7px; border-radius: 4px;
+    }
+    .rec-score {
+      font-family: 'Orbitron', monospace;
+      font-size: 14px; font-weight: 700; color: var(--bright);
+    }
+    .rec-del {
+      background: none; border: none;
+      color: rgba(239,68,68,0.4);
+      cursor: pointer; font-size: 12px;
+      transition: color 0.15s; padding: 2px;
+    }
+    .rec-del:hover { color: var(--red); }
+    .rec-date-sub {
+      grid-column: 1 / -1;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 9px; letter-spacing: 1px; color: var(--muted);
+      margin-top: -2px;
+    }
+    .rec-item { grid-template-rows: auto auto; }
+    .best-badge {
+      font-family: 'Orbitron', monospace;
+      font-size: 7px; letter-spacing: 2px;
+      color: var(--gold);
+      background: rgba(251,191,36,0.12);
+      border: 1px solid rgba(251,191,36,0.3);
+      padding: 2px 6px; border-radius: 3px;
+      vertical-align: middle; margin-left: 5px;
+    }
+
+    /* ── SESSION MODAL ── */
+    .modal-bg {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.8);
+      backdrop-filter: blur(6px);
+      z-index: 200;
+      align-items: center; justify-content: center;
+      padding: 20px;
+    }
+    .modal-bg.open { display: flex; }
+    .modal-box {
+      background: #060d06;
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      max-width: 620px; width: 100%;
+      max-height: 80vh;
+      display: flex; flex-direction: column;
+      overflow: hidden;
+    }
+    .modal-hdr {
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .modal-hdr-title {
+      font-family: 'Orbitron', monospace;
+      font-size: 10px; letter-spacing: 3px; color: var(--bright);
+    }
+    .modal-close {
+      background: none; border: none;
+      color: var(--muted); cursor: pointer; font-size: 16px;
+      transition: color 0.15s;
+    }
+    .modal-close:hover { color: var(--red); }
+    .modal-content { padding: 16px 18px; overflow-y: auto; }
+    .modal-thumb {
+      width: 100%; max-height: 220px;
+      object-fit: contain;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      margin-bottom: 14px;
+      background: var(--bg);
+      display: block;
+    }
+    .modal-feedback-text {
+      font-size: 13px; line-height: 1.8; color: var(--text);
+      white-space: pre-wrap;
+    }
+
+    /* ── MISC ── */
+    .section-gap { margin-top: 14px; }
+    .divider { height: 1px; background: var(--border); margin: 12px 0; }
+
+    .error-msg {
+      background: rgba(239,68,68,0.08);
+      border: 1px solid rgba(239,68,68,0.25);
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 12px; color: #fca5a5;
+      margin-top: 10px;
+      display: none;
+    }
+    .error-msg.show { display: block; }
+
+    @media (max-width: 720px) {
+      .app { grid-template-columns: 1fr; padding: 14px 16px 30px; }
+      .header-inner { padding: 10px 0; gap: 10px; }
+      .header-bow { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="header-logo">🏹</div>
+    <div class="header-titles">
+      <div class="header-main">Archery Coach AI</div>
+      <div class="header-sub">Form Analysis · Recurve Technique</div>
+    </div>
+    <div class="header-bow">Sanlida Miracle X9 · Recurve</div>
+    <button class="logout-btn" onclick="logout()">LOGOUT</button>
+  </div>
+</header>
+
+<div class="app">
+
+  <!-- LEFT — main column -->
+  <div>
+
+    <!-- Analyse Card -->
+    <div class="card">
+      <div class="card-hdr">
+        <span class="card-hdr-icon">📸</span>
+        <span class="card-hdr-title">AI Form Analysis</span>
+      </div>
+      <div class="card-body">
+
+        <div class="upload-zone" id="upload-zone"
+             ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="dropFile(event)">
+          <input type="file" id="file-input" accept="image/*" onchange="fileSelected(event)">
+          <span class="upload-icon">🎯</span>
+          <div class="upload-title">Upload Your Stance Photo</div>
+          <div class="upload-hint">Drag &amp; drop or click to browse · JPG, PNG, WEBP</div>
+        </div>
+
+        <div class="preview-wrap" id="preview-wrap">
+          <img id="preview-img" class="preview-img" src="" alt="Stance preview">
+          <button class="preview-clear" onclick="clearPhoto()">✕</button>
+        </div>
+
+        <button class="analyse-btn" id="analyse-btn" onclick="analyseForm()" disabled>
+          🔍 &nbsp; ANALYSE FORM
+        </button>
+
+        <div class="error-msg" id="error-msg"></div>
+
+        <!-- Spinner -->
+        <div class="spinner-wrap" id="spinner">
+          <div class="target-spinner">
+            <div class="target-ring"></div>
+            <div class="target-ring"></div>
+            <div class="target-ring"></div>
+            <div class="target-dot"></div>
+          </div>
+          <div class="spinner-label">COACH IS ANALYSING YOUR FORM…</div>
+        </div>
+
+        <!-- Feedback -->
+        <div class="feedback-wrap" id="feedback-wrap">
+          <div class="divider"></div>
+          <div class="feedback-hdr">
+            <div class="feedback-hdr-title">📋 &nbsp;Coaching Feedback</div>
+          </div>
+          <div class="aspect-cards" id="aspect-cards"></div>
+          <button class="save-session-btn" id="save-btn" onclick="saveSession()">
+            💾 &nbsp; SAVE THIS SESSION
+          </button>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+  <!-- RIGHT — sidebar -->
+  <div style="display:flex;flex-direction:column;gap:14px;">
+
+    <!-- API Key -->
+    <div class="card">
+      <div class="card-hdr">
+        <span class="card-hdr-icon">🔑</span>
+        <span class="card-hdr-title">API Key</span>
+      </div>
+      <div class="card-body">
+        <input class="api-input" type="password" id="api-key"
+               placeholder="sk-ant-api03-..."
+               oninput="localStorage.setItem('chessApiKey',this.value)">
+        <div class="api-hint">Anthropic API key · stored locally only.<br>Required for AI analysis.</div>
+      </div>
+    </div>
+
+    <!-- Past Sessions -->
+    <div class="card">
+      <div class="card-hdr">
+        <span class="card-hdr-icon">🗂️</span>
+        <span class="card-hdr-title">Past Sessions</span>
+      </div>
+      <div class="card-body">
+        <div class="session-list" id="session-list"></div>
+      </div>
+    </div>
+
+    <!-- Personal Records -->
+    <div class="card">
+      <div class="card-hdr">
+        <span class="card-hdr-icon">🏆</span>
+        <span class="card-hdr-title">Personal Records</span>
+      </div>
+      <div class="card-body">
+        <div class="rec-form">
+          <div class="rec-row">
+            <input class="rec-input" id="rec-comp" placeholder="Competition / Venue" style="grid-column:1/-1">
+          </div>
+          <div class="rec-row">
+            <input class="rec-input" id="rec-score" type="number" placeholder="Score" min="0">
+            <input class="rec-input" id="rec-dist"  placeholder="Distance (e.g. 18m)">
+          </div>
+          <input class="rec-input" id="rec-date" type="date">
+          <button class="add-rec-btn" onclick="addRecord()">+ ADD RECORD</button>
+        </div>
+        <div class="rec-list" id="rec-list"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Session detail modal -->
+<div class="modal-bg" id="session-modal" onclick="if(event.target===this)closeModal()">
+  <div class="modal-box">
+    <div class="modal-hdr">
+      <div class="modal-hdr-title" id="modal-date">SESSION</div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-content" id="modal-content"></div>
+  </div>
+</div>
+
+<script>
+'use strict';
+
+// ── State ──
+let currentImageBase64 = null;
+let currentImageType   = null;
+let currentFeedback    = null;
+let sessionSaved       = false;
+
+// ── Init ──
+document.getElementById('api-key').value = localStorage.getItem('chessApiKey') || '';
+// Set today as default record date
+document.getElementById('rec-date').value = new Date().toISOString().slice(0,10);
+renderSessions();
+renderRecords();
+
+// ── Logout ──
+function logout() {
+  sessionStorage.removeItem('archeryAccess');
+  window.location.replace('https://shahmeer.me');
+}
+
+// ── Drag / drop ──
+function dragOver(e) { e.preventDefault(); document.getElementById('upload-zone').classList.add('drag-over'); }
+function dragLeave()  { document.getElementById('upload-zone').classList.remove('drag-over'); }
+function dropFile(e) {
+  e.preventDefault();
+  dragLeave();
+  const f = e.dataTransfer.files[0];
+  if (f && f.type.startsWith('image/')) loadFile(f);
+}
+
+// ── File selection ──
+function fileSelected(e) {
+  const f = e.target.files[0];
+  if (f) loadFile(f);
+}
+
+function loadFile(file) {
+  resizeImage(file).then(({base64, mediaType, dataUrl}) => {
+    currentImageBase64 = base64;
+    currentImageType   = mediaType;
+    currentFeedback    = null;
+    sessionSaved       = false;
+
+    const img = document.getElementById('preview-img');
+    img.src = dataUrl;
+    document.getElementById('preview-wrap').classList.add('show');
+    document.getElementById('analyse-btn').disabled = false;
+    document.getElementById('feedback-wrap').classList.remove('show');
+    document.getElementById('error-msg').classList.remove('show');
+    document.getElementById('save-btn').disabled = false;
+  });
+}
+
+function clearPhoto() {
+  currentImageBase64 = null;
+  currentImageType   = null;
+  currentFeedback    = null;
+  document.getElementById('preview-wrap').classList.remove('show');
+  document.getElementById('preview-img').src = '';
+  document.getElementById('analyse-btn').disabled = true;
+  document.getElementById('feedback-wrap').classList.remove('show');
+  document.getElementById('file-input').value = '';
+}
+
+// ── Image resize ──
+function resizeImage(file, maxDim=1200) {
+  return new Promise(resolve => {
+    const img = new Image();
+    img.onload = () => {
+      let {width: w, height: h} = img;
+      if (w > maxDim || h > maxDim) {
+        if (w > h) { h = Math.round(h * maxDim / w); w = maxDim; }
+        else       { w = Math.round(w * maxDim / h); h = maxDim; }
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      canvas.toBlob(blob => {
+        const reader = new FileReader();
+        reader.onload = e => {
+          const dataUrl = e.target.result;
+          const base64  = dataUrl.split(',')[1];
+          resolve({ base64, mediaType: 'image/jpeg', dataUrl });
+        };
+        reader.readAsDataURL(blob);
+      }, 'image/jpeg', 0.88);
+    };
+    img.src = URL.createObjectURL(file);
+  });
+}
+
+// ── Analyse ──
+async function analyseForm() {
+  if (!currentImageBase64) return;
+  const apiKey = localStorage.getItem('chessApiKey') || '';
+  if (!apiKey) { showError('Please enter your Anthropic API key in the sidebar.'); return; }
+
+  setLoading(true);
+  currentFeedback = null;
+  sessionSaved    = false;
+  document.getElementById('error-msg').classList.remove('show');
+  document.getElementById('feedback-wrap').classList.remove('show');
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 2000,
+        messages: [{
+          role: 'user',
+          content: [
+            {
+              type: 'image',
+              source: {
+                type: 'base64',
+                media_type: currentImageType,
+                data: currentImageBase64
+              }
+            },
+            {
+              type: 'text',
+              text: 'You are an expert archery coach specialising in recurve bow technique. Analyse this photo of a young competitive recurve archer and give specific detailed feedback on: stance, feet position, grip, draw elbow, anchor point, bow arm, sight alignment, release and follow through. Be encouraging but precise. Format your response with clear sections for each aspect.'
+            }
+          ]
+        }]
+      })
+    });
+
+    if (!res.ok) {
+      const err = await res.text();
+      throw new Error(`API error ${res.status}: ${err.slice(0,200)}`);
+    }
+
+    const data = await res.json();
+    currentFeedback = data.content[0].text || '';
+    renderFeedback(currentFeedback);
+
+  } catch(e) {
+    showError('Analysis failed: ' + e.message);
+  } finally {
+    setLoading(false);
+  }
+}
+
+function setLoading(on) {
+  document.getElementById('spinner').classList.toggle('show', on);
+  document.getElementById('analyse-btn').disabled = on;
+}
+
+function showError(msg) {
+  const el = document.getElementById('error-msg');
+  el.textContent = msg;
+  el.classList.add('show');
+}
+
+// ── Parse & render feedback ──
+const ASPECT_META = {
+  'stance':               { icon:'🧍', label:'Stance' },
+  'feet':                 { icon:'👣', label:'Feet Position' },
+  'grip':                 { icon:'✊', label:'Grip' },
+  'draw':                 { icon:'💪', label:'Draw Elbow' },
+  'anchor':               { icon:'📍', label:'Anchor Point' },
+  'bow arm':              { icon:'🏹', label:'Bow Arm' },
+  'sight':                { icon:'🎯', label:'Sight Alignment' },
+  'release':              { icon:'🔄', label:'Release & Follow Through' },
+  'follow':               { icon:'🔄', label:'Follow Through' },
+  'alignment':            { icon:'📐', label:'Alignment' },
+  'overall':              { icon:'⭐', label:'Overall' },
+  'summary':              { icon:'📋', label:'Summary' },
+};
+
+function detectAspect(title) {
+  const t = title.toLowerCase();
+  for (const [key, meta] of Object.entries(ASPECT_META)) {
+    if (t.includes(key)) return meta;
+  }
+  return { icon: '📌', label: title };
+}
+
+function parseFeedback(text) {
+  const sections = [];
+
+  // Try **Title:** or **Title** patterns
+  const bold = /\*\*([^*\n]+?)\*\*[:\s]*\n?([\s\S]*?)(?=\n\*\*[^*]|\n#{1,3} |\n\d+\.\s+[A-Z]|$)/g;
+  let m;
+  while ((m = bold.exec(text)) !== null) {
+    const title   = m[1].replace(/:$/, '').trim();
+    const content = m[2].trim();
+    if (content.length > 10) sections.push({ title, content });
+  }
+  if (sections.length >= 3) return sections;
+
+  // Try ## Heading or ### Heading
+  sections.length = 0;
+  const heads = /#{1,3}\s+([^\n]+)\n([\s\S]*?)(?=#{1,3}\s|$)/g;
+  while ((m = heads.exec(text)) !== null) {
+    const title   = m[1].trim();
+    const content = m[2].trim();
+    if (content.length > 10) sections.push({ title, content });
+  }
+  if (sections.length >= 3) return sections;
+
+  // Try numbered sections: 1. Title\n content
+  sections.length = 0;
+  const nums = /\d+\.\s+\*?\*?([A-Z][^\n*:]+?)\*?\*?[:\n]([\s\S]*?)(?=\n\d+\.\s+[A-Z]|$)/g;
+  while ((m = nums.exec(text)) !== null) {
+    const title   = m[1].trim();
+    const content = m[2].trim();
+    if (content.length > 10) sections.push({ title, content });
+  }
+  if (sections.length >= 2) return sections;
+
+  // Fallback: all-caps lines as section headers
+  sections.length = 0;
+  const lines = text.split('\n');
+  let cur = null;
+  for (const line of lines) {
+    const stripped = line.trim();
+    if (!stripped) continue;
+    // A line that is mostly uppercase and short = header
+    if (stripped.length < 40 && stripped === stripped.toUpperCase() && /[A-Z]/.test(stripped)) {
+      if (cur && cur.content.length > 10) sections.push(cur);
+      cur = { title: stripped, content: '' };
+    } else if (cur) {
+      cur.content += (cur.content ? '\n' : '') + stripped;
+    }
+  }
+  if (cur && cur.content.length > 10) sections.push(cur);
+  if (sections.length >= 2) return sections;
+
+  // Last resort: whole text as one section
+  return [{ title: 'Coaching Feedback', content: text }];
+}
+
+function renderFeedback(text) {
+  const sections = parseFeedback(text);
+  const container = document.getElementById('aspect-cards');
+  container.innerHTML = '';
+
+  sections.forEach((sec, i) => {
+    const meta    = detectAspect(sec.title);
+    const card    = document.createElement('div');
+    card.className = 'aspect-card' + (i === 0 ? ' open' : '');
+    card.innerHTML = `
+      <div class="aspect-hdr" onclick="toggleAspect(this.parentElement)">
+        <span class="aspect-icon">${meta.icon}</span>
+        <span class="aspect-title">${meta.label !== sec.title ? meta.label : sec.title}</span>
+        <span class="aspect-chevron">▶</span>
+      </div>
+      <div class="aspect-body">${formatBody(sec.content)}</div>`;
+    container.appendChild(card);
+  });
+
+  document.getElementById('feedback-wrap').classList.add('show');
+  document.getElementById('save-btn').disabled = false;
+}
+
+function formatBody(text) {
+  return text
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g, '<em>$1</em>')
+    .replace(/\n{2,}/g, '</p><p>')
+    .replace(/\n/g, '<br>')
+    .replace(/^/, '<p>').replace(/$/, '</p>');
+}
+
+function toggleAspect(card) {
+  card.classList.toggle('open');
+}
+
+// ── Save session ──
+function saveSession() {
+  if (!currentFeedback) return;
+  const sessions = JSON.parse(localStorage.getItem('archery_sessions') || '[]');
+  const now = new Date();
+  sessions.unshift({
+    date: now.toLocaleDateString('en-GB', {day:'2-digit',month:'short',year:'numeric'}),
+    time: now.toLocaleTimeString('en-GB', {hour:'2-digit',minute:'2-digit'}),
+    thumb: document.getElementById('preview-img').src,
+    feedback: currentFeedback
+  });
+  // Keep last 5
+  sessions.splice(5);
+  localStorage.setItem('archery_sessions', JSON.stringify(sessions));
+  document.getElementById('save-btn').disabled = true;
+  document.getElementById('save-btn').textContent = '✅  SESSION SAVED';
+  sessionSaved = true;
+  renderSessions();
+}
+
+// ── Render sessions ──
+function renderSessions() {
+  const sessions = JSON.parse(localStorage.getItem('archery_sessions') || '[]');
+  const list = document.getElementById('session-list');
+  if (sessions.length === 0) {
+    list.innerHTML = '<div class="no-sessions">No sessions yet</div>';
+    return;
+  }
+  list.innerHTML = sessions.map((s, i) => {
+    const preview = s.feedback.replace(/\*\*/g,'').slice(0, 80) + '…';
+    return `<div class="session-item" onclick="openSession(${i})">
+      ${s.thumb
+        ? `<img class="session-thumb" src="${s.thumb}" alt="">`
+        : `<div class="session-thumb-placeholder">🏹</div>`}
+      <div class="session-info">
+        <div class="session-date">${s.date} · ${s.time||''}</div>
+        <div class="session-preview">${preview}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openSession(i) {
+  const sessions = JSON.parse(localStorage.getItem('archery_sessions') || '[]');
+  const s = sessions[i];
+  if (!s) return;
+  document.getElementById('modal-date').textContent = s.date + ' · ' + (s.time||'');
+  const content = document.getElementById('modal-content');
+  content.innerHTML = (s.thumb
+    ? `<img class="modal-thumb" src="${s.thumb}" alt="Stance">`
+    : '') +
+    `<div class="modal-feedback-text">${s.feedback.replace(/</g,'&lt;').replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>')}</div>`;
+  document.getElementById('session-modal').classList.add('open');
+}
+
+function closeModal() {
+  document.getElementById('session-modal').classList.remove('open');
+}
+
+// ── Personal Records ──
+function addRecord() {
+  const comp  = document.getElementById('rec-comp').value.trim();
+  const score = document.getElementById('rec-score').value.trim();
+  const dist  = document.getElementById('rec-dist').value.trim();
+  const date  = document.getElementById('rec-date').value;
+  if (!score) { document.getElementById('rec-score').focus(); return; }
+
+  const records = JSON.parse(localStorage.getItem('archery_records') || '[]');
+  records.unshift({ comp: comp||'Practice', score: parseInt(score)||0, dist, date });
+  records.sort((a,b) => b.score - a.score); // sort by score desc
+  localStorage.setItem('archery_records', JSON.stringify(records));
+
+  document.getElementById('rec-comp').value  = '';
+  document.getElementById('rec-score').value = '';
+  document.getElementById('rec-dist').value  = '';
+  renderRecords();
+}
+
+function deleteRecord(i) {
+  const records = JSON.parse(localStorage.getItem('archery_records') || '[]');
+  records.splice(i, 1);
+  localStorage.setItem('archery_records', JSON.stringify(records));
+  renderRecords();
+}
+
+function renderRecords() {
+  const records = JSON.parse(localStorage.getItem('archery_records') || '[]');
+  const list = document.getElementById('rec-list');
+  if (records.length === 0) {
+    list.innerHTML = '<div class="no-sessions">No records yet</div>';
+    return;
+  }
+  // Best score is index 0 (already sorted)
+  list.innerHTML = records.map((r, i) => {
+    const isBest = i === 0;
+    const dateStr = r.date ? new Date(r.date).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}) : '';
+    return `<div class="rec-item${isBest?' best':''}">
+      <div class="rec-comp">${esc(r.comp)}${isBest?'<span class="best-badge">BEST</span>':''}</div>
+      <div class="rec-dist">${esc(r.dist)||'—'}</div>
+      <div class="rec-score">${r.score}</div>
+      <button class="rec-del" onclick="deleteRecord(${i})" title="Delete">✕</button>
+      <div class="rec-date-sub">${dateStr}</div>
+    </div>`;
+  }).join('');
+}
+
+function esc(s) {
+  return (s||'').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+</script>
+</body>
+</html>
