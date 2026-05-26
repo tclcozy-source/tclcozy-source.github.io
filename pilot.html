@@ -279,6 +279,19 @@
       font-size: 22px; font-weight: 700; color: var(--orange);
     }
     .sidebar-days-unit { font-size: 9px; color: var(--muted); letter-spacing: 2px; }
+    .sidebar-streak-row {
+      display: flex; justify-content: space-between; align-items: flex-end;
+      margin-top: 14px; padding-top: 12px;
+      border-top: 1px solid var(--border);
+    }
+    .sidebar-streak-block { text-align: center; flex: 1; }
+    .sidebar-streak-val {
+      font-family: 'Orbitron', monospace;
+      font-size: 18px; font-weight: 700;
+    }
+    .sidebar-streak-val.fire { color: #ff5e3a; }
+    .sidebar-streak-val.gold { color: #f5c842; }
+    .sidebar-streak-lbl { font-size: 8px; letter-spacing: 2px; color: var(--muted); margin-top: 3px; }
 
     /* ── CONTENT AREA ── */
     #content {
@@ -404,6 +417,8 @@
     .stat-val.o { color: var(--orange); }
     .stat-val.b { color: var(--blue); }
     .stat-val.g { color: var(--green); }
+    .stat-val.r { color: #ff5e3a; }
+    .stat-val.y { color: #f5c842; }
     .stat-lbl {
       font-size: 9px; letter-spacing: 2px;
       color: var(--muted); text-transform: uppercase; margin-top: 7px;
@@ -906,6 +921,16 @@
       <div class="sidebar-foot-label">Days to First Flight</div>
       <div id="sidebar-days">—</div>
       <div class="sidebar-days-unit">DAYS REMAINING</div>
+      <div class="sidebar-streak-row">
+        <div class="sidebar-streak-block">
+          <div class="sidebar-streak-val fire" id="sidebar-streak">0</div>
+          <div class="sidebar-streak-lbl">🔥 STREAK</div>
+        </div>
+        <div class="sidebar-streak-block">
+          <div class="sidebar-streak-val gold" id="sidebar-best-streak">0</div>
+          <div class="sidebar-streak-lbl">🏆 BEST</div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -966,6 +991,14 @@
         <div class="stat-card">
           <div class="stat-val g" id="stat-days">—</div>
           <div class="stat-lbl">Days to Go</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-val r" id="stat-streak">0</div>
+          <div class="stat-lbl">🔥 Study Streak</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-val y" id="stat-best-streak">0</div>
+          <div class="stat-lbl">🏆 Best Streak</div>
         </div>
       </div>
     </div>
@@ -1333,6 +1366,7 @@ const TARGET_DATE = new Date('2030-03-16T00:00:00').getTime();
 let checked    = JSON.parse(localStorage.getItem('pilot_theory')     || '{}');
 let milestones = JSON.parse(localStorage.getItem('pilot_milestones_v3') || 'null')
                  || DEFAULT_MS.map(m => ({...m}));
+let streakData = JSON.parse(localStorage.getItem('pilot_streak') || '{"lastStudyDate":null,"current":0,"best":0}');
 
 // Modal state
 let modalCat = null, modalTopic = null;
@@ -1381,9 +1415,54 @@ function init() {
   buildMilestones();
   loadNotes();
   updateStats();
+  initStreak();
   tickClock();
   setInterval(tickClock, 1000);
   buildStudyPlan();
+}
+
+// ════════════════════════════════════════
+//  STREAK
+// ════════════════════════════════════════
+function todayStr() {
+  return new Date().toISOString().slice(0, 10); // 'YYYY-MM-DD'
+}
+function daysBetween(a, b) {
+  // Returns (date b) - (date a) in whole days; both 'YYYY-MM-DD' strings
+  return Math.round((new Date(b) - new Date(a)) / 86400000);
+}
+function initStreak() {
+  // On login: if the last study date is older than yesterday, streak resets to 0
+  if (streakData.lastStudyDate) {
+    const gap = daysBetween(streakData.lastStudyDate, todayStr());
+    if (gap > 1) {
+      streakData.current = 0;
+      localStorage.setItem('pilot_streak', JSON.stringify(streakData));
+    }
+  }
+  updateStreakUI();
+}
+function recordStudyDay() {
+  const today = todayStr();
+  if (streakData.lastStudyDate === today) return; // already counted today
+  const gap = streakData.lastStudyDate ? daysBetween(streakData.lastStudyDate, today) : 999;
+  if (gap === 1) {
+    streakData.current += 1; // consecutive day
+  } else {
+    streakData.current = 1;  // missed day(s) — restart
+  }
+  streakData.lastStudyDate = today;
+  if (streakData.current > streakData.best) streakData.best = streakData.current;
+  localStorage.setItem('pilot_streak', JSON.stringify(streakData));
+  updateStreakUI();
+}
+function updateStreakUI() {
+  const cur  = streakData.current;
+  const best = streakData.best;
+  document.getElementById('stat-streak').textContent      = cur;
+  document.getElementById('stat-best-streak').textContent = best;
+  document.getElementById('sidebar-streak').textContent      = cur;
+  document.getElementById('sidebar-best-streak').textContent = best;
 }
 
 // ════════════════════════════════════════
@@ -1515,6 +1594,7 @@ function toggleFromModal() {
   const k = modalCat + '|' + modalTopic;
   checked[k] = !checked[k];
   localStorage.setItem('pilot_theory', JSON.stringify(checked));
+  if (checked[k]) recordStudyDay();
   buildTheory();
   buildStudyPlan();
   updateStats();
@@ -1526,6 +1606,7 @@ function toggleDirect(cat, topic, itemEl) {
   checked[k] = !checked[k];
   localStorage.setItem('pilot_theory', JSON.stringify(checked));
   const ok = checked[k];
+  if (ok) recordStudyDay();
   itemEl.classList.toggle('done', ok);
   itemEl.querySelector('.topic-chk').textContent = ok ? '✓' : '';
   // fast-update category progress bar
