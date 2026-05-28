@@ -306,6 +306,25 @@
       border-color: rgba(168,85,247,0.7);
     }
 
+    /* ── VIDEO EGG OVERLAY ── */
+    #egg-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.93);
+      z-index: 99999;
+      align-items: center;
+      justify-content: center;
+    }
+    #egg-overlay.open { display: flex; }
+    #egg-video {
+      width: min(82vw, 900px);
+      height: min(46.125vw, 506px);
+      border: none;
+      border-radius: 14px;
+      box-shadow: 0 0 80px rgba(0,0,0,0.8);
+    }
+
     @media (max-width: 520px) {
       .content { padding: 24px 16px 16px; }
       header { margin-bottom: 0; }
@@ -325,6 +344,11 @@
 <body>
   <canvas id="stars"></canvas>
   <button id="mute-btn" onclick="toggleMute()" title="Sound" style="position:fixed;top:14px;right:14px;z-index:9999;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);color:white;width:38px;height:38px;border-radius:50%;font-size:16px;cursor:pointer;backdrop-filter:blur(10px);transition:transform .15s"></button>
+
+  <!-- Video easter egg overlay -->
+  <div id="egg-overlay" onclick="if(event.target===this)closeEgg()">
+    <iframe id="egg-video" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+  </div>
 
   <div id="redirect-msg">
     <p>Redirecting to <strong>shahmeer.me</strong>...</p>
@@ -467,6 +491,24 @@
     // ── Secret trigger (click footer 5x within 2s → pilot.html) ──
     var _sc=0,_st=0;
     function secretClick(){var n=Date.now();if(n-_st>2000)_sc=0;_sc++;_st=n;if(_sc>=5){_sc=0;sessionStorage.setItem('pilotAccess','true');window.location.href='pilot.html';}}
+
+    // ── Video easter egg (click header → type "6" then "7") ──
+    var _ev=false,_es=0;
+    document.querySelector('header').addEventListener('click',function(){_ev=true;_es=0;});
+    document.addEventListener('keydown',function(e){
+      if(!_ev)return;
+      if(_es===0&&e.key==='6'){_es=1;}
+      else if(_es===1&&e.key==='7'){openEgg();_ev=false;_es=0;}
+      else{_ev=false;_es=0;}
+    });
+    function openEgg(){
+      document.getElementById('egg-video').src='https://www.youtube.com/embed/XEFZ30Cvdnc?autoplay=1';
+      document.getElementById('egg-overlay').classList.add('open');
+    }
+    function closeEgg(){
+      document.getElementById('egg-overlay').classList.remove('open');
+      document.getElementById('egg-video').src='';
+    }
 
     // ── Audio ──────────────────────────────────────────────────────
     var _ac=null,_muted=localStorage.getItem('sfx')==='1';
