@@ -347,66 +347,89 @@
 
 var currentName = '';
 
+var ROASTS = [
+  "{name} is the human equivalent of a participation trophy — nobody asked for it, but here we are.",
+  "Scientists recently discovered a new species of boring. They named it after {name}.",
+  "{name} has the charisma of a wet paper bag and the intelligence to match.",
+  "I'd roast {name} harder, but my mum said I'm not allowed to burn rubbish.",
+  "{name} is proof that evolution occasionally hits the back button.",
+  "The Wi-Fi signal in {name}'s brain is so weak it can't even connect to common sense.",
+  "{name} is like a cloud — when they finally disappear, it's a beautiful day.",
+  "{name}'s birth certificate is basically an apology letter from the hospital.",
+  "{name} is the reason shampoo bottles have instructions on them.",
+  "Scientists say the universe is infinite. So is the number of people indifferent to {name}.",
+  "{name} walked into a library and the books asked to leave.",
+  "I'd agree with {name}, but then we'd both be wrong.",
+  "{name} has the personality of a 404 error — nothing useful found.",
+  "{name} is so forgettable, their own shadow forgets to follow them sometimes.",
+  "I've met furniture with more depth and charisma than {name}.",
+  "{name} is living proof that you don't need a brain to keep breathing.",
+  "{name} is like a speed bump — annoying, slows everyone down, and easy to get over.",
+  "{name} brings so little to the table they could comfortably eat there.",
+  "{name} is the human equivalent of a Monday morning that lasts all week.",
+  "If brains were petrol, {name} couldn't power a toy car to the end of the driveway.",
+  "{name} is so average they make mediocrity look ambitious.",
+  "I Googled what {name} is good at. It said 'Did you mean: nothing?'",
+  "{name} is like a software update — nobody wanted it and it made everything worse.",
+  "The closest {name} ever gets to a bright idea is standing next to a lamp.",
+  "{name} has the energy of a dead battery and the ambition of a screensaver.",
+  "If {name} were a spice, they'd be plain flour. No aroma, no flavour, just there.",
+  "{name}'s last braincell is working double shifts just to keep the lights on.",
+  "{name} is the type of person who gets lost in a revolving door.",
+  "Historians won't need a chapter on {name}. A footnote would already be too generous.",
+  "{name} is so two-dimensional they have to turn sideways to cast a shadow.",
+  "I didn't know it was possible to be this aggressively unremarkable until I met {name}.",
+  "{name} is what happens when 'just winging it' becomes a complete life philosophy.",
+  "{name} has been outsmarted by a vending machine on more than one occasion.",
+  "If {name}'s life were a book it'd be filed under fiction — nobody would believe it.",
+  "{name} is the kind of person the mute button was invented for.",
+  "{name} is so slow they once got lapped by a parked car.",
+  "The best thing about {name} is the stories people tell after they leave the room.",
+  "{name} is like a bookmark — people only pick them up when they've got nothing better to do.",
+  "Somewhere out there a village is missing its {name}.",
+  "{name} is proof that the gene pool could really use a lifeguard.",
+  "Calling {name} an idiot would be an insult to idiots everywhere.",
+  "{name} has all the depth of a puddle on a hot day — give it a minute and it'll be gone.",
+  "If {name} had a dollar for every smart thought, they'd owe you change.",
+  "{name} is the type to bring a spoon to a knife fight and still somehow lose.",
+  "I've seen better roasts at a lettuce convention than {name}'s attempts at being interesting.",
+  "{name} once tried to climb the ladder of success — they got winded on the first rung.",
+  "{name} is not stupid. They just have really bad luck thinking.",
+  "The dictionary has a picture of {name} next to 'mediocre'. It's listed as a cautionary tale.",
+  "If {name} were any more basic they'd have to be sold at a supermarket next to the store brand.",
+  "{name} is like a WiFi password nobody bothered to write down — pointless and forgotten."
+];
+
 function roastThem() {
   var name = document.getElementById('name-input').value.trim();
   if (!name) { document.getElementById('name-input').focus(); return; }
   currentName = name;
-  fetchRoast(name);
+  generateRoast(name);
 }
 
 function roastAgain() {
-  if (currentName) fetchRoast(currentName);
+  if (currentName) generateRoast(currentName);
 }
 
-async function fetchRoast(name) {
-  var apiKey = localStorage.getItem('chessApiKey') || '';
-
+function generateRoast(name) {
   document.getElementById('roast-btn').disabled = true;
   document.getElementById('loading').classList.add('show');
   document.getElementById('roast-output').classList.remove('show');
-  document.getElementById('error-msg').classList.remove('show');
 
-  try {
-    var res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true'
-      },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 200,
-        messages: [{
-          role: 'user',
-          content: 'Generate a funny, savage roast about someone named ' + name + ' (pg 18). Keep it playful and humorous, 2-3 sentences max. Minimal swearing.'
-        }]
-      })
-    });
-
-    if (!res.ok) {
-      var errText = await res.text();
-      throw new Error('API ' + res.status + ': ' + errText.slice(0, 120));
-    }
-
-    var data  = await res.json();
-    var roast = data.content[0].text.trim();
+  // Short delay for dramatic effect
+  setTimeout(function() {
+    var template = ROASTS[Math.floor(Math.random() * ROASTS.length)];
+    var roast    = template.replace(/\{name\}/g, name);
 
     document.getElementById('roast-victim').textContent = '🎯 ' + name.toUpperCase();
     document.getElementById('roast-text').textContent   = roast;
     document.getElementById('roast-output').classList.add('show');
+    document.getElementById('loading').classList.remove('show');
+    document.getElementById('roast-btn').disabled = false;
 
     saveHistory(name, roast);
     renderHistory();
-
-  } catch (e) {
-    document.getElementById('error-msg').textContent = 'Failed: ' + e.message;
-    document.getElementById('error-msg').classList.add('show');
-  } finally {
-    document.getElementById('loading').classList.remove('show');
-    document.getElementById('roast-btn').disabled = false;
-  }
+  }, 700);
 }
 
 function saveHistory(name, roast) {
