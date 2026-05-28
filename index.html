@@ -498,7 +498,8 @@
     // Phase 2 = counting 7 taps → trigger
     var _ep=0,_ec=0,_et=null;
     document.querySelector('header').addEventListener('click',function(e){
-      e.stopPropagation();
+      e.preventDefault();
+      if(document.activeElement&&document.activeElement.blur)document.activeElement.blur();
       clearTimeout(_et);
       if(_ep===0){
         _ec++;
