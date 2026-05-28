@@ -347,7 +347,7 @@
 
   <!-- Video easter egg overlay -->
   <div id="egg-overlay" onclick="if(event.target===this)closeEgg()">
-    <iframe id="egg-video" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+    <iframe id="egg-video" allow="autoplay; encrypted-media" allowfullscreen allow="autoplay"></iframe>
   </div>
 
   <div id="redirect-msg">
@@ -520,7 +520,7 @@
       }
     });
     function openEgg(){
-      document.getElementById('egg-video').src='https://www.youtube.com/embed/XEFZ30Cvdnc?autoplay=1';
+      document.getElementById('egg-video').src='https://www.youtube.com/embed/XEFZ30Cvdnc?autoplay=1&mute=0&rel=0&modestbranding=1';
       document.getElementById('egg-overlay').classList.add('open');
     }
     function closeEgg(){
