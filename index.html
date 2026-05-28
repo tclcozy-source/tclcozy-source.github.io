@@ -21,6 +21,32 @@
       overflow-x: hidden;
       display: flex;
       flex-direction: column;
+      animation: pageFadeIn 0.7s ease both;
+    }
+
+    /* Animated ambient background glow — sits above the star canvas */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      background:
+        radial-gradient(ellipse 55% 45% at 20% 40%, rgba(168,85,247,0.055) 0%, transparent 65%),
+        radial-gradient(ellipse 45% 40% at 80% 25%, rgba(59,130,246,0.04)  0%, transparent 60%),
+        radial-gradient(ellipse 40% 35% at 60% 80%, rgba(168,85,247,0.03)  0%, transparent 60%);
+      animation: ambientShift 12s ease-in-out infinite alternate;
+    }
+
+    @keyframes ambientShift {
+      0%   { opacity: 0.7; transform: scale(1)    translateX(0px);  }
+      50%  { opacity: 1;   transform: scale(1.04) translateX(8px);  }
+      100% { opacity: 0.8; transform: scale(1.02) translateX(-6px); }
+    }
+
+    @keyframes pageFadeIn {
+      from { opacity: 0; }
+      to   { opacity: 1; }
     }
 
     canvas {
@@ -87,12 +113,12 @@
       margin: 40px auto 0;
     }
 
-    /* ── CARD — premium glassmorphism ── */
+    /* ── CARD — dark frosted glassmorphism ── */
     .card {
-      background: rgba(255, 255, 255, 0.05);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(12, 10, 22, 0.55);
+      backdrop-filter: blur(24px) saturate(160%);
+      -webkit-backdrop-filter: blur(24px) saturate(160%);
+      border: 1px solid rgba(255, 255, 255, 0.09);
       border-radius: 24px;
       padding: 24px 24px 20px;
       width: 240px;
@@ -105,33 +131,39 @@
       opacity: 0;
       transform: translateY(40px);
       transition:
-        transform    0.38s cubic-bezier(0.34, 1.4, 0.64, 1),
-        box-shadow   0.38s ease,
+        transform    0.4s cubic-bezier(0.34, 1.4, 0.64, 1),
+        box-shadow   0.4s ease,
         border-color 0.3s ease,
         background   0.3s ease;
       position: relative;
       overflow: hidden;
+      box-shadow:
+        0 4px 24px rgba(0, 0, 0, 0.35),
+        inset 0 1px 0 rgba(255, 255, 255, 0.06);
     }
 
     /* top-edge gloss line */
     .card::before {
       content: '';
       position: absolute;
-      top: 0; left: 10%; right: 10%;
+      top: 0; left: 12%; right: 12%;
       height: 1px;
-      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.22), transparent);
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
       border-radius: 999px;
     }
 
-    /* inner glow that fades in on hover */
+    /* purple/blue gradient glow that blooms on hover */
     .card::after {
       content: '';
       position: absolute;
       inset: 0;
       border-radius: 24px;
-      background: radial-gradient(ellipse 80% 50% at 50% 0%, rgba(255,77,158,0.07) 0%, transparent 70%);
+      background: radial-gradient(ellipse 90% 60% at 50% 0%,
+        rgba(168,85,247,0.13) 0%,
+        rgba(59,130,246,0.06) 50%,
+        transparent 75%);
       opacity: 0;
-      transition: opacity 0.35s ease;
+      transition: opacity 0.4s ease;
       pointer-events: none;
     }
 
@@ -141,13 +173,13 @@
 
     .card:hover {
       transform: translateY(-10px) scale(1.03);
-      background: rgba(255, 255, 255, 0.08);
-      border-color: rgba(255, 77, 158, 0.55);
+      background: rgba(20, 14, 40, 0.72);
+      border-color: rgba(168, 85, 247, 0.5);
       box-shadow:
-        0 8px 32px rgba(0, 0, 0, 0.5),
-        0 0 0 1px rgba(255, 77, 158, 0.15),
-        0 0 40px rgba(255, 77, 158, 0.18),
-        0 0 80px rgba(168, 85, 247, 0.08),
+        0 12px 40px rgba(0, 0, 0, 0.55),
+        0 0 0 1px rgba(168, 85, 247, 0.18),
+        0 0 36px rgba(168, 85, 247, 0.22),
+        0 0 72px rgba(59, 130, 246, 0.1),
         inset 0 1px 0 rgba(255, 255, 255, 0.1);
     }
 
@@ -171,7 +203,7 @@
       line-height: 1.4;
     }
 
-    /* ── PLAY BUTTON — glowing gradient pill ── */
+    /* ── PLAY BUTTON — purple glow pill ── */
     .play-btn {
       margin-top: 10px;
       background: linear-gradient(135deg, #ff4d9e, #a855f7);
@@ -184,34 +216,32 @@
       cursor: pointer;
       pointer-events: none;
       position: relative;
-      transition: transform 0.25s ease, box-shadow 0.25s ease, opacity 0.25s ease;
-      box-shadow:
-        0 0 0 rgba(255,77,158,0),
-        0 2px 8px rgba(168,85,247,0.25);
+      transition: transform 0.25s ease, box-shadow 0.25s ease;
+      box-shadow: 0 2px 10px rgba(168, 85, 247, 0.3);
     }
 
-    /* glow layer behind the button */
+    /* blurred glow layer behind the button */
     .play-btn::before {
       content: '';
       position: absolute;
-      inset: -2px;
+      inset: -3px;
       border-radius: 999px;
-      background: linear-gradient(135deg, #ff4d9e, #a855f7);
-      filter: blur(10px);
+      background: linear-gradient(135deg, #a855f7, #6366f1);
+      filter: blur(12px);
       opacity: 0;
       z-index: -1;
       transition: opacity 0.3s ease;
     }
 
     .card:hover .play-btn {
-      transform: scale(1.07);
+      transform: scale(1.08);
       box-shadow:
-        0 0 16px rgba(255, 77, 158, 0.55),
-        0 0 32px rgba(168, 85, 247, 0.3),
-        0 4px 12px rgba(0,0,0,0.4);
+        0 0 18px rgba(168, 85, 247, 0.65),
+        0 0 36px rgba(99, 102, 241, 0.35),
+        0 4px 14px rgba(0, 0, 0, 0.4);
     }
 
-    .card:hover .play-btn::before { opacity: 0.55; }
+    .card:hover .play-btn::before { opacity: 0.6; }
 
     footer {
       margin-top: 0;
