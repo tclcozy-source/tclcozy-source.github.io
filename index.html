@@ -246,7 +246,7 @@
 
   <div class="content">
     <header>
-      <h1 onclick="archeryClick()" style="cursor:default;user-select:none;">🎮 Shahmeer's Game Hub</h1>
+      <h1>🎮 Shahmeer's Game Hub</h1>
       <p>Made by a 12 year old developer</p>
       <span class="badge">⚡ Built with HTML, CSS &amp; JS</span>
     </header>
@@ -380,10 +380,6 @@
     // ── Secret trigger (click footer 5x within 2s → pilot.html) ──
     var _sc=0,_st=0;
     function secretClick(){var n=Date.now();if(n-_st>2000)_sc=0;_sc++;_st=n;if(_sc>=5){_sc=0;sessionStorage.setItem('pilotAccess','true');window.location.href='pilot.html';}}
-
-    // ── Archery easter egg (click header h1 5x within 2s → archery.html) ──
-    var _ah=0,_at=0;
-    function archeryClick(){var n=Date.now();if(n-_at>2000)_ah=0;_ah++;_at=n;if(_ah>=5){_ah=0;sessionStorage.setItem('archeryAccess','true');window.location.href='archery.html';}}
 
     // ── Audio ──────────────────────────────────────────────────────
     var _ac=null,_muted=localStorage.getItem('sfx')==='1';
