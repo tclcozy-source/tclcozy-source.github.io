@@ -523,8 +523,6 @@
     "zippy"
   ];
 
-  const VALID = new Set(WORDS);
-
   const TARGET = getDailyWord();
   let row = 0, col = 0, over = false, busy = false, tutOpen = true;
   const history = [];
@@ -617,8 +615,6 @@
   function submit() {
     if (col < 5) { toast('Not enough letters'); shakeRow(row); return; }
     const word = rowWord(row);
-    if (!VALID.has(word)) { toast('Not a word!'); shakeRow(row); return; }
-
     const states = score(word, TARGET);
     history.push({ guess: word, states });
     busy = true;
