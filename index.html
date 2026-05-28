@@ -464,9 +464,22 @@
       }, 300 + i * 180);
     });
 
-    // ── Secret trigger (click footer 5x within 2s → pilot.html) ──
-    var _sc=0,_st=0;
-    function secretClick(){var n=Date.now();if(n-_st>2000)_sc=0;_sc++;_st=n;if(_sc>=5){_sc=0;sessionStorage.setItem('pilotAccess','true');window.location.href='pilot.html';}}
+    // ── Secret footer triggers ──
+    // Roast:  10 clicks total, resets after 5s of no clicks  → roast.html
+    // Pilot:  5 rapid clicks within 2s gaps                  → pilot.html
+    var _sc=0,_st=0,_rc=0,_rl=null;
+    function secretClick(){
+      var n=Date.now();
+      // Roast counter (checked first — longer window, batch-friendly)
+      clearTimeout(_rl);
+      _rc++;
+      _rl=setTimeout(function(){_rc=0;},5000);
+      if(_rc>=10){_rc=0;sessionStorage.setItem('roastAccess','true');window.location.href='roast.html';return;}
+      // Pilot counter (5 rapid clicks within 2s each)
+      if(n-_st>2000)_sc=0;
+      _sc++;_st=n;
+      if(_sc>=5){_sc=0;sessionStorage.setItem('pilotAccess','true');window.location.href='pilot.html';}
+    }
 
     // ── Audio ──────────────────────────────────────────────────────
     var _ac=null,_muted=localStorage.getItem('sfx')==='1';
