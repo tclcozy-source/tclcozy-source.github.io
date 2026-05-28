@@ -306,25 +306,6 @@
       border-color: rgba(168,85,247,0.7);
     }
 
-    /* ── VIDEO EGG OVERLAY ── */
-    #egg-overlay {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.93);
-      z-index: 99999;
-      align-items: center;
-      justify-content: center;
-    }
-    #egg-overlay.open { display: flex; }
-    #egg-video {
-      width: min(82vw, 900px);
-      height: min(46.125vw, 506px);
-      border: none;
-      border-radius: 14px;
-      box-shadow: 0 0 80px rgba(0,0,0,0.8);
-    }
-
     @media (max-width: 520px) {
       .content { padding: 24px 16px 16px; }
       header { margin-bottom: 0; }
@@ -344,11 +325,6 @@
 <body>
   <canvas id="stars"></canvas>
   <button id="mute-btn" onclick="toggleMute()" title="Sound" style="position:fixed;top:14px;right:14px;z-index:9999;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);color:white;width:38px;height:38px;border-radius:50%;font-size:16px;cursor:pointer;backdrop-filter:blur(10px);transition:transform .15s"></button>
-
-  <!-- Video easter egg overlay -->
-  <div id="egg-overlay" onclick="if(event.target===this)closeEgg()">
-    <iframe id="egg-video" allow="autoplay; encrypted-media" allowfullscreen allow="autoplay"></iframe>
-  </div>
 
   <div id="redirect-msg">
     <p>Redirecting to <strong>shahmeer.me</strong>...</p>
@@ -491,42 +467,6 @@
     // ── Secret trigger (click footer 5x within 2s → pilot.html) ──
     var _sc=0,_st=0;
     function secretClick(){var n=Date.now();if(n-_st>2000)_sc=0;_sc++;_st=n;if(_sc>=5){_sc=0;sessionStorage.setItem('pilotAccess','true');window.location.href='pilot.html';}}
-
-    // ── Video easter egg: tap header 6×, wait 2s, tap header 7× ──
-    // Phase 0 = counting first 6 taps
-    // Phase 1 = mandatory 2s gap (tap during gap resets)
-    // Phase 2 = counting 7 taps → trigger
-    var _ep=0,_ec=0,_et=null;
-    document.querySelector('header').addEventListener('click',function(e){
-      e.preventDefault();
-      if(document.activeElement&&document.activeElement.blur)document.activeElement.blur();
-      clearTimeout(_et);
-      if(_ep===0){
-        _ec++;
-        if(_ec===6){
-          _ep=1;_ec=0;
-          // After 2s of silence arm phase 2; give 6s total before full reset
-          _et=setTimeout(function(){_ep=2;_et=setTimeout(function(){_ep=0;_ec=0;},6000);},2000);
-        } else {
-          _et=setTimeout(function(){_ec=0;},1500); // reset if no tap for 1.5s
-        }
-      } else if(_ep===1){
-        // Tapped during 2s gap → reset
-        _ep=0;_ec=0;
-      } else if(_ep===2){
-        _ec++;
-        if(_ec===7){openEgg();_ep=0;_ec=0;}
-        else{_et=setTimeout(function(){_ep=0;_ec=0;},1500);}
-      }
-    });
-    function openEgg(){
-      document.getElementById('egg-video').src='https://www.youtube.com/embed/XEFZ30Cvdnc?autoplay=1&mute=0&rel=0&modestbranding=1';
-      document.getElementById('egg-overlay').classList.add('open');
-    }
-    function closeEgg(){
-      document.getElementById('egg-overlay').classList.remove('open');
-      document.getElementById('egg-video').src='';
-    }
 
     // ── Audio ──────────────────────────────────────────────────────
     var _ac=null,_muted=localStorage.getItem('sfx')==='1';
