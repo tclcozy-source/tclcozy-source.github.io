@@ -1,392 +1,483 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Shahmeer's Game Hub</title>
+  <title>Shahmeer.me</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script>
     if (window.location.hostname === 'tclcozy-source.github.io') {
       window.location.replace('https://shahmeer.me');
     }
   </script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
-    body {
-      background: #0a0a0f;
-      color: white;
-      font-family: Arial, sans-serif;
-      text-align: center;
-      min-height: 100vh;
-      overflow-x: hidden;
-      display: flex;
-      flex-direction: column;
+    :root {
+      --bg:            #06060a;
+      --surface:       rgba(255,255,255,0.038);
+      --surface-hover: rgba(255,255,255,0.068);
+      --border:        rgba(255,255,255,0.07);
+      --border-hover:  rgba(255,255,255,0.13);
+      --text:          #f0f0f5;
+      --muted:         rgba(255,255,255,0.36);
+      --faint:         rgba(255,255,255,0.13);
     }
 
-    canvas {
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── PARTICLES ── */
+    #particles {
       position: fixed;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
+      inset: 0;
       pointer-events: none;
       z-index: 0;
     }
 
-    .content {
+    /* ── NAV ── */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      padding: 0 36px;
+      justify-content: space-between;
+      background: rgba(6,6,10,0.65);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-logo {
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 4px;
+      color: rgba(255,255,255,0.65);
+      text-transform: uppercase;
+      text-decoration: none;
+    }
+    .nav-badge {
+      font-size: 10px;
+      color: var(--muted);
+      letter-spacing: 1.5px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--border);
+      padding: 4px 13px;
+      border-radius: 999px;
+    }
+
+    /* ── MAIN ── */
+    main {
       position: relative;
       z-index: 1;
-      padding: 32px 20px 24px;
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      min-height: 100vh;
+      padding-top: 56px;
     }
 
-    header {
-      margin-bottom: 0;
-      animation: fadeDown 0.8s ease both;
+    /* ── HERO ── */
+    .hero {
+      text-align: center;
+      padding: 96px 24px 72px;
+      animation: fadeUp 0.85s cubic-bezier(0.22,1,0.36,1) both;
     }
-
-    header h1 {
-      font-size: 58px;
+    .hero-eyebrow {
+      font-size: 10px;
+      letter-spacing: 6px;
+      text-transform: uppercase;
+      color: var(--faint);
+      margin-bottom: 22px;
+    }
+    .hero-title {
+      font-size: clamp(48px, 8.5vw, 108px);
       font-weight: 900;
-      letter-spacing: 3px;
-      background: linear-gradient(90deg, #ff4d9e, #a855f7, #3b82f6);
+      letter-spacing: -2px;
+      line-height: 0.95;
+      background: linear-gradient(160deg, #ffffff 0%, rgba(255,255,255,0.48) 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
-      line-height: 1.1;
+      margin-bottom: 20px;
+    }
+    .hero-sub {
+      font-size: 13px;
+      color: var(--muted);
+      font-weight: 400;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+    }
+    .hero-rule {
+      width: 32px;
+      height: 1px;
+      background: var(--faint);
+      margin: 30px auto 0;
     }
 
-    header p {
-      font-size: 16px;
-      color: rgba(255,255,255,0.5);
-      margin-top: 8px;
-      letter-spacing: 1px;
+    /* ── GRID SECTION ── */
+    .section-label {
+      text-align: center;
+      font-size: 9px;
+      letter-spacing: 5px;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.16);
+      margin-bottom: 32px;
+      animation: fadeUp 0.9s cubic-bezier(0.22,1,0.36,1) 0.15s both;
     }
 
-    .badge {
-      display: inline-block;
-      background: rgba(255,255,255,0.08);
-      border: 1px solid rgba(255,255,255,0.15);
-      padding: 5px 14px;
-      border-radius: 999px;
-      font-size: 12px;
-      margin-top: 10px;
-      color: rgba(255,255,255,0.6);
-      backdrop-filter: blur(10px);
+    .grid-wrap {
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 0 28px 80px;
     }
 
-    .games {
-      display: flex;
-      justify-content: center;
-      flex-wrap: wrap;
-      gap: 20px;
-      padding: 0 20px;
-      max-width: 1000px;
-      margin: 40px auto 0;
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
     }
 
+    /* ── CARD ── */
     .card {
-      background: rgba(255, 255, 255, 0.05);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 24px;
-      padding: 24px 24px 20px;
-      width: 240px;
+      background: var(--surface);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 26px 22px 22px;
       text-decoration: none;
-      color: white;
+      color: var(--text);
       display: flex;
       flex-direction: column;
-      align-items: center;
-      gap: 10px;
+      gap: 9px;
       opacity: 0;
-      transform: translateY(40px);
-      transition: transform 0.35s ease, box-shadow 0.35s ease, border 0.35s ease;
+      transform: translateY(22px);
+      transition:
+        opacity       0.45s ease,
+        transform     0.45s ease,
+        background    0.25s ease,
+        border-color  0.25s ease,
+        box-shadow    0.35s ease;
+      position: relative;
+      overflow: hidden;
     }
 
+    /* top-edge shimmer that appears on hover */
+    .card::after {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.18), transparent);
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    .card:hover::after { opacity: 1; }
+
     .card.visible {
-      animation: cardIn 0.6s ease forwards;
+      opacity: 1;
+      transform: translateY(0);
     }
 
     .card:hover {
-      transform: translateY(-10px) scale(1.03);
-      border: 1px solid rgba(255, 77, 158, 0.6);
+      transform: translateY(-7px);
+      background: var(--surface-hover);
+      border-color: var(--border-hover);
       box-shadow:
-        0 0 30px rgba(255, 77, 158, 0.3),
-        0 0 60px rgba(255, 77, 158, 0.1),
-        inset 0 0 30px rgba(255, 77, 158, 0.05);
+        0 28px 72px rgba(0,0,0,0.55),
+        0 0 0 1px rgba(255,255,255,0.03);
     }
 
-    .card-emoji {
-      font-size: 48px;
+    .card-icon {
+      font-size: 34px;
       line-height: 1;
+      display: block;
+      margin-bottom: 2px;
     }
-
     .card-title {
-      font-size: 19px;
-      font-weight: 700;
-      color: white;
-      margin-top: 4px;
-    }
-
-    .card-desc {
-      font-size: 13px;
-      color: rgba(255,255,255,0.45);
-      line-height: 1.4;
-    }
-
-    .play-btn {
-      margin-top: 10px;
-      background: linear-gradient(135deg, #ff4d9e, #a855f7);
-      border: none;
-      color: white;
       font-size: 15px;
+      font-weight: 700;
+      color: rgba(255,255,255,0.9);
+      letter-spacing: -0.2px;
+    }
+    .card-desc {
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.65;
+      flex: 1;
+    }
+    .card-cta {
+      margin-top: 6px;
+      font-size: 11px;
       font-weight: 600;
-      padding: 10px 28px;
-      border-radius: 999px;
-      cursor: pointer;
-      transition: opacity 0.2s, transform 0.2s;
-      pointer-events: none;
-    }
-
-    .card:hover .play-btn {
-      opacity: 0.9;
-      transform: scale(1.05);
-    }
-
-    footer {
-      margin-top: 0;
-      padding: 16px;
       color: rgba(255,255,255,0.25);
-      font-size: 14px;
-      letter-spacing: 1px;
-      animation: fadeDown 1.2s ease both;
+      letter-spacing: 0.5px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      transition: color 0.2s ease, gap 0.2s ease;
     }
-    .email-link {
-      background: linear-gradient(90deg, #ff4d9e, #a855f7);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      text-decoration: none;
-      font-weight: 600;
-      transition: text-shadow 0.3s ease, filter 0.3s ease;
-    }
-    .email-link:hover {
-      filter: drop-shadow(0 0 8px rgba(255,77,158,0.7)) drop-shadow(0 0 16px rgba(168,85,247,0.4));
+    .card:hover .card-cta {
+      color: rgba(255,255,255,0.65);
+      gap: 10px;
     }
 
-    @keyframes fadeDown {
-      from { opacity: 0; transform: translateY(-20px); }
-      to { opacity: 1; transform: translateY(0); }
+    /* ── FOOTER ── */
+    footer {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      padding: 22px 20px 30px;
+      border-top: 1px solid var(--border);
+    }
+    .footer-text {
+      font-size: 11px;
+      color: rgba(255,255,255,0.12);
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      cursor: default;
+      user-select: none;
+      display: inline-block;
     }
 
-    @keyframes cardIn {
-      from { opacity: 0; transform: translateY(40px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
+    /* ── REDIRECT OVERLAY ── */
     #redirect-msg {
       display: none;
-      position: fixed;
-      inset: 0;
-      background: #0a0a0f;
-      z-index: 1000;
+      position: fixed; inset: 0;
+      background: var(--bg);
+      z-index: 9999;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 20px;
-      text-align: center;
-      padding: 20px;
+      gap: 16px;
     }
-    #redirect-msg p {
-      font-size: 18px;
-      color: rgba(255,255,255,0.6);
-    }
-    #redirect-msg p strong { color: white; }
+    #redirect-msg p { font-size: 16px; color: var(--muted); }
+    #redirect-msg p strong { color: var(--text); }
     #redirect-msg a {
-      color: #a855f7;
+      color: rgba(255,255,255,0.6);
       text-decoration: none;
-      border: 1px solid rgba(168,85,247,0.4);
-      padding: 10px 24px;
+      border: 1px solid var(--border-hover);
+      padding: 10px 26px;
       border-radius: 999px;
-      font-size: 15px;
-      transition: background 0.2s, border-color 0.2s;
+      font-size: 13px;
+      transition: border-color 0.2s, color 0.2s;
     }
-    #redirect-msg a:hover {
-      background: rgba(168,85,247,0.12);
-      border-color: rgba(168,85,247,0.7);
+    #redirect-msg a:hover { border-color: rgba(255,255,255,0.3); color: var(--text); }
+
+    /* ── ANIMATIONS ── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(18px); }
+      to   { opacity: 1; transform: translateY(0); }
     }
 
-    @media (max-width: 520px) {
-      .content { padding: 24px 16px 16px; }
-      header { margin-bottom: 0; }
-      header h1 { font-size: 34px; letter-spacing: 2px; }
-      header p { font-size: 13px; }
-      .badge { font-size: 11px; padding: 4px 12px; }
-      .games { gap: 14px; padding: 0; }
-      .card { width: 100%; max-width: 340px; padding: 18px 16px 16px; }
-      .card-emoji { font-size: 40px; }
-      .card-title { font-size: 17px; }
-      .card-desc { font-size: 12px; }
-      .play-btn { font-size: 13px; padding: 8px 20px; margin-top: 8px; }
-      footer { margin-top: 20px; font-size: 12px; }
+    /* ── RESPONSIVE ── */
+    @media (max-width: 860px) {
+      .grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 540px) {
+      nav { padding: 0 20px; }
+      .nav-badge { display: none; }
+      .hero { padding: 72px 20px 52px; }
+      .hero-title { letter-spacing: -1px; }
+      .grid-wrap { padding: 0 16px 60px; }
+      .grid { grid-template-columns: 1fr; gap: 10px; }
+      .card { padding: 22px 18px 18px; }
     }
   </style>
 </head>
 <body>
-  <canvas id="stars"></canvas>
-  <button id="mute-btn" onclick="toggleMute()" title="Sound" style="position:fixed;top:14px;right:14px;z-index:9999;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);color:white;width:38px;height:38px;border-radius:50%;font-size:16px;cursor:pointer;backdrop-filter:blur(10px);transition:transform .15s"></button>
+
+  <canvas id="particles"></canvas>
 
   <div id="redirect-msg">
-    <p>Redirecting to <strong>shahmeer.me</strong>...</p>
-    <a href="https://shahmeer.me">Click here if not redirected</a>
+    <p>Redirecting to <strong>shahmeer.me</strong>…</p>
+    <a href="https://shahmeer.me">Go now</a>
   </div>
 
-  <div class="content">
-    <header>
-      <h1>🎮 Shahmeer's Game Hub</h1>
-      <p>Made by a 12 year old developer</p>
-      <span class="badge">⚡ Built with HTML, CSS &amp; JS</span>
-    </header>
+  <nav>
+    <a class="nav-logo" href="/">Shahmeer.me</a>
+    <span class="nav-badge">12yo developer</span>
+  </nav>
 
-    <div class="games">
-      <a class="card" href="rps.html">
-        <div class="card-emoji">✂️</div>
-        <div class="card-title">Rock Paper Scissors</div>
-        <div class="card-desc">Challenge the computer. First to 2 wins takes the crown!</div>
-        <div class="play-btn">Play Now</div>
-      </a>
-      <a class="card" href="tictactoe.html">
-        <div class="card-emoji">❌</div>
-        <div class="card-title">Tic Tac Toe</div>
-        <div class="card-desc">Classic 3×3 strategy. Get three in a row to win!</div>
-        <div class="play-btn">Play Now</div>
-      </a>
-      <a class="card" href="quiz.html">
-        <div class="card-emoji">🔬</div>
-        <div class="card-title">Science Quiz</div>
-        <div class="card-desc">Test your science knowledge across 8 fun questions!</div>
-        <div class="play-btn">Play Now</div>
-      </a>
-      <a class="card" href="wordle.html">
-        <div class="card-emoji">🟩</div>
-        <div class="card-title">Wordle</div>
-        <div class="card-desc">Guess the 5-letter word in 6 tries. A new word every day!</div>
-        <div class="play-btn">Play Now</div>
-      </a>
-      <a class="card" href="converter.html">
-        <div class="card-emoji">📐</div>
-        <div class="card-title">Unit Converter</div>
-        <div class="card-desc">Convert length, weight, temperature, speed, area and volume instantly.</div>
-        <div class="play-btn">Open</div>
-      </a>
-      <a class="card" href="snake.html">
-        <div class="card-emoji">🐍</div>
-        <div class="card-title">Snake</div>
-        <div class="card-desc">Classic snake game! Eat food, grow longer, don't hit the walls or yourself!</div>
-        <div class="play-btn">Play Now</div>
-      </a>
-      <a class="card" href="reactiontime.html">
-        <div class="card-emoji">🏎️</div>
-        <div class="card-title">Reaction Time</div>
-        <div class="card-desc">F1 start lights reaction test. Wait for the lights to go out — how fast are you?</div>
-        <div class="play-btn">Play Now</div>
-      </a>
-      <a class="card" href="https://server.shahmeer.me/battleship.html">
-        <div class="card-emoji">🚢</div>
-        <div class="card-title">Battleship</div>
-        <div class="card-desc">Classic naval warfare! Place your ships and sink the enemy fleet before they sink yours!</div>
-        <div class="play-btn">Play Now</div>
-      </a>
-      <a class="card" href="https://weather-shahmeer.netlify.app/">
-        <div class="card-emoji">🌤️</div>
-        <div class="card-title">Weather App</div>
-        <div class="card-desc">Check real time weather for any city</div>
-        <div class="play-btn">Open</div>
-      </a>
-      <a class="card" href="chess.html">
-        <div class="card-emoji">♟️</div>
-        <div class="card-title">Chess vs AI</div>
-        <div class="card-desc">Play chess against Claude AI. Full rules, move hints, captured pieces &amp; move history!</div>
-        <div class="play-btn">Play Now</div>
-      </a>
-      <a class="card" href="https://server.shahmeer.me/drawing">
-        <div class="card-emoji">🎨</div>
-        <div class="card-title">Scribbl</div>
-        <div class="card-desc">Draw and guess with friends! Sketch a word and see who figures it out first!</div>
-        <div class="play-btn">Play Now</div>
-      </a>
+  <main>
 
+    <section class="hero">
+      <div class="hero-eyebrow">Portfolio</div>
+      <h1 class="hero-title">SHAHMEER.ME</h1>
+      <p class="hero-sub">Games &amp; Projects</p>
+      <div class="hero-rule"></div>
+    </section>
+
+    <p class="section-label">— Select a game or project —</p>
+
+    <div class="grid-wrap">
+      <div class="grid">
+
+        <a class="card" href="rps.html">
+          <span class="card-icon">✂️</span>
+          <div class="card-title">Rock Paper Scissors</div>
+          <div class="card-desc">Challenge the computer. First to 2 wins takes the crown.</div>
+          <div class="card-cta">Play now <span>→</span></div>
+        </a>
+
+        <a class="card" href="tictactoe.html">
+          <span class="card-icon">❌</span>
+          <div class="card-title">Tic Tac Toe</div>
+          <div class="card-desc">Classic 3×3 strategy. Get three in a row to win.</div>
+          <div class="card-cta">Play now <span>→</span></div>
+        </a>
+
+        <a class="card" href="quiz.html">
+          <span class="card-icon">🔬</span>
+          <div class="card-title">Science Quiz</div>
+          <div class="card-desc">Test your science knowledge across 8 fun questions.</div>
+          <div class="card-cta">Play now <span>→</span></div>
+        </a>
+
+        <a class="card" href="wordle.html">
+          <span class="card-icon">🟩</span>
+          <div class="card-title">Wordle</div>
+          <div class="card-desc">Guess the 5-letter word in 6 tries. A new word every day.</div>
+          <div class="card-cta">Play now <span>→</span></div>
+        </a>
+
+        <a class="card" href="converter.html">
+          <span class="card-icon">📐</span>
+          <div class="card-title">Unit Converter</div>
+          <div class="card-desc">Convert length, weight, temperature, speed, area and volume instantly.</div>
+          <div class="card-cta">Open <span>→</span></div>
+        </a>
+
+        <a class="card" href="snake.html">
+          <span class="card-icon">🐍</span>
+          <div class="card-title">Snake</div>
+          <div class="card-desc">Classic snake — eat food, grow longer, don't hit the walls.</div>
+          <div class="card-cta">Play now <span>→</span></div>
+        </a>
+
+        <a class="card" href="reactiontime.html">
+          <span class="card-icon">🏎️</span>
+          <div class="card-title">Reaction Time</div>
+          <div class="card-desc">F1 start lights reaction test. Wait for lights out — how fast are you?</div>
+          <div class="card-cta">Play now <span>→</span></div>
+        </a>
+
+        <a class="card" href="https://server.shahmeer.me/battleship.html">
+          <span class="card-icon">🚢</span>
+          <div class="card-title">Battleship</div>
+          <div class="card-desc">Classic naval warfare. Place your ships and sink the enemy fleet.</div>
+          <div class="card-cta">Play now <span>→</span></div>
+        </a>
+
+        <a class="card" href="https://weather-shahmeer.netlify.app/">
+          <span class="card-icon">🌤️</span>
+          <div class="card-title">Weather App</div>
+          <div class="card-desc">Check real-time weather for any city in the world.</div>
+          <div class="card-cta">Open <span>→</span></div>
+        </a>
+
+        <a class="card" href="chess.html">
+          <span class="card-icon">♟️</span>
+          <div class="card-title">Chess vs AI</div>
+          <div class="card-desc">Play chess against Claude AI with full rules, move history and captured pieces.</div>
+          <div class="card-cta">Play now <span>→</span></div>
+        </a>
+
+        <a class="card" href="https://server.shahmeer.me/drawing">
+          <span class="card-icon">🎨</span>
+          <div class="card-title">Scribbl</div>
+          <div class="card-desc">Draw and guess with friends. Sketch a word — who figures it out first?</div>
+          <div class="card-cta">Play now <span>→</span></div>
+        </a>
+
+      </div>
     </div>
 
-    <footer>
-      <span id="secret-trigger" onclick="secretClick()" style="cursor:default;user-select:none;">✨ More games coming soon</span>
-    </footer>
-  </div>
+  </main>
+
+  <footer>
+    <span class="footer-text" id="secret-trigger" onclick="secretClick()">✦ &nbsp; More coming soon &nbsp; ✦</span>
+  </footer>
 
   <script>
-    // Show fallback redirect message if still on GitHub Pages (redirect may be slow)
+    // ── GitHub Pages redirect ──
     if (window.location.hostname === 'tclcozy-source.github.io') {
       document.getElementById('redirect-msg').style.display = 'flex';
     }
 
-    // Twinkling stars
-    var canvas = document.getElementById("stars");
-    var ctx = canvas.getContext("2d");
-    var stars = [];
+    // ── Particle system ──
+    const canvas = document.getElementById('particles');
+    const ctx    = canvas.getContext('2d');
+    let W, H, ptcls = [];
 
     function resize() {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
+      W = canvas.width  = window.innerWidth;
+      H = canvas.height = window.innerHeight;
     }
     resize();
-    window.addEventListener("resize", resize);
 
-    for (var i = 0; i < 160; i++) {
-      stars.push({
-        x: Math.random(),
-        y: Math.random(),
-        r: Math.random() * 1.5 + 0.3,
-        speed: Math.random() * 0.012 + 0.003,
-        phase: Math.random() * Math.PI * 2
-      });
+    function mkParticle() {
+      return {
+        x:     Math.random() * W,
+        y:     Math.random() * H,
+        r:     Math.random() * 1.1 + 0.25,
+        vx:    (Math.random() - 0.5) * 0.15,
+        vy:    -(Math.random() * 0.2 + 0.04),
+        base:  Math.random() * 0.14 + 0.03,
+        phase: Math.random() * Math.PI * 2,
+        freq:  Math.random() * 0.006 + 0.002,
+      };
     }
 
-    function drawStars(t) {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      for (var i = 0; i < stars.length; i++) {
-        var s = stars[i];
-        var alpha = 0.3 + 0.7 * (0.5 + 0.5 * Math.sin(t * s.speed + s.phase));
+    function initParticles() {
+      ptcls = Array.from({ length: 100 }, mkParticle);
+    }
+    initParticles();
+
+    window.addEventListener('resize', () => { resize(); initParticles(); });
+
+    function animateParticles(t) {
+      ctx.clearRect(0, 0, W, H);
+      for (const p of ptcls) {
+        p.x += p.vx;
+        p.y += p.vy;
+        if (p.y < -6) { p.y = H + 6; p.x = Math.random() * W; }
+        if (p.x < -6) p.x = W + 6;
+        if (p.x > W + 6) p.x = -6;
+        const a = p.base * (0.55 + 0.45 * Math.sin(t * p.freq + p.phase));
         ctx.beginPath();
-        ctx.arc(s.x * canvas.width, s.y * canvas.height, s.r, 0, Math.PI * 2);
-        ctx.fillStyle = "rgba(255,255,255," + alpha + ")";
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(255,255,255,${a.toFixed(3)})`;
         ctx.fill();
       }
-      requestAnimationFrame(drawStars);
+      requestAnimationFrame(animateParticles);
     }
-    requestAnimationFrame(drawStars);
+    requestAnimationFrame(animateParticles);
 
-    // Cards animate in one by one
-    var cards = document.querySelectorAll(".card");
-    cards.forEach(function(card, i) {
-      setTimeout(function() {
-        card.classList.add("visible");
-        card.style.animationDelay = "0s";
-      }, 300 + i * 180);
+    // ── Card stagger fade-in ──
+    document.querySelectorAll('.card').forEach((card, i) => {
+      setTimeout(() => card.classList.add('visible'), 100 + i * 70);
     });
 
-    // ── Secret trigger (click footer 5x within 2s → pilot.html) ──
-    var _sc=0,_st=0;
-    function secretClick(){var n=Date.now();if(n-_st>2000)_sc=0;_sc++;_st=n;if(_sc>=5){_sc=0;sessionStorage.setItem('pilotAccess','true');window.location.href='pilot.html';}}
-
-    // ── Audio ──────────────────────────────────────────────────────
-    var _ac=null,_muted=localStorage.getItem('sfx')==='1';
-    function _ctx(){return _ac||(_ac=new(window.AudioContext||window.webkitAudioContext)())}
-    function _sfx(f){if(!_muted)try{f(_ctx())}catch(e){}}
-    function toggleMute(){_muted=!_muted;localStorage.setItem('sfx',_muted?'1':'0');document.getElementById('mute-btn').textContent=_muted?'🔇':'🔊'}
-    document.getElementById('mute-btn').textContent=_muted?'🔇':'🔊';
+    // ── Secret footer trigger → pilot.html ──
+    let _sc = 0, _st = 0;
+    function secretClick() {
+      const n = Date.now();
+      if (n - _st > 2000) _sc = 0;
+      _sc++; _st = n;
+      if (_sc >= 5) {
+        _sc = 0;
+        sessionStorage.setItem('pilotAccess', 'true');
+        window.location.href = 'pilot.html';
+      }
+    }
   </script>
+
 </body>
 </html>
