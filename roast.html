@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🔥 Roast Generator</title>
+  <script>if(sessionStorage.getItem('roastAccess')!=='true'){window.location.replace('https://shahmeer.me');}</script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=Space+Grotesk:wght@700;800&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg:     #040000;
+      --card:   rgba(220,38,38,0.05);
+      --border: rgba(220,38,38,0.16);
+      --red:    #dc2626;
+      --bright: #f87171;
+      --orange: #fb923c;
+      --text:   #fde8e8;
+      --muted:  rgba(253,232,232,0.38);
+    }
+
+    body {
+      background: var(--bg);
+      background-image: radial-gradient(ellipse 70% 45% at 50% 0%, rgba(220,38,38,0.13) 0%, transparent 65%);
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* subtle scanline texture */
+    body::after {
+      content: '';
+      position: fixed; inset: 0;
+      background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.025) 2px, rgba(0,0,0,0.025) 4px);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── HEADER ── */
+    header {
+      text-align: center;
+      padding: 52px 20px 38px;
+      position: relative;
+      z-index: 1;
+    }
+    .header-emoji {
+      font-size: 60px;
+      display: block;
+      margin-bottom: 14px;
+      animation: flicker 3s infinite;
+    }
+    @keyframes flicker {
+      0%,90%,100% { filter: drop-shadow(0 0 14px rgba(251,146,60,0.85)); }
+      92%          { filter: drop-shadow(0 0 4px  rgba(251,146,60,0.3));  }
+      96%          { filter: drop-shadow(0 0 22px rgba(251,146,60,1));    }
+    }
+    .header-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: clamp(34px, 6vw, 66px);
+      font-weight: 800;
+      letter-spacing: 5px;
+      text-transform: uppercase;
+      background: linear-gradient(135deg, #ff4500 0%, #ff6600 35%, #ffcc00 55%, #ff4500 100%);
+      background-size: 200% auto;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: gradientFlow 3s linear infinite;
+    }
+    @keyframes gradientFlow { to { background-position: 200% center; } }
+    .header-sub {
+      font-size: 10px;
+      letter-spacing: 5px;
+      color: var(--muted);
+      text-transform: uppercase;
+      margin-top: 10px;
+    }
+
+    /* ── CONTAINER ── */
+    .container {
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 0 20px 80px;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ── INPUT CARD ── */
+    .input-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 28px 24px;
+      margin-bottom: 20px;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+    .input-label {
+      display: block;
+      font-size: 10px;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 12px;
+    }
+    .name-input {
+      width: 100%;
+      background: rgba(0,0,0,0.45);
+      border: 1px solid rgba(220,38,38,0.22);
+      border-radius: 12px;
+      padding: 14px 18px;
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      margin-bottom: 16px;
+    }
+    .name-input::placeholder { color: rgba(253,232,232,0.18); }
+    .name-input:focus {
+      border-color: rgba(220,38,38,0.55);
+      box-shadow: 0 0 0 3px rgba(220,38,38,0.08), 0 0 18px rgba(220,38,38,0.1);
+    }
+
+    .roast-btn {
+      width: 100%;
+      padding: 16px;
+      background: linear-gradient(135deg, #7f1d1d, #b91c1c, #ea580c);
+      border: none;
+      border-radius: 12px;
+      color: white;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 17px;
+      font-weight: 700;
+      letter-spacing: 3px;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.18s, box-shadow 0.18s, opacity 0.2s;
+      box-shadow: 0 4px 24px rgba(220,38,38,0.4), inset 0 1px 0 rgba(255,255,255,0.08);
+    }
+    .roast-btn::before {
+      content: '';
+      position: absolute; inset: -2px;
+      background: linear-gradient(135deg, #ff4500, #ff6600);
+      filter: blur(12px);
+      opacity: 0;
+      z-index: -1;
+      border-radius: 12px;
+      transition: opacity 0.2s;
+    }
+    .roast-btn:hover  { transform: scale(1.02); box-shadow: 0 8px 32px rgba(220,38,38,0.55); }
+    .roast-btn:hover::before { opacity: 0.45; }
+    .roast-btn:active { transform: scale(0.985); }
+    .roast-btn:disabled { opacity: 0.5; cursor: default; transform: none; box-shadow: none; }
+
+    /* ── ERROR ── */
+    .error-msg {
+      background: rgba(239,68,68,0.07);
+      border: 1px solid rgba(239,68,68,0.22);
+      border-radius: 10px;
+      padding: 12px 16px;
+      font-size: 12px;
+      color: #fca5a5;
+      margin-bottom: 16px;
+      display: none;
+    }
+    .error-msg.show { display: block; }
+
+    /* ── LOADER ── */
+    .loading {
+      display: none;
+      text-align: center;
+      padding: 36px 0;
+    }
+    .loading.show { display: block; }
+    .flame-bounce {
+      font-size: 52px;
+      display: inline-block;
+      animation: flameBounce 0.45s ease-in-out infinite alternate;
+    }
+    @keyframes flameBounce {
+      from { transform: translateY(0) scale(1); filter: drop-shadow(0 0 8px rgba(255,100,0,0.6)); }
+      to   { transform: translateY(-12px) scale(1.12); filter: drop-shadow(0 0 20px rgba(255,100,0,1)); }
+    }
+    .loading-text {
+      font-size: 10px;
+      letter-spacing: 5px;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-top: 14px;
+      animation: textPulse 1.2s infinite;
+    }
+    @keyframes textPulse { 0%,100%{opacity:1} 50%{opacity:0.35} }
+
+    /* ── ROAST OUTPUT ── */
+    .roast-output {
+      display: none;
+      background: rgba(127,29,29,0.1);
+      border: 1px solid rgba(220,38,38,0.28);
+      border-radius: 20px;
+      padding: 28px 24px;
+      margin-bottom: 20px;
+      position: relative;
+      overflow: hidden;
+    }
+    .roast-output.show { display: block; }
+    .roast-output::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: radial-gradient(ellipse 90% 50% at 50% 110%, rgba(249,115,22,0.09) 0%, transparent 65%);
+      pointer-events: none;
+    }
+    .roast-victim {
+      font-size: 9px;
+      letter-spacing: 5px;
+      text-transform: uppercase;
+      color: rgba(248,113,113,0.6);
+      margin-bottom: 16px;
+      position: relative;
+    }
+    .roast-text {
+      font-size: clamp(16px, 2.8vw, 21px);
+      font-weight: 600;
+      line-height: 1.65;
+      color: var(--text);
+      position: relative;
+      z-index: 1;
+      animation: fireGlow 2.5s ease-in-out infinite alternate;
+    }
+    @keyframes fireGlow {
+      from { text-shadow: 0 0 8px rgba(255,69,0,0.35),  0 0 16px rgba(255,102,0,0.15); }
+      to   { text-shadow: 0 0 16px rgba(255,69,0,0.65), 0 0 32px rgba(255,102,0,0.35), 0 0 48px rgba(255,165,0,0.12); }
+    }
+    .roast-again-btn {
+      width: 100%;
+      margin-top: 20px;
+      padding: 12px;
+      background: rgba(220,38,38,0.09);
+      border: 1px solid rgba(220,38,38,0.28);
+      border-radius: 10px;
+      color: var(--bright);
+      font-family: 'Inter', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      cursor: pointer;
+      transition: background 0.2s, border-color 0.2s, transform 0.15s;
+      position: relative; z-index: 1;
+    }
+    .roast-again-btn:hover {
+      background: rgba(220,38,38,0.18);
+      border-color: rgba(220,38,38,0.5);
+      transform: scale(1.01);
+    }
+
+    /* ── HISTORY ── */
+    .history-section { margin-top: 8px; }
+    .history-label {
+      font-size: 9px;
+      letter-spacing: 5px;
+      text-transform: uppercase;
+      color: rgba(253,232,232,0.18);
+      margin-bottom: 14px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid rgba(220,38,38,0.09);
+    }
+    .history-item {
+      background: rgba(127,29,29,0.05);
+      border: 1px solid rgba(220,38,38,0.09);
+      border-radius: 12px;
+      padding: 14px 16px;
+      margin-bottom: 10px;
+      transition: border-color 0.2s;
+    }
+    .history-item:hover { border-color: rgba(220,38,38,0.2); }
+    .history-name {
+      font-size: 9px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: rgba(248,113,113,0.65);
+      margin-bottom: 6px;
+    }
+    .history-text { font-size: 13px; color: rgba(253,232,232,0.55); line-height: 1.55; }
+    .history-date { font-size: 9px; color: rgba(253,232,232,0.18); margin-top: 7px; letter-spacing: 1px; }
+    .no-history {
+      font-size: 11px;
+      color: rgba(253,232,232,0.18);
+      text-align: center;
+      padding: 14px 0;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+    }
+
+    @media (max-width: 520px) {
+      header { padding: 38px 20px 28px; }
+      .header-emoji { font-size: 46px; }
+      .input-card, .roast-output { padding: 20px 18px; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <span class="header-emoji">🔥</span>
+  <div class="header-title">Roast Generator</div>
+  <div class="header-sub">Powered by AI · Handle with care</div>
+</header>
+
+<div class="container">
+
+  <div class="input-card">
+    <label class="input-label" for="name-input">Who's getting roasted?</label>
+    <input class="name-input" type="text" id="name-input"
+           placeholder="Enter a name…" maxlength="40" autocomplete="off"
+           onkeydown="if(event.key==='Enter')roastThem()">
+    <button class="roast-btn" id="roast-btn" onclick="roastThem()">
+      🔥 &nbsp; ROAST THEM
+    </button>
+  </div>
+
+  <div class="error-msg" id="error-msg"></div>
+
+  <div class="loading" id="loading">
+    <span class="flame-bounce">🔥</span>
+    <div class="loading-text">Generating the heat…</div>
+  </div>
+
+  <div class="roast-output" id="roast-output">
+    <div class="roast-victim" id="roast-victim"></div>
+    <div class="roast-text"  id="roast-text"></div>
+    <button class="roast-again-btn" onclick="roastAgain()">🎲 &nbsp; Roast Again</button>
+  </div>
+
+  <div class="history-section">
+    <div class="history-label">— Recent Roasts —</div>
+    <div id="history-list"></div>
+  </div>
+
+</div>
+
+<script>
+'use strict';
+
+var currentName = '';
+
+function roastThem() {
+  var name = document.getElementById('name-input').value.trim();
+  if (!name) { document.getElementById('name-input').focus(); return; }
+  currentName = name;
+  fetchRoast(name);
+}
+
+function roastAgain() {
+  if (currentName) fetchRoast(currentName);
+}
+
+async function fetchRoast(name) {
+  var apiKey = localStorage.getItem('chessApiKey') || '';
+
+  document.getElementById('roast-btn').disabled = true;
+  document.getElementById('loading').classList.add('show');
+  document.getElementById('roast-output').classList.remove('show');
+  document.getElementById('error-msg').classList.remove('show');
+
+  try {
+    var res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 200,
+        messages: [{
+          role: 'user',
+          content: 'Generate a funny, savage roast about someone named ' + name + ' (pg 18). Keep it playful and humorous, 2-3 sentences max. Minimal swearing.'
+        }]
+      })
+    });
+
+    if (!res.ok) {
+      var errText = await res.text();
+      throw new Error('API ' + res.status + ': ' + errText.slice(0, 120));
+    }
+
+    var data  = await res.json();
+    var roast = data.content[0].text.trim();
+
+    document.getElementById('roast-victim').textContent = '🎯 ' + name.toUpperCase();
+    document.getElementById('roast-text').textContent   = roast;
+    document.getElementById('roast-output').classList.add('show');
+
+    saveHistory(name, roast);
+    renderHistory();
+
+  } catch (e) {
+    document.getElementById('error-msg').textContent = 'Failed: ' + e.message;
+    document.getElementById('error-msg').classList.add('show');
+  } finally {
+    document.getElementById('loading').classList.remove('show');
+    document.getElementById('roast-btn').disabled = false;
+  }
+}
+
+function saveHistory(name, roast) {
+  var h = JSON.parse(localStorage.getItem('roast_history') || '[]');
+  h.unshift({
+    name: name,
+    roast: roast,
+    date: new Date().toLocaleDateString('en-GB', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' })
+  });
+  localStorage.setItem('roast_history', JSON.stringify(h.slice(0, 5)));
+}
+
+function renderHistory() {
+  var h    = JSON.parse(localStorage.getItem('roast_history') || '[]');
+  var list = document.getElementById('history-list');
+  if (!h.length) {
+    list.innerHTML = '<div class="no-history">No roasts yet — fire one off</div>';
+    return;
+  }
+  list.innerHTML = h.map(function(r) {
+    return '<div class="history-item">' +
+      '<div class="history-name">🎯 ' + esc(r.name) + '</div>' +
+      '<div class="history-text">'    + esc(r.roast) + '</div>' +
+      '<div class="history-date">'    + esc(r.date)  + '</div>' +
+    '</div>';
+  }).join('');
+}
+
+function esc(s) {
+  return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+renderHistory();
+</script>
+</body>
+</html>
