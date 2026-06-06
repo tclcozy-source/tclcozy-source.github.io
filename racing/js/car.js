@@ -15,6 +15,12 @@ const PEAK_TORQUE_RPM   = 4600;
 const LIMITER_START_RPM = 6500;  // power begins falling off above this
 const CRANK_TIME        = 1.1;   // seconds of cranking before idle
 
+// ---- Rev dynamics (display/audio smoothing — does not affect physics) ----
+const RPM_RISE_RATE  = 11;    // per second — quick rev pickup on throttle
+const RPM_FALL_RATE  = 3.2;   // per second — gradual, satisfying rev drop
+const DOWNSHIFT_BLIP = 1200;  // rpm bump injected on downshift (rev-match)
+const BLIP_DECAY     = 0.90;  // per-frame blip decay (~0.35s at 60fps)
+
 // ---- Drivetrain ----
 // gear index: -1 = reverse, 0 = neutral, 1..6 = forward gears
 const FINAL_DRIVE = 3.0;
@@ -38,7 +44,9 @@ export class Car {
     this.steerValue  = 0;       // smoothed steering, -1 (right) .. +1 (left)
     this.bodyRoll    = 0;       // visual only
     this.gear        = 1;       // start ready to launch in 1st
-    this.rpm         = 0;       // engine off at spawn
+    this.rpm         = 0;       // displayed/audible rpm (smoothed + blip)
+    this._baseRpm    = 0;       // smoothed mechanical rpm
+    this.revBlip     = 0;       // transient downshift rev-match blip
     this.engineState = 'off';   // 'off' | 'ignition' | 'cranking' | 'running'
     this.crankTimer  = 0;
     this.startRejected = false; // one-shot: start attempted without ignition
@@ -48,57 +56,94 @@ export class Car {
   }
 
   _buildMesh() {
+    // Ferrari-style Formula 1 single-seater. Forward = +Z (nose), rear = -Z.
     const group = new THREE.Group();
 
-    const bodyMat = new THREE.MeshStandardMaterial({ color: 0xe63946, roughness: 0.4, metalness: 0.6 });
-    const glassMat = new THREE.MeshStandardMaterial({ color: 0x90caf9, roughness: 0.1, metalness: 0.1, transparent: true, opacity: 0.6 });
-    const wheelMat = new THREE.MeshStandardMaterial({ color: 0x1a1a1a, roughness: 0.9 });
-    const rimMat   = new THREE.MeshStandardMaterial({ color: 0xcccccc, roughness: 0.3, metalness: 0.8 });
+    const RED      = 0xd00000; // Ferrari red
+    const bodyMat   = new THREE.MeshStandardMaterial({ color: RED,      roughness: 0.35, metalness: 0.45 });
+    const carbonMat = new THREE.MeshStandardMaterial({ color: 0x15171a, roughness: 0.5,  metalness: 0.4 });
+    const tireMat   = new THREE.MeshStandardMaterial({ color: 0x0a0a0a, roughness: 0.9 });
+    const rimMat    = new THREE.MeshStandardMaterial({ color: 0xcacaca, roughness: 0.3,  metalness: 0.9 });
+    const darkMat   = new THREE.MeshStandardMaterial({ color: 0x202225, roughness: 0.7 });
+    const helmetMat = new THREE.MeshStandardMaterial({ color: 0xe6e6e6, roughness: 0.3,  metalness: 0.2 });
 
-    // Lower body
-    const lower = new THREE.Mesh(new THREE.BoxGeometry(2, 0.4, 4.2), bodyMat);
-    lower.position.y = 0.3;
-    lower.castShadow = true;
-    group.add(lower);
+    const add = (geo, mat, x, y, z, cast = true) => {
+      const m = new THREE.Mesh(geo, mat);
+      m.position.set(x, y, z);
+      m.castShadow = cast;
+      group.add(m);
+      return m;
+    };
 
-    // Upper cabin
-    const cabin = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.5, 2.2), bodyMat);
-    cabin.position.set(0, 0.75, -0.1);
-    cabin.castShadow = true;
-    group.add(cabin);
+    // Floor plank
+    add(new THREE.BoxGeometry(0.9, 0.08, 3.6), carbonMat, 0, 0.12, -0.2).receiveShadow = true;
 
-    // Windscreen
-    const windscreen = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.42, 0.08), glassMat);
-    windscreen.position.set(0, 0.72, 1.0);
-    group.add(windscreen);
+    // Central monocoque tub
+    add(new THREE.BoxGeometry(0.62, 0.34, 2.4), bodyMat, 0, 0.34, -0.2);
 
-    // Rear window
-    const rearWin = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.42, 0.08), glassMat);
-    rearWin.position.set(0, 0.72, -1.2);
-    group.add(rearWin);
+    // Sidepods (radiator bulges either side of the cockpit)
+    [-1, 1].forEach((s) => add(new THREE.BoxGeometry(0.42, 0.34, 1.5), bodyMat, s * 0.52, 0.32, -0.55));
 
-    // Wheels
-    const wheelPositions = [
-      [ 1.1, 0.28,  1.5],  // front-right
-      [-1.1, 0.28,  1.5],  // front-left
-      [ 1.1, 0.28, -1.5],  // rear-right
-      [-1.1, 0.28, -1.5],  // rear-left
+    // Nose: main section + tapered cone tip pointing forward
+    add(new THREE.BoxGeometry(0.5, 0.28, 1.4), bodyMat, 0, 0.4, 1.25);
+    const noseTip = add(new THREE.ConeGeometry(0.22, 0.9, 14), bodyMat, 0, 0.36, 2.15);
+    noseTip.rotation.x = Math.PI / 2;
+
+    // Front wing (main plane + flap + endplates + pylons)
+    add(new THREE.BoxGeometry(1.75, 0.05, 0.55), bodyMat, 0, 0.16, 2.5);
+    add(new THREE.BoxGeometry(1.75, 0.04, 0.2),  bodyMat, 0, 0.24, 2.62, false);
+    [-1, 1].forEach((s) => add(new THREE.BoxGeometry(0.04, 0.22, 0.6), carbonMat, s * 0.86, 0.22, 2.5));
+    [-1, 1].forEach((s) => add(new THREE.BoxGeometry(0.05, 0.2, 0.1),  carbonMat, s * 0.18, 0.26, 2.55, false));
+
+    // Cockpit: raised rim, dark opening, driver helmet + visor
+    add(new THREE.BoxGeometry(0.56, 0.16, 0.95), bodyMat, 0, 0.52, 0.25);
+    add(new THREE.BoxGeometry(0.42, 0.16, 0.7),  darkMat, 0, 0.6, 0.28, false);
+    add(new THREE.SphereGeometry(0.17, 18, 14),  helmetMat, 0, 0.7, 0.18);
+    add(new THREE.BoxGeometry(0.2, 0.06, 0.04),  darkMat, 0, 0.71, 0.33, false);
+
+    // Airbox / roll hoop behind the driver, sloping engine cover to the rear
+    add(new THREE.BoxGeometry(0.34, 0.4, 0.5),  bodyMat, 0, 0.72, -0.45);
+    add(new THREE.BoxGeometry(0.4, 0.36, 1.3),  bodyMat, 0, 0.46, -1.1);
+
+    // Rear wing: support pylon, main plane, upper flap, endplates
+    add(new THREE.BoxGeometry(0.12, 0.55, 0.25), carbonMat, 0, 0.75, -1.95, false);
+    add(new THREE.BoxGeometry(1.15, 0.06, 0.42), bodyMat, 0, 1.0, -2.0);
+    add(new THREE.BoxGeometry(1.15, 0.06, 0.3),  bodyMat, 0, 1.14, -2.06);
+    [-1, 1].forEach((s) => add(new THREE.BoxGeometry(0.05, 0.42, 0.55), carbonMat, s * 0.6, 1.05, -2.02));
+
+    // Open wheels (fat rears), with steerable fronts and suspension arms
+    const wheelDefs = [
+      { x:  0.95, z:  1.55, r: 0.33, w: 0.30, front: true  },
+      { x: -0.95, z:  1.55, r: 0.33, w: 0.30, front: true  },
+      { x:  1.0,  z: -1.5,  r: 0.36, w: 0.46, front: false },
+      { x: -1.0,  z: -1.5,  r: 0.36, w: 0.46, front: false },
     ];
-    this.wheelMeshes = [];
-    wheelPositions.forEach(([x, y, z]) => {
-      const tire = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.28, 0.22, 20), wheelMat);
+    this.wheelMeshes = [];   // inner spinners (roll)
+    this.frontWheels = [];   // outer groups (steer)
+    wheelDefs.forEach(({ x, z, r, w, front }) => {
+      const tire = new THREE.Mesh(new THREE.CylinderGeometry(r, r, w, 24), tireMat);
       tire.rotation.z = Math.PI / 2;
       tire.castShadow = true;
-
-      const rim = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.14, 0.23, 8), rimMat);
+      const rim = new THREE.Mesh(new THREE.CylinderGeometry(r * 0.55, r * 0.55, w + 0.02, 12), rimMat);
       rim.rotation.z = Math.PI / 2;
 
-      const wheel = new THREE.Group();
-      wheel.add(tire);
-      wheel.add(rim);
-      wheel.position.set(x, y, z);
+      const spinner = new THREE.Group();   // rotates about X to roll
+      spinner.add(tire);
+      spinner.add(rim);
+
+      const wheel = new THREE.Group();     // rotates about Y to steer
+      wheel.add(spinner);
+      wheel.position.set(x, r, z);
       group.add(wheel);
-      this.wheelMeshes.push(wheel);
+
+      this.wheelMeshes.push(spinner);
+      if (front) this.frontWheels.push(wheel);
+
+      // Suspension arm to the body
+      const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, Math.abs(x) - 0.32, 6), carbonMat);
+      arm.rotation.z = Math.PI / 2;
+      arm.position.set(x * 0.55, r, z);
+      group.add(arm);
     });
 
     return group;
@@ -146,8 +191,19 @@ export class Car {
   }
 
   _handleShift(input) {
-    if (input.shiftUp)   { this.gear = Math.min(this.gear + 1, 6);  input.shiftUp = false; }
-    if (input.shiftDown) { this.gear = Math.max(this.gear - 1, -1); input.shiftDown = false; }
+    if (input.shiftUp) {
+      this.gear = Math.min(this.gear + 1, 6);
+      input.shiftUp = false;
+    }
+    if (input.shiftDown) {
+      const before = this.gear;
+      this.gear = Math.max(this.gear - 1, -1);
+      // Rev-match blip: revs briefly rise when dropping a gear under power/braking
+      if (this.gear < before && this.engineState === 'running') {
+        this.revBlip = Math.max(this.revBlip, DOWNSHIFT_BLIP);
+      }
+      input.shiftDown = false;
+    }
   }
 
   _updateEngine(input, dt) {
@@ -165,28 +221,30 @@ export class Car {
       } else {
         this.rpm = 0;                            // off / electronics only
       }
+      this._baseRpm = this.rpm;                  // keep base synced for a clean start
+      this.revBlip = 0;
       this._applyBrakeAndDrag(input, dt);
       return;
     }
 
     const throttle = input.forward;
-    const braking  = input.backward;
     let engineAccel = 0;
+    let targetRpm;
 
     if (this.gear === 0) {
       // Neutral — engine free-revs, no drive to the wheels
-      const target = throttle ? ENGINE_REDLINE * 0.88 : ENGINE_IDLE_RPM;
-      this.rpm += (target - this.rpm) * (throttle ? 0.07 : 0.05);
+      targetRpm = throttle ? ENGINE_REDLINE * 0.85 : ENGINE_IDLE_RPM;
     } else {
       const effRatio = GEAR_RATIOS[this.gear] * FINAL_DRIVE;
       const dir = this.gear < 0 ? -1 : 1;
-      const rawRpm = Math.abs(this.speed) * effRatio * RPM_PER_MS;
-      this.rpm = Math.max(ENGINE_IDLE_RPM, rawRpm);
+      // Mechanical rpm drives the *physics* (unchanged gearbox behaviour)
+      const mechRpm = Math.max(ENGINE_IDLE_RPM, Math.abs(this.speed) * effRatio * RPM_PER_MS);
+      targetRpm = mechRpm;
 
       const gearTopSpeed = (ENGINE_REDLINE / (effRatio * RPM_PER_MS)) * dir;
       if (throttle) {
         const atLimit = dir > 0 ? this.speed >= gearTopSpeed : this.speed <= gearTopSpeed;
-        if (!atLimit) engineAccel = torqueFactor(this.rpm) * effRatio * TORQUE_K * dir;
+        if (!atLimit) engineAccel = torqueFactor(mechRpm) * effRatio * TORQUE_K * dir;
       } else if (Math.abs(this.speed) > 0.1) {
         const eb = ENGINE_BRAKE_BASE * (effRatio / EFF_RATIO_1);
         engineAccel = -Math.sign(this.speed) * eb;
@@ -195,6 +253,15 @@ export class Car {
 
     this.speed += engineAccel * dt;
     this._applyBrakeAndDrag(input, dt);
+
+    // Displayed/audible rpm: quick to rise, gradual to fall, plus the
+    // decaying downshift blip — keeps the satisfying engine-braking note
+    // and stops the revs from collapsing the instant you brake.
+    const rate = (targetRpm > this._baseRpm) ? RPM_RISE_RATE : RPM_FALL_RATE;
+    this._baseRpm += (targetRpm - this._baseRpm) * Math.min(1, rate * dt);
+    this.revBlip *= Math.pow(BLIP_DECAY, dt * 60);
+    if (this.revBlip < 1) this.revBlip = 0;
+    this.rpm = Math.min(ENGINE_MAX_RPM, this._baseRpm + this.revBlip);
   }
 
   _applyBrakeAndDrag(input, dt) {
@@ -240,6 +307,10 @@ export class Car {
     // Spin wheels with road speed
     const spin = this.speed * dt * 3;
     this.wheelMeshes.forEach(w => { w.rotation.x += spin; });
+
+    // Steer the front wheels visually with the smoothed steering
+    const steerAngle = this.steerValue * 0.5;
+    this.frontWheels.forEach(w => { w.rotation.y = steerAngle; });
   }
 
   get position()  { return this.mesh.position; }
