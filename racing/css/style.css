@@ -1,0 +1,322 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background: #000;
+  overflow: hidden;
+  font-family: 'Segoe UI', sans-serif;
+  touch-action: none;
+}
+
+#game-canvas {
+  display: block;
+  width: 100vw;
+  height: 100vh;
+}
+
+/* HUD */
+#hud {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  pointer-events: none;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+}
+
+/* Tachometer */
+#tach {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(0, 0, 0, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 12px;
+  padding: 8px 14px;
+  backdrop-filter: blur(6px);
+}
+
+#tach-track {
+  width: 200px;
+  height: 12px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.12);
+  overflow: hidden;
+}
+
+#tach-fill {
+  height: 100%;
+  width: 0%;
+  border-radius: 6px;
+  background: linear-gradient(90deg, #4ade80 0%, #facc15 70%, #f87171 100%);
+  transition: width 0.05s linear;
+}
+
+#tach-fill.redline {
+  background: #ef4444;
+  box-shadow: 0 0 10px #ef4444;
+}
+
+#tach-readout {
+  min-width: 64px;
+  text-align: right;
+}
+
+#rpm-value {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+#rpm-unit {
+  font-size: 0.65rem;
+  color: rgba(255, 255, 255, 0.5);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-left: 3px;
+}
+
+/* Dash: gear + speed */
+#dash {
+  display: flex;
+  align-items: stretch;
+  gap: 10px;
+}
+
+#gear-box {
+  background: rgba(0, 0, 0, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 12px;
+  padding: 8px 20px;
+  text-align: center;
+  backdrop-filter: blur(6px);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 72px;
+}
+
+#gear-value {
+  display: block;
+  font-size: 3rem;
+  font-weight: 800;
+  color: #fde047;
+  line-height: 1;
+  text-shadow: 0 0 12px rgba(253, 224, 71, 0.4);
+}
+
+#gear-label {
+  font-size: 0.65rem;
+  color: rgba(255, 255, 255, 0.5);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+#speedometer {
+  background: rgba(0, 0, 0, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 12px;
+  padding: 10px 18px;
+  text-align: center;
+  backdrop-filter: blur(6px);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+#speed-value {
+  display: block;
+  font-size: 2.4rem;
+  font-weight: 700;
+  color: #fff;
+  line-height: 1;
+}
+
+#speed-unit {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.5);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+/* Mobile controls */
+#mobile-controls {
+  display: none;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 160px;
+  z-index: 20;
+  padding: 12px 20px;
+  align-items: center;
+  justify-content: space-between;
+  pointer-events: none;
+}
+
+@media (pointer: coarse) {
+  #mobile-controls {
+    display: flex;
+  }
+}
+
+#controls-left,
+#controls-right {
+  display: flex;
+  align-items: center;
+  pointer-events: all;
+}
+
+#controls-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  pointer-events: all;
+}
+
+.ctrl-btn {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  font-size: 1.4rem;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  backdrop-filter: blur(4px);
+  transition: background 0.1s;
+  touch-action: none;
+}
+
+.ctrl-btn:active,
+.ctrl-btn.pressed {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* Gear shift buttons (mobile) */
+#shift-row {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+
+.ctrl-btn.small {
+  width: 56px;
+  height: 44px;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #fde047;
+}
+
+/* Ignition / engine status (top-left) */
+#ignition-controls {
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  z-index: 15;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+#engine-status {
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 8px 16px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+#engine-status::before {
+  content: '';
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 8px currentColor;
+}
+
+#engine-status.status-off {
+  background: rgba(0, 0, 0, 0.55);
+  color: #9ca3af;
+}
+
+#engine-status.status-ignition {
+  background: rgba(120, 80, 0, 0.45);
+  color: #fbbf24;
+}
+
+#engine-status.status-cranking {
+  background: rgba(120, 80, 0, 0.55);
+  color: #fbbf24;
+  animation: status-blink 0.4s steps(2, start) infinite;
+}
+
+#engine-status.status-running {
+  background: rgba(0, 80, 30, 0.5);
+  color: #34d399;
+}
+
+@keyframes status-blink {
+  0%   { opacity: 1; }
+  100% { opacity: 0.5; }
+}
+
+#ignition-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.ign-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 8px 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: rgba(0, 0, 0, 0.5);
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  backdrop-filter: blur(4px);
+  transition: background 0.1s;
+}
+
+.ign-btn.start {
+  border-color: rgba(52, 211, 153, 0.5);
+  color: #34d399;
+}
+
+.ign-btn:active,
+.ign-btn.pressed {
+  background: rgba(255, 255, 255, 0.22);
+}
+
+.key-hint {
+  font-size: 0.6rem;
+  font-weight: 500;
+  opacity: 0.55;
+  letter-spacing: 0.04em;
+}

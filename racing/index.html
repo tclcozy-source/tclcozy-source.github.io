@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Racing Game</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <canvas id="game-canvas"></canvas>
+
+  <!-- Ignition / starter -->
+  <div id="ignition-controls">
+    <div id="engine-status" class="status-off">Engine Off</div>
+    <div id="ignition-buttons">
+      <button class="ign-btn" id="btn-ignition">IGN <span class="key-hint">I</span></button>
+      <button class="ign-btn start" id="btn-start">START <span class="key-hint">Ctrl+I</span></button>
+    </div>
+  </div>
+
+  <!-- HUD -->
+  <div id="hud">
+    <div id="tach">
+      <div id="tach-track"><div id="tach-fill"></div></div>
+      <div id="tach-readout"><span id="rpm-value">0</span><span id="rpm-unit">rpm</span></div>
+    </div>
+    <div id="dash">
+      <div id="gear-box">
+        <span id="gear-value">1</span>
+        <span id="gear-label">gear</span>
+      </div>
+      <div id="speedometer">
+        <span id="speed-value">0</span>
+        <span id="speed-unit">km/h</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mobile Controls -->
+  <div id="mobile-controls">
+    <div id="controls-left">
+      <button class="ctrl-btn" id="btn-left">&#9664;</button>
+    </div>
+    <div id="controls-center">
+      <div id="shift-row">
+        <button class="ctrl-btn small" id="btn-downshift">Q&#9660;</button>
+        <button class="ctrl-btn small" id="btn-upshift">E&#9650;</button>
+      </div>
+      <button class="ctrl-btn" id="btn-accel">&#9650;</button>
+      <button class="ctrl-btn" id="btn-brake">&#9660;</button>
+    </div>
+    <div id="controls-right">
+      <button class="ctrl-btn" id="btn-right">&#9654;</button>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.165.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.165.0/examples/jsm/"
+      }
+    }
+  </script>
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
