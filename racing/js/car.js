@@ -17,7 +17,8 @@ const CRANK_TIME        = 1.1;   // seconds of cranking before idle
 
 // ---- Rev dynamics (display/audio smoothing — does not affect physics) ----
 const RPM_RISE_RATE  = 11;    // per second — quick rev pickup on throttle
-const RPM_FALL_RATE  = 2.0;   // per second — slow, satisfying rev drop / engine braking
+const RPM_FALL_RATE  = 2.0;   // per second — exponential ease for the final approach
+const RPM_FALL_MAX   = 2600;  // hard cap on rev-down speed (rpm/sec) so braking never plummets
 const DOWNSHIFT_BLIP = 1200;  // rpm bump injected on downshift (rev-match)
 const BLIP_DECAY     = 0.90;  // per-frame blip decay (~0.35s at 60fps)
 
@@ -256,9 +257,17 @@ export class Car {
 
     // Displayed/audible rpm: quick to rise, gradual to fall, plus the
     // decaying downshift blip — keeps the satisfying engine-braking note
-    // and stops the revs from collapsing the instant you brake.
-    const rate = (targetRpm > this._baseRpm) ? RPM_RISE_RATE : RPM_FALL_RATE;
-    this._baseRpm += (targetRpm - this._baseRpm) * Math.min(1, rate * dt);
+    // and stops the revs from collapsing when you brake.
+    if (targetRpm >= this._baseRpm) {
+      // Rise responsively toward the target
+      this._baseRpm += (targetRpm - this._baseRpm) * Math.min(1, RPM_RISE_RATE * dt);
+    } else {
+      // Fall: exponential ease near the target, but never faster than the cap,
+      // so hard braking from high revs still bleeds down gradually.
+      const eased  = this._baseRpm + (targetRpm - this._baseRpm) * Math.min(1, RPM_FALL_RATE * dt);
+      const capped = this._baseRpm - RPM_FALL_MAX * dt;
+      this._baseRpm = Math.max(targetRpm, eased, capped);
+    }
     this.revBlip *= Math.pow(BLIP_DECAY, dt * 60);
     if (this.revBlip < 1) this.revBlip = 0;
     this.rpm = Math.min(ENGINE_MAX_RPM, this._baseRpm + this.revBlip);
