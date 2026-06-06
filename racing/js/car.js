@@ -17,7 +17,7 @@ const CRANK_TIME        = 1.1;   // seconds of cranking before idle
 
 // ---- Rev dynamics (display/audio smoothing — does not affect physics) ----
 const RPM_RISE_RATE  = 11;    // per second — quick rev pickup on throttle
-const RPM_FALL_RATE  = 3.2;   // per second — gradual, satisfying rev drop
+const RPM_FALL_RATE  = 2.0;   // per second — slow, satisfying rev drop / engine braking
 const DOWNSHIFT_BLIP = 1200;  // rpm bump injected on downshift (rev-match)
 const BLIP_DECAY     = 0.90;  // per-frame blip decay (~0.35s at 60fps)
 

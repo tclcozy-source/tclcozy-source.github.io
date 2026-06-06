@@ -14,11 +14,15 @@ class EngineAudio {
     if (this.ctx) return;
     const Ctx = window.AudioContext || window.webkitAudioContext;
     if (!Ctx) return;
-    const ctx = this.ctx = new Ctx();
+    const ctx = this.ctx = new Ctx({ latencyHint: 'interactive' });
+
+    // iOS: route through the "playback" session so sound is heard even when
+    // the phone's silent/ring switch is on.
+    try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (e) {}
 
     // Master chain with a limiter so the aggressive tone never clips harshly
     this.master = ctx.createGain();
-    this.master.gain.value = 0.8;
+    this.master.gain.value = 0.9;
     const comp = ctx.createDynamicsCompressor();
     comp.threshold.value = -10;
     comp.knee.value = 6;
@@ -108,14 +112,31 @@ class EngineAudio {
     return buf;
   }
 
-  // Resume/initialise on the first user gesture.
+  // Resume/initialise on the first user gesture. Mobile browsers (esp. iOS)
+  // need the context created AND unlocked with a silent buffer inside a real
+  // touch handler, so we listen broadly and keep retrying until it's running.
   attachAutoResume() {
-    const resume = () => {
+    const unlock = () => {
       this._init();
-      if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume();
+      if (!this.ctx) return;
+      if (this.ctx.state === 'suspended') this.ctx.resume();
+      if (!this._unlocked) {
+        try {
+          const src = this.ctx.createBufferSource();
+          src.buffer = this.ctx.createBuffer(1, 1, 22050);
+          src.connect(this.ctx.destination);
+          src.start(0);
+          this._unlocked = true;
+        } catch (e) {}
+      }
     };
-    window.addEventListener('keydown', resume);
-    window.addEventListener('pointerdown', resume);
+    ['pointerdown', 'touchstart', 'touchend', 'mousedown', 'keydown'].forEach((ev) => {
+      window.addEventListener(ev, unlock, { passive: true });
+    });
+    // Resume again if the tab/app returns to the foreground
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden && this.ctx && this.ctx.state === 'suspended') this.ctx.resume();
+    });
   }
 
   // Starter-motor crank: chugging low oscillator + whine, ~1.1s.
