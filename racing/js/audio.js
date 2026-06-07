@@ -1,7 +1,9 @@
 // Procedural engine + UI sounds generated with the Web Audio API.
-// The running-engine tone is voiced as a high-revving V8 (F1-style scream):
-// a rich sawtooth harmonic stack driven up in pitch by RPM, with a resonant
-// "wail" formant that sweeps dramatically toward the redline.
+// The running engine is voiced as a V8: a sub-bass rumble for the engine body,
+// a sawtooth firing fundamental at the true V8 firing frequency (rpm/15), and
+// upper harmonics that grow with revs. Run through a waveshaper for raw grit and
+// a lowpass that opens with RPM — so it's a deep growl at idle that builds into
+// an aggressive, throaty wail at the redline (not a thin high-pitched whine).
 
 class EngineAudio {
   constructor() {
@@ -32,73 +34,78 @@ class EngineAudio {
     this.master.connect(comp);
     comp.connect(ctx.destination);
 
-    // Tone bus: oscillators -> highpass -> scream(peaking) -> engineGain -> master
+    // Tone bus: oscillators -> oscMix -> waveshaper(distortion) -> lowpass -> engineGain -> master
     this.engineGain = ctx.createGain();
     this.engineGain.gain.value = 0.0001; // silent until the engine runs
 
-    this.scream = ctx.createBiquadFilter();
-    this.scream.type = 'peaking';
-    this.scream.frequency.value = 800;
-    this.scream.Q.value = 9;
-    this.scream.gain.value = 15;        // strong resonant wail
+    // Lowpass opens with RPM: muffled growl at idle, bright wail at the redline
+    this.lowpass = ctx.createBiquadFilter();
+    this.lowpass.type = 'lowpass';
+    this.lowpass.frequency.value = 400;
+    this.lowpass.Q.value = 1.6;
 
-    this.hp = ctx.createBiquadFilter();
-    this.hp.type = 'highpass';
-    this.hp.frequency.value = 200;      // keep it bright, not rumbly
-    this.hp.Q.value = 0.7;
+    // Waveshaper adds raw, raspy grit (the racing-engine edge)
+    this.shaper = ctx.createWaveShaper();
+    this.shaper.curve = this._makeDistortionCurve(10);
+    this.shaper.oversample = '2x';
 
-    this.hp.connect(this.scream);
-    this.scream.connect(this.engineGain);
+    this.oscMix = ctx.createGain();
+    this.oscMix.gain.value = 0.5;        // drive level into the distortion
+
+    this.oscMix.connect(this.shaper);
+    this.shaper.connect(this.lowpass);
+    this.lowpass.connect(this.engineGain);
     this.engineGain.connect(this.master);
 
-    // Harmonic stack — high partials grow with revs for the sharp scream.
-    // gain = g0 + g1 * revShape  (set each frame in update()).
+    // Layered oscillators at multiples of the firing frequency.
+    // gain = g0 + g1*revShape: low layers dominate the idle growl, upper
+    // harmonics grow with revs for the high-RPM scream.
     this.oscDefs = [
-      { type: 'sawtooth', mult: 1.0, g0: 0.32, g1: 0.24 }, // fundamental
-      { type: 'sawtooth', mult: 2.0, g0: 0.12, g1: 0.26 }, // 2nd
-      { type: 'sawtooth', mult: 3.0, g0: 0.04, g1: 0.28 }, // 3rd — the wail
-      { type: 'sawtooth', mult: 4.0, g0: 0.02, g1: 0.20 }, // sharpness up top
-      { type: 'square',   mult: 0.5, g0: 0.16, g1: 0.02 }, // sub body (fades up)
+      { type: 'sine',     mult: 0.5, g0: 0.55, g1: -0.20 }, // sub-bass rumble (engine body)
+      { type: 'sawtooth', mult: 1.0, g0: 0.45, g1: 0.05  }, // firing fundamental
+      { type: 'sawtooth', mult: 2.0, g0: 0.18, g1: 0.22  }, // growl harmonic
+      { type: 'sawtooth', mult: 3.0, g0: 0.06, g1: 0.26  }, // scream harmonic
+      { type: 'sawtooth', mult: 4.0, g0: 0.02, g1: 0.18  }, // top-end bite
     ];
     this.oscs = this.oscDefs.map((d) => {
       const o = ctx.createOscillator();
       o.type = d.type;
-      o.frequency.value = 150;
+      o.frequency.value = 60;
       const g = ctx.createGain();
       g.gain.value = d.g0;
       o.connect(g);
-      g.connect(this.hp);
+      g.connect(this.oscMix);
       o.start();
       return { o, g, mult: d.mult, g0: d.g0, g1: d.g1 };
     });
 
-    // Detuned twin of the fundamental — shimmer/beating for a metallic edge
+    // Detuned twin of the fundamental — thickens the tone with a beating texture
     this.twin = ctx.createOscillator();
     this.twin.type = 'sawtooth';
-    this.twin.detune.value = 11; // cents
-    this.twin.frequency.value = 150;
+    this.twin.detune.value = 14; // cents
+    this.twin.frequency.value = 60;
     const twinG = ctx.createGain();
-    twinG.gain.value = 0.16;
+    twinG.gain.value = 0.18;
     this.twin.connect(twinG);
-    twinG.connect(this.hp);
+    twinG.connect(this.oscMix);
     this.twin.start();
 
     // Shared noise buffer for texture / mechanical sounds
     this.noiseBuf = this._makeNoise(ctx, 1.5);
 
-    // Light induction hiss
+    // Subtle intake/induction hiss (added clean, after the distortion)
     this.noise = ctx.createBufferSource();
     this.noise.buffer = this.noiseBuf;
     this.noise.loop = true;
     const nbp = ctx.createBiquadFilter();
     nbp.type = 'bandpass';
-    nbp.frequency.value = 2400;
-    nbp.Q.value = 0.8;
+    nbp.frequency.value = 1800;
+    nbp.Q.value = 0.7;
     this.noiseGain = ctx.createGain();
-    this.noiseGain.gain.value = 0.02;
+    this.noiseGain.gain.value = 0.015;
     this.noise.connect(nbp);
     nbp.connect(this.noiseGain);
-    this.noiseGain.connect(this.hp);
+    this.noiseGain.connect(this.lowpass);
     this.noise.start();
 
     this.ready = true;
@@ -110,6 +117,18 @@ class EngineAudio {
     const data = buf.getChannelData(0);
     for (let i = 0; i < len; i++) data[i] = Math.random() * 2 - 1;
     return buf;
+  }
+
+  // Soft-clipping distortion curve for engine grit (higher amount = harsher).
+  _makeDistortionCurve(amount) {
+    const n = 1024;
+    const curve = new Float32Array(n);
+    const deg = Math.PI / 180;
+    for (let i = 0; i < n; i++) {
+      const x = (i * 2) / n - 1;
+      curve[i] = ((3 + amount) * x * 20 * deg) / (Math.PI + amount * Math.abs(x));
+    }
+    return curve;
   }
 
   // Resume/initialise on the first user gesture. Mobile browsers (esp. iOS)
@@ -229,7 +248,7 @@ class EngineAudio {
     }
   }
 
-  // Per-frame: shape the V8 scream from RPM / throttle / speed.
+  // Per-frame: shape the V8 tone from RPM / throttle / speed.
   update(rpm, throttle, running, speed) {
     if (!this.ready || !this.ctx) return;
     const t = this.ctx.currentTime;
@@ -240,23 +259,22 @@ class EngineAudio {
     }
 
     const revFrac = Math.min(rpm / 7200, 1);
-    const revShape = Math.pow(revFrac, 1.3); // bias drama toward high revs
+    const revShape = Math.pow(revFrac, 1.2);
 
-    // V8 firing frequency (rpm/15), pitched up for the F1 scream
-    const firing = Math.max(40, rpm / 15);
-    const base = firing * 2.5;
+    // True V8 firing frequency — deep at idle (~60Hz), rises linearly with revs.
+    // No pitch inflation, so low RPM stays a throaty growl.
+    const firing = Math.max(28, rpm / 15);
     this.oscs.forEach(({ o, g, mult, g0, g1 }) => {
-      o.frequency.setTargetAtTime(base * mult, t, 0.02);
-      g.gain.setTargetAtTime(g0 + g1 * revShape, t, 0.03);
+      o.frequency.setTargetAtTime(firing * mult, t, 0.025);
+      g.gain.setTargetAtTime(Math.max(0, g0 + g1 * revShape), t, 0.04);
     });
-    this.twin.frequency.setTargetAtTime(base, t, 0.02);
+    this.twin.frequency.setTargetAtTime(firing, t, 0.025);
 
-    // Resonant wail sweeps up dramatically with revs
-    this.scream.frequency.setTargetAtTime(500 + revShape * 4300, t, 0.04);
-    this.scream.Q.setTargetAtTime(8 + revShape * 9, t, 0.05);
+    // Brightness opens up with revs: muffled growl -> bright, aggressive wail
+    this.lowpass.frequency.setTargetAtTime(350 + revShape * 3200, t, 0.05);
 
-    const vol = 0.1 + revShape * 0.6 + (throttle ? 0.1 : 0) + Math.min(Math.abs(speed) / 100, 1) * 0.05;
-    this.engineGain.gain.setTargetAtTime(vol, t, 0.04);
+    const vol = 0.14 + revShape * 0.5 + (throttle ? 0.08 : 0) + Math.min(Math.abs(speed) / 120, 1) * 0.05;
+    this.engineGain.gain.setTargetAtTime(vol, t, 0.05);
   }
 }
 
