@@ -4,10 +4,12 @@ export const input = {
   backward: false,
   left: false,
   right: false,
+  steerAxis: 0,          // analog steering from joystick: -1 (right) .. +1 (left)
   shiftUp: false,        // one-shot: set on press, consumed by the car
   shiftDown: false,      // one-shot
   ignitionToggle: false, // one-shot: I
   startEngine: false,    // one-shot: Ctrl+I
+  toggleTransmission: false, // one-shot: T (auto/manual)
 };
 
 // Held-direction keys
@@ -30,6 +32,7 @@ window.addEventListener('keydown', (e) => {
       else           input.ignitionToggle = true;  // I: ignition on/off
       e.preventDefault();
     }
+    if (e.key === 't' || e.key === 'T') { input.toggleTransmission = true; e.preventDefault(); }
   }
 });
 window.addEventListener('keyup', (e) => {
@@ -72,3 +75,4 @@ bindTap('btn-upshift',   'shiftUp');
 bindTap('btn-downshift', 'shiftDown');
 bindTap('btn-ignition',  'ignitionToggle');
 bindTap('btn-start',     'startEngine');
+bindTap('btn-transmission', 'toggleTransmission');

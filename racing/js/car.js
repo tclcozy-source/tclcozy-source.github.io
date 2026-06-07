@@ -38,6 +38,11 @@ const MAX_REVERSE_SPEED = 12;
 
 const EFF_RATIO_1 = GEAR_RATIOS[1] * FINAL_DRIVE; // reference for engine braking
 
+// ---- Automatic transmission ----
+const AUTO_UPSHIFT_RPM   = 6200; // shift up when revs climb past this
+const AUTO_DOWNSHIFT_RPM = 2600; // shift down when revs drop below this
+const AUTO_SHIFT_COOLDOWN = 0.5; // seconds between auto shifts (anti-hunting)
+
 export class Car {
   constructor(scene) {
     this.speed       = 0;       // signed m/s: + forward, - reverse
@@ -51,6 +56,8 @@ export class Car {
     this.engineState = 'off';   // 'off' | 'ignition' | 'cranking' | 'running'
     this.crankTimer  = 0;
     this.startRejected = false; // one-shot: start attempted without ignition
+    this.autoTransmission = false; // set by main (mobile = true; desktop togglable)
+    this._autoCooldown = 0;     // anti-hunting timer for auto shifts
 
     this.mesh = this._buildMesh();
     scene.add(this.mesh);
@@ -192,6 +199,8 @@ export class Car {
   }
 
   _handleShift(input) {
+    // In automatic mode the gearbox manages itself — ignore manual shifts
+    if (this.autoTransmission) { input.shiftUp = false; input.shiftDown = false; return; }
     if (input.shiftUp) {
       this.gear = Math.min(this.gear + 1, 6);
       input.shiftUp = false;
@@ -224,11 +233,19 @@ export class Car {
       }
       this._baseRpm = this.rpm;                  // keep base synced for a clean start
       this.revBlip = 0;
-      this._applyBrakeAndDrag(input, dt);
+      this._applyBrakeAndDrag(input.backward, dt);
       return;
     }
 
-    const throttle = input.forward;
+    // Automatic mode picks the gear (and reverse) for you.
+    if (this.autoTransmission) this._autoTransmission(input, dt);
+
+    // Effective throttle/brake. While in reverse the controls flip so that
+    // "down/back" drives backwards and "up/forward" brakes — like an automatic.
+    let throttle, braking;
+    if (this.gear < 0) { throttle = input.backward; braking = input.forward; }
+    else               { throttle = input.forward;  braking = input.backward; }
+
     let engineAccel = 0;
     let targetRpm;
 
@@ -253,7 +270,7 @@ export class Car {
     }
 
     this.speed += engineAccel * dt;
-    this._applyBrakeAndDrag(input, dt);
+    this._applyBrakeAndDrag(braking, dt);
 
     // Displayed/audible rpm: quick to rise, gradual to fall, plus the
     // decaying downshift blip — keeps the satisfying engine-braking note
@@ -273,8 +290,8 @@ export class Car {
     this.rpm = Math.min(ENGINE_MAX_RPM, this._baseRpm + this.revBlip);
   }
 
-  _applyBrakeAndDrag(input, dt) {
-    if (input.backward) {
+  _applyBrakeAndDrag(braking, dt) {
+    if (braking) {
       if (this.speed > 0)      this.speed = Math.max(0, this.speed - BRAKE_DECEL * dt);
       else if (this.speed < 0) this.speed = Math.min(0, this.speed + BRAKE_DECEL * dt);
     }
@@ -285,10 +302,44 @@ export class Car {
     this.speed = THREE.MathUtils.clamp(this.speed, -MAX_REVERSE_SPEED, 75);
   }
 
+  // Automatic gearbox: choose direction near standstill and shift forward
+  // gears by engine speed (with a cooldown to avoid hunting).
+  _autoTransmission(input, dt) {
+    if (this._autoCooldown > 0) this._autoCooldown -= dt;
+    const v = this.speed;
+
+    // Direction / engagement
+    if (Math.abs(v) < 0.6) {
+      if (input.forward) { if (this.gear < 1) this.gear = 1; }
+      else if (input.backward) { if (this.gear >= 0) this.gear = -1; }
+      else if (this.gear === 0) { this.gear = 1; }
+    } else if (v >= 0.6 && this.gear < 1) {
+      this.gear = 1;            // rolling forward must be in a drive gear
+    } else if (v <= -0.6 && this.gear !== -1) {
+      this.gear = -1;           // rolling backward -> reverse
+    }
+
+    // Up/down shifting among the forward gears
+    if (this.gear >= 1 && this._autoCooldown <= 0) {
+      const effRatio = GEAR_RATIOS[this.gear] * FINAL_DRIVE;
+      const mechRpm = Math.abs(v) * effRatio * RPM_PER_MS;
+      if (mechRpm > AUTO_UPSHIFT_RPM && this.gear < 6) {
+        this.gear++;
+        this._autoCooldown = AUTO_SHIFT_COOLDOWN;
+      } else if (mechRpm < AUTO_DOWNSHIFT_RPM && this.gear > 1) {
+        this.gear--;
+        this.revBlip = Math.max(this.revBlip, DOWNSHIFT_BLIP); // blip on auto downshift
+        this._autoCooldown = AUTO_SHIFT_COOLDOWN;
+      }
+    }
+  }
+
   _updateSteering(input, dt) {
-    // Ease the steering value toward the target instead of snapping to it
-    const target = (input.left ? 1 : 0) - (input.right ? 1 : 0);
-    const resp = (target === 0) ? STEER_RETURN : STEER_RESPONSE;
+    // Ease the steering value toward the target instead of snapping to it.
+    // Analog joystick (steerAxis) and keyboard (left/right) both feed the target.
+    const target = THREE.MathUtils.clamp(
+      (input.steerAxis || 0) + (input.left ? 1 : 0) - (input.right ? 1 : 0), -1, 1);
+    const resp = (Math.abs(target) < 0.001) ? STEER_RETURN : STEER_RESPONSE;
     this.steerValue += (target - this.steerValue) * Math.min(1, resp * dt);
 
     // Turn rate eases off as speed climbs, for stability
@@ -331,6 +382,7 @@ export class Car {
     if (this.gear === 0)  return 'N';
     return String(this.gear);
   }
+  get transmissionLabel() { return this.autoTransmission ? 'AUTO' : 'MANUAL'; }
   get statusLabel() {
     switch (this.engineState) {
       case 'ignition': return 'Ignition On';

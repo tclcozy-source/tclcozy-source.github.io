@@ -5,6 +5,7 @@ import { ChaseCamera }        from './camera.js';
 import { buildWorld, scatterTrees } from './world.js';
 import { buildTrack }         from './track.js';
 import { engineAudio }        from './audio.js';
+import { initJoystick }       from './joystick.js';
 
 // Renderer
 const canvas   = document.getElementById('game-canvas');
@@ -31,12 +32,26 @@ const car         = new Car(scene);
 car.placeAt(track.start.x, track.start.z, track.startHeading);
 const chaseCamera = new ChaseCamera(camera);
 
+// Device detection -> controls + default transmission
+const isMobile = window.matchMedia('(pointer: coarse)').matches;
+document.body.classList.add(isMobile ? 'mobile' : 'desktop');
+car.autoTransmission = isMobile;     // mobile = automatic; desktop defaults to manual
+if (isMobile) initJoystick();
+
 // HUD elements
 const speedEl    = document.getElementById('speed-value');
 const gearEl     = document.getElementById('gear-value');
 const rpmEl      = document.getElementById('rpm-value');
 const tachFillEl = document.getElementById('tach-fill');
 const statusEl   = document.getElementById('engine-status');
+const transLabel = document.getElementById('transmission-label');
+const transBtn   = document.getElementById('btn-transmission');
+
+function refreshTransmissionUI() {
+  if (transLabel) transLabel.textContent = car.autoTransmission ? 'AUTO' : 'MANUAL';
+  if (transBtn)   transBtn.classList.toggle('auto', car.autoTransmission);
+}
+refreshTransmissionUI();
 
 // Audio: starts on the first user gesture (autoplay policy)
 engineAudio.attachAutoResume();
@@ -51,6 +66,12 @@ let prevState = car.engineState;
 // Game loop
 function tick() {
   const dt = Math.min(clock.getDelta(), 0.05); // cap dt to avoid tunnelling
+
+  // Transmission toggle (desktop only — mobile is locked to automatic)
+  if (input.toggleTransmission) {
+    input.toggleTransmission = false;
+    if (!isMobile) { car.autoTransmission = !car.autoTransmission; refreshTransmissionUI(); }
+  }
 
   car.update(input, dt);
   chaseCamera.update(car);
@@ -68,7 +89,7 @@ function tick() {
     engineAudio.shift();
     prevGear = car.gear;
   }
-  engineAudio.update(car.rpm, input.forward, car.isRunning, car.speed);
+  engineAudio.update(car.rpm, input.forward || input.backward, car.isRunning, car.speed);
 
   // Update HUD
   speedEl.textContent = Math.round(car.kmh);

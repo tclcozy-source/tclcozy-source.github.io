@@ -16,6 +16,7 @@
       <button class="ign-btn" id="btn-ignition">IGN <span class="key-hint">I</span></button>
       <button class="ign-btn start" id="btn-start">START <span class="key-hint">Ctrl+I</span></button>
     </div>
+    <button class="ign-btn" id="btn-transmission"><span id="transmission-label">MANUAL</span> <span class="key-hint">T</span></button>
   </div>
 
   <!-- HUD -->
@@ -36,23 +37,11 @@
     </div>
   </div>
 
-  <!-- Mobile Controls -->
-  <div id="mobile-controls">
-    <div id="controls-left">
-      <button class="ctrl-btn" id="btn-left">&#9664;</button>
-    </div>
-    <div id="controls-center">
-      <div id="shift-row">
-        <button class="ctrl-btn small" id="btn-downshift">Q&#9660;</button>
-        <button class="ctrl-btn small" id="btn-upshift">E&#9650;</button>
-      </div>
-      <button class="ctrl-btn" id="btn-accel">&#9650;</button>
-      <button class="ctrl-btn" id="btn-brake">&#9660;</button>
-    </div>
-    <div id="controls-right">
-      <button class="ctrl-btn" id="btn-right">&#9654;</button>
-    </div>
+  <!-- Mobile joystick (floating, drag to steer + accelerate) -->
+  <div id="joystick-zone">
+    <div id="joystick-base"><div id="joystick-knob"></div></div>
   </div>
+  <div id="joystick-hint">Drag to drive · up = go · down = brake/reverse</div>
 
   <!-- Scripts -->
   <script type="importmap">
