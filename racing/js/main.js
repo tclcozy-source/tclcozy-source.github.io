@@ -89,15 +89,16 @@ function tick() {
     engineAudio.shift();
     prevGear = car.gear;
   }
-  engineAudio.update(car.rpm, input.forward || input.backward, car.isRunning, car.speed);
+  // Audio is tied to the internal sim RPM; limiter bounce when at the limiter
+  engineAudio.update(car.rpm, input.forward || input.backward, car.isRunning, car.speed, car.atLimiter);
 
-  // Update HUD
+  // Update HUD (tachometer shows the F1-scale display RPM)
   speedEl.textContent = Math.round(car.kmh);
   gearEl.textContent  = car.gearLabel;
-  rpmEl.textContent   = Math.round(car.rpm);
-  const rpmPct = Math.min(car.rpm / car.maxRpm, 1) * 100;
+  rpmEl.textContent   = car.displayRpm;
+  const rpmPct = Math.min(car.displayRpm / car.maxRpm, 1) * 100;
   tachFillEl.style.width = rpmPct + '%';
-  tachFillEl.classList.toggle('redline', car.rpm > car.redline);
+  tachFillEl.classList.toggle('redline', car.displayRpm > car.redline);
   statusEl.textContent = car.statusLabel;
   statusEl.className   = 'status-' + car.engineState;
 

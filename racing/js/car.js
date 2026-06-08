@@ -15,6 +15,10 @@ const PEAK_TORQUE_RPM   = 4600;
 const LIMITER_START_RPM = 6500;  // power begins falling off above this
 const CRANK_TIME        = 1.1;   // seconds of cranking before idle
 
+// The physics runs on a compact internal rev range; the tachometer shows a
+// realistic F1-V8-style scale (redline ~18,000 rpm). 7200 internal -> 18,000.
+const DISPLAY_RPM_SCALE = 2.5;
+
 // ---- Rev dynamics (display/audio smoothing — does not affect physics) ----
 const RPM_RISE_RATE  = 11;    // per second — quick rev pickup on throttle
 const RPM_FALL_RATE  = 1.7;   // per second — exponential ease for the final approach
@@ -59,6 +63,7 @@ export class Car {
     this.autoTransmission = false; // set by main (mobile = true; desktop togglable)
     this._autoCooldown = 0;     // anti-hunting timer for auto shifts
     this._reverseReady = false; // auto: reverse only after a deliberate re-press at a stop
+    this.atLimiter = false;     // true while revs are pinned at the limiter
 
     this.mesh = this._buildMesh();
     scene.add(this.mesh);
@@ -249,6 +254,7 @@ export class Car {
 
     let engineAccel = 0;
     let targetRpm;
+    this.atLimiter = false;
 
     if (this.gear === 0) {
       // Neutral — engine free-revs, no drive to the wheels
@@ -264,6 +270,7 @@ export class Car {
       if (throttle) {
         const atLimit = dir > 0 ? this.speed >= gearTopSpeed : this.speed <= gearTopSpeed;
         if (!atLimit) engineAccel = torqueFactor(mechRpm) * effRatio * TORQUE_K * dir;
+        else if (dir > 0) this.atLimiter = true; // revs pinned at the limiter
       } else if (Math.abs(this.speed) > 0.1) {
         const eb = ENGINE_BRAKE_BASE * (effRatio / EFF_RATIO_1);
         engineAccel = -Math.sign(this.speed) * eb;
@@ -391,8 +398,10 @@ export class Car {
 
   get position()  { return this.mesh.position; }
   get kmh()       { return Math.abs(this.speed) * 3.6; }
-  get maxRpm()    { return ENGINE_MAX_RPM; }
-  get redline()   { return LIMITER_START_RPM; }
+  get rpmRaw()    { return this.rpm; }                            // internal sim rpm (audio)
+  get displayRpm(){ return Math.round(this.rpm * DISPLAY_RPM_SCALE); } // F1-scale rpm (HUD)
+  get maxRpm()    { return ENGINE_MAX_RPM * DISPLAY_RPM_SCALE; }   // tach ceiling (~20,000)
+  get redline()   { return LIMITER_START_RPM * DISPLAY_RPM_SCALE; }// limiter line (~16,250)
   get gearLabel() {
     if (this.gear === -1) return 'R';
     if (this.gear === 0)  return 'N';
