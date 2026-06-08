@@ -39,9 +39,9 @@ const MAX_REVERSE_SPEED = 12;
 const EFF_RATIO_1 = GEAR_RATIOS[1] * FINAL_DRIVE; // reference for engine braking
 
 // ---- Automatic transmission ----
-const AUTO_UPSHIFT_RPM   = 6200; // shift up when revs climb past this
-const AUTO_DOWNSHIFT_RPM = 2600; // shift down when revs drop below this
-const AUTO_SHIFT_COOLDOWN = 0.5; // seconds between auto shifts (anti-hunting)
+const AUTO_UPSHIFT_RPM   = 6900; // hold each gear and rev out before upshifting
+const AUTO_DOWNSHIFT_RPM = 1850; // only drop a gear once revs fall well off — no eager downshifts
+const AUTO_SHIFT_COOLDOWN = 0.7; // seconds between auto shifts (relaxed, anti-hunting)
 
 export class Car {
   constructor(scene) {
