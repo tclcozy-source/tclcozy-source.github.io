@@ -1,16 +1,17 @@
-// Procedural engine + UI sounds generated with the Web Audio API.
-// The running engine models a 2006-era F1 V8:
-//   * 8 detuned sawtooth oscillators = the 8 cylinders firing (thick, rough).
-//   * fundamental maps to RPM: deep ~48Hz rumble at idle -> ~560Hz wail at max.
-//   * harmonic oscillators (2x/3x/4x) build with revs for the metallic growl.
-//   * a waveshaper adds raw, aggressive distortion.
-//   * a bandpass formant opens (and tightens) with RPM = the building wail.
-// Low RPM = a lumpy aggressive idle; high RPM = an ear-piercing screaming wail.
+// Engine + UI sounds via the Web Audio API.
+// The running engine is a REAL recorded racing engine (assets/engine.mp3 —
+// "Racing motorcycle engine" from Mixkit, free SFX license, no attribution
+// required). It plays as a seamless loop whose playbackRate is driven by RPM,
+// so it revs up and down like a real engine. The starter/shift/fail sounds are
+// short synthesized mechanical effects.
+
+const ENGINE_URL = new URL('../assets/engine.mp3', import.meta.url);
 
 class EngineAudio {
   constructor() {
     this.ctx = null;
     this.ready = false;
+    this.engineReady = false; // sample decoded + looping
   }
 
   // Build the audio graph. Must run after a user gesture (autoplay policy).
@@ -24,97 +25,52 @@ class EngineAudio {
     // the phone's silent/ring switch is on.
     try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (e) {}
 
-    // Master chain with a limiter so the aggressive tone never clips harshly
+    // Master chain with a limiter
     this.master = ctx.createGain();
-    this.master.gain.value = 0.9;
+    this.master.gain.value = 0.95;
     const comp = ctx.createDynamicsCompressor();
-    comp.threshold.value = -10;
+    comp.threshold.value = -8;
     comp.knee.value = 6;
-    comp.ratio.value = 8;
+    comp.ratio.value = 6;
     comp.attack.value = 0.003;
-    comp.release.value = 0.12;
+    comp.release.value = 0.15;
     this.master.connect(comp);
     comp.connect(ctx.destination);
 
-    // Engine bus: [8 cylinders + harmonics] -> drive -> waveshaper -> bandpass -> engineGain -> master
+    // Running-engine path: sample loop -> tone lowpass -> engineGain -> master
     this.engineGain = ctx.createGain();
-    this.engineGain.gain.value = 0.0001; // silent until the engine runs
-
-    // Bandpass formant that opens up (and tightens) with revs: a low raspy
-    // growl at idle building into a bright screaming wail at the redline.
-    this.bandpass = ctx.createBiquadFilter();
-    this.bandpass.type = 'bandpass';
-    this.bandpass.frequency.value = 220;
-    this.bandpass.Q.value = 0.8;
-
-    // Waveshaper for raw, aggressive distortion (the racing-engine edge)
-    this.shaper = ctx.createWaveShaper();
-    this.shaper.curve = this._makeDistortionCurve(20);
-    this.shaper.oversample = '4x';
-
-    // Pre-distortion drive — pushed harder on throttle for extra bite
-    this.driveGain = ctx.createGain();
-    this.driveGain.gain.value = 0.85;
-
-    this.driveGain.connect(this.shaper);
-    this.shaper.connect(this.bandpass);
-    this.bandpass.connect(this.engineGain);
+    this.engineGain.gain.value = 0.0001; // silent until running
+    this.engineLP = ctx.createBiquadFilter();
+    this.engineLP.type = 'lowpass';
+    this.engineLP.frequency.value = 2000;
+    this.engineLP.Q.value = 0.7;
+    this.engineLP.connect(this.engineGain);
     this.engineGain.connect(this.master);
 
-    // --- 8 cylinder oscillators: detuned sawtooths => thick, rough V8 texture ---
-    const cylBus = ctx.createGain();
-    cylBus.gain.value = 0.28;
-    cylBus.connect(this.driveGain);
-    const detunes = [-17, -12, -7, -2, 3, 8, 13, 18]; // cents spread for firing roughness
-    this.cylinders = detunes.map((cents) => {
-      const o = ctx.createOscillator();
-      o.type = 'sawtooth';
-      o.detune.value = cents;
-      o.frequency.value = 55;
-      o.connect(cylBus);
-      o.start();
-      return o;
-    });
-
-    // --- Harmonic oscillators (2x/3x/4x): metallic growl that builds with revs ---
-    const harmBus = ctx.createGain();
-    harmBus.gain.value = 1.0;
-    harmBus.connect(this.driveGain);
-    this.harmonics = [
-      { mult: 2, g0: 0.12, g1: 0.16 },
-      { mult: 3, g0: 0.05, g1: 0.18 },
-      { mult: 4, g0: 0.02, g1: 0.16 },
-    ].map((d) => {
-      const o = ctx.createOscillator();
-      o.type = 'sawtooth';
-      o.frequency.value = 110;
-      const g = ctx.createGain();
-      g.gain.value = d.g0;
-      o.connect(g);
-      g.connect(harmBus);
-      o.start();
-      return { o, g, mult: d.mult, g0: d.g0, g1: d.g1 };
-    });
-
-    // Shared noise buffer for the mechanical one-shots (crank/shift/fail)
+    // Noise buffer for the synthesized one-shots
     this.noiseBuf = this._makeNoise(ctx, 1.5);
 
-    // Subtle intake hiss, added clean after the engine filter
-    this.noise = ctx.createBufferSource();
-    this.noise.buffer = this.noiseBuf;
-    this.noise.loop = true;
-    const nbp = ctx.createBiquadFilter();
-    nbp.type = 'bandpass';
-    nbp.frequency.value = 2200;
-    nbp.Q.value = 0.7;
-    this.noiseGain = ctx.createGain();
-    this.noiseGain.gain.value = 0.012;
-    this.noise.connect(nbp);
-    nbp.connect(this.noiseGain);
-    this.noiseGain.connect(this.engineGain);
-    this.noise.start();
-
     this.ready = true;
+    this._loadEngineSample();
+  }
+
+  async _loadEngineSample() {
+    try {
+      const resp = await fetch(ENGINE_URL);
+      const data = await resp.arrayBuffer();
+      const buf = await this.ctx.decodeAudioData(data);
+      const src = this.ctx.createBufferSource();
+      src.buffer = buf;
+      src.loop = true;
+      src.playbackRate.value = 0.8;
+      src.connect(this.engineLP);
+      src.start(0);
+      this.engineSource = src;
+      this.engineReady = true;
+    } catch (e) {
+      // If the sample can't load, the engine simply stays silent.
+      this.engineReady = false;
+    }
   }
 
   _makeNoise(ctx, seconds) {
@@ -125,21 +81,8 @@ class EngineAudio {
     return buf;
   }
 
-  // Soft-clipping distortion curve for engine grit (higher amount = harsher).
-  _makeDistortionCurve(amount) {
-    const n = 1024;
-    const curve = new Float32Array(n);
-    const deg = Math.PI / 180;
-    for (let i = 0; i < n; i++) {
-      const x = (i * 2) / n - 1;
-      curve[i] = ((3 + amount) * x * 20 * deg) / (Math.PI + amount * Math.abs(x));
-    }
-    return curve;
-  }
-
   // Resume/initialise on the first user gesture. Mobile browsers (esp. iOS)
-  // need the context created AND unlocked with a silent buffer inside a real
-  // touch handler, so we listen broadly and keep retrying until it's running.
+  // need the context created AND unlocked inside a real touch handler.
   attachAutoResume() {
     const unlock = () => {
       this._init();
@@ -147,10 +90,10 @@ class EngineAudio {
       if (this.ctx.state === 'suspended') this.ctx.resume();
       if (!this._unlocked) {
         try {
-          const src = this.ctx.createBufferSource();
-          src.buffer = this.ctx.createBuffer(1, 1, 22050);
-          src.connect(this.ctx.destination);
-          src.start(0);
+          const s = this.ctx.createBufferSource();
+          s.buffer = this.ctx.createBuffer(1, 1, 22050);
+          s.connect(this.ctx.destination);
+          s.start(0);
           this._unlocked = true;
         } catch (e) {}
       }
@@ -158,7 +101,6 @@ class EngineAudio {
     ['pointerdown', 'touchstart', 'touchend', 'mousedown', 'keydown'].forEach((ev) => {
       window.addEventListener(ev, unlock, { passive: true });
     });
-    // Resume again if the tab/app returns to the foreground
     document.addEventListener('visibilitychange', () => {
       if (!document.hidden && this.ctx && this.ctx.state === 'suspended') this.ctx.resume();
     });
@@ -254,44 +196,29 @@ class EngineAudio {
     }
   }
 
-  // Per-frame: drive the V8 voice from RPM / throttle / speed.
+  // Per-frame: drive the recorded engine loop from RPM / throttle / speed.
   update(rpm, throttle, running, speed) {
     if (!this.ready || !this.ctx) return;
     const t = this.ctx.currentTime;
 
     if (!running) {
-      this.engineGain.gain.setTargetAtTime(0.0001, t, 0.08);
+      this.engineGain.gain.setTargetAtTime(0.0001, t, 0.1);
       return;
     }
+    if (!this.engineReady) return; // sample still loading
 
-    // Fundamental (firing) frequency: deep ~48Hz rumble at idle rising to
-    // ~560Hz at the redline (up to ~640Hz on over-rev). Kept low so it sounds
-    // powerful and throaty, not thin and screechy. Linear with RPM.
-    const rev  = Math.max(0, (rpm - 900) / (7200 - 900)); // 0 idle .. 1 redline (may exceed)
-    const revC = Math.min(rev, 1);
-    const base = 48 + Math.min(rev, 1.25) * 512;
+    const rev = Math.max(0, (rpm - 900) / (7200 - 900)); // 0 idle .. 1 redline (may exceed)
 
-    // 8 cylinders track the fundamental (their fixed detune keeps the spread)
-    this.cylinders.forEach((o) => o.frequency.setTargetAtTime(base, t, 0.03));
+    // Playback rate revs the loop: deeper/slower at idle, screaming at redline
+    const rate = 0.72 + Math.min(rev, 1.25) * 1.25; // ~0.72 idle -> ~1.97 redline
+    this.engineSource.playbackRate.setTargetAtTime(rate, t, 0.06);
 
-    // Harmonics climb in pitch and grow in level with revs (metallic scream)
-    this.harmonics.forEach(({ o, g, mult, g0, g1 }) => {
-      o.frequency.setTargetAtTime(base * mult, t, 0.03);
-      g.gain.setTargetAtTime(g0 + g1 * revC, t, 0.05);
-    });
-
-    // Bandpass opens and tightens with revs => the building wail. Top end kept
-    // lower so high RPM is a powerful wail rather than a piercing screech.
-    const revShape = Math.pow(Math.min(rev, 1.15), 1.15);
-    this.bandpass.frequency.setTargetAtTime(180 + revShape * 2050, t, 0.05);
-    this.bandpass.Q.setTargetAtTime(0.8 + revC * 1.2, t, 0.06);
-
-    // Throttle pushes the distortion harder for an aggressive on-power bite
-    this.driveGain.gain.setTargetAtTime(throttle ? 1.3 : 0.85, t, 0.08);
+    // Tone opens up with revs for extra brightness up top
+    this.engineLP.frequency.setTargetAtTime(1400 + Math.min(rev, 1) * 6000, t, 0.06);
 
     // Volume rises with RPM and throttle
-    const vol = 0.13 + Math.min(rev, 1.1) * 0.5 + (throttle ? 0.12 : 0) + Math.min(Math.abs(speed) / 120, 1) * 0.05;
-    this.engineGain.gain.setTargetAtTime(Math.min(vol, 0.92), t, 0.05);
+    const vol = 0.3 + Math.min(rev, 1.1) * 0.45 + (throttle ? 0.12 : 0) + Math.min(Math.abs(speed) / 120, 1) * 0.05;
+    this.engineGain.gain.setTargetAtTime(Math.min(vol, 0.95), t, 0.05);
   }
 }
 

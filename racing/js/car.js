@@ -30,7 +30,7 @@ const RPM_PER_MS  = 39;    // engineRPM = |speed| * effRatio * RPM_PER_MS
 const TORQUE_K    = 0.85;  // engine force scaling (accel feel)
 
 // ---- Resistance ----
-const BRAKE_DECEL       = 26;
+const BRAKE_DECEL       = 9.5;  // gentle, controllable braking (was an abrupt 26)
 const ROLLING_DRAG      = 0.8;
 const AERO_DRAG         = 0.0004;
 const ENGINE_BRAKE_BASE = 2.2;
