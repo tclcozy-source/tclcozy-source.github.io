@@ -100,8 +100,8 @@ function startGame() {
       engineAudio.shift();
       prevGear = car.gear;
     }
-    // Audio is tied to the internal sim RPM; limiter bounce when at the limiter
-    engineAudio.update(car.rpm, input.forward || input.backward, car.isRunning, car.speed, car.atLimiter);
+    // Engine loop: audible while running, slightly louder under throttle
+    engineAudio.update(car.isRunning, input.forward);
 
     // Update HUD (tachometer shows the F1-scale display RPM)
     speedEl.textContent = Math.round(car.kmh);
