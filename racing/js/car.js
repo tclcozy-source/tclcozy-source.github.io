@@ -359,10 +359,8 @@ export class Car {
 
   _updateSteering(input, dt) {
     // Ease the steering value toward the target instead of snapping to it.
-    // Analog joystick (steerAxis) and keyboard (left/right) both feed the target.
-    const target = THREE.MathUtils.clamp(
-      (input.steerAxis || 0) + (input.left ? 1 : 0) - (input.right ? 1 : 0), -1, 1);
-    const resp = (Math.abs(target) < 0.001) ? STEER_RETURN : STEER_RESPONSE;
+    const target = (input.left ? 1 : 0) - (input.right ? 1 : 0);
+    const resp = (target === 0) ? STEER_RETURN : STEER_RESPONSE;
     this.steerValue += (target - this.steerValue) * Math.min(1, resp * dt);
 
     // Turn rate eases off as speed climbs, for stability

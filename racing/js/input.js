@@ -1,10 +1,9 @@
-// Centralised input state — keyboard + touch
+// Centralised input state — keyboard (desktop only).
 export const input = {
   forward: false,
   backward: false,
   left: false,
   right: false,
-  steerAxis: 0,          // analog steering from joystick: -1 (right) .. +1 (left)
   shiftUp: false,        // one-shot: set on press, consumed by the car
   shiftDown: false,      // one-shot
   ignitionToggle: false, // one-shot: I
@@ -39,40 +38,13 @@ window.addEventListener('keyup', (e) => {
   if (keyMap[e.key]) { input[keyMap[e.key]] = false; }
 });
 
-// Held touch buttons (steer / throttle / brake)
-function bindHold(id, action) {
+// Clickable on-screen buttons (ignition / start / transmission)
+function bindClick(id, action) {
   const btn = document.getElementById(id);
   if (!btn) return;
-
-  const on  = () => { input[action] = true;  btn.classList.add('pressed'); };
-  const off = () => { input[action] = false; btn.classList.remove('pressed'); };
-
-  btn.addEventListener('pointerdown',   on,  { passive: true });
-  btn.addEventListener('pointerup',     off, { passive: true });
-  btn.addEventListener('pointercancel', off, { passive: true });
-  btn.addEventListener('pointerleave',  off, { passive: true });
+  btn.addEventListener('click', () => { input[action] = true; });
 }
 
-// One-shot touch buttons (gear shifts)
-function bindTap(id, action) {
-  const btn = document.getElementById(id);
-  if (!btn) return;
-  btn.addEventListener('pointerdown', () => {
-    input[action] = true;
-    btn.classList.add('pressed');
-  }, { passive: true });
-  const release = () => btn.classList.remove('pressed');
-  btn.addEventListener('pointerup',     release, { passive: true });
-  btn.addEventListener('pointercancel', release, { passive: true });
-  btn.addEventListener('pointerleave',  release, { passive: true });
-}
-
-bindHold('btn-accel', 'forward');
-bindHold('btn-brake', 'backward');
-bindHold('btn-left',  'left');
-bindHold('btn-right', 'right');
-bindTap('btn-upshift',   'shiftUp');
-bindTap('btn-downshift', 'shiftDown');
-bindTap('btn-ignition',  'ignitionToggle');
-bindTap('btn-start',     'startEngine');
-bindTap('btn-transmission', 'toggleTransmission');
+bindClick('btn-ignition',     'ignitionToggle');
+bindClick('btn-start',        'startEngine');
+bindClick('btn-transmission', 'toggleTransmission');
