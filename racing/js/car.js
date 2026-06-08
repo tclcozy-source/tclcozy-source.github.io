@@ -17,8 +17,8 @@ const CRANK_TIME        = 1.1;   // seconds of cranking before idle
 
 // ---- Rev dynamics (display/audio smoothing — does not affect physics) ----
 const RPM_RISE_RATE  = 11;    // per second — quick rev pickup on throttle
-const RPM_FALL_RATE  = 2.0;   // per second — exponential ease for the final approach
-const RPM_FALL_MAX   = 2600;  // hard cap on rev-down speed (rpm/sec) so braking never plummets
+const RPM_FALL_RATE  = 1.7;   // per second — exponential ease for the final approach
+const RPM_FALL_MAX   = 1500;  // hard cap on rev-down speed (rpm/sec) so braking never plummets
 const DOWNSHIFT_BLIP = 1200;  // rpm bump injected on downshift (rev-match)
 const BLIP_DECAY     = 0.90;  // per-frame blip decay (~0.35s at 60fps)
 
@@ -58,6 +58,7 @@ export class Car {
     this.startRejected = false; // one-shot: start attempted without ignition
     this.autoTransmission = false; // set by main (mobile = true; desktop togglable)
     this._autoCooldown = 0;     // anti-hunting timer for auto shifts
+    this._reverseReady = false; // auto: reverse only after a deliberate re-press at a stop
 
     this.mesh = this._buildMesh();
     scene.add(this.mesh);
@@ -302,21 +303,36 @@ export class Car {
     this.speed = THREE.MathUtils.clamp(this.speed, -MAX_REVERSE_SPEED, 75);
   }
 
-  // Automatic gearbox: choose direction near standstill and shift forward
-  // gears by engine speed (with a cooldown to avoid hunting).
+  // Automatic gearbox. Braking only downshifts through the forward gears and
+  // comes to a stop — it NEVER rolls into reverse on its own. Reverse engages
+  // only as a deliberate action: stop, release back, then press back again.
   _autoTransmission(input, dt) {
     if (this._autoCooldown > 0) this._autoCooldown -= dt;
     const v = this.speed;
+    const stopped = Math.abs(v) < 0.5;
 
-    // Direction / engagement
-    if (Math.abs(v) < 0.6) {
-      if (input.forward) { if (this.gear < 1) this.gear = 1; }
-      else if (input.backward) { if (this.gear >= 0) this.gear = -1; }
-      else if (this.gear === 0) { this.gear = 1; }
-    } else if (v >= 0.6 && this.gear < 1) {
-      this.gear = 1;            // rolling forward must be in a drive gear
-    } else if (v <= -0.6 && this.gear !== -1) {
-      this.gear = -1;           // rolling backward -> reverse
+    // "Arm" reverse only once the car is stopped AND the back/brake input has
+    // been released. This makes engaging reverse a fresh, deliberate press
+    // rather than a continuation of braking to a halt.
+    if (!stopped) this._reverseReady = false;
+    else if (!input.backward) this._reverseReady = true;
+
+    if (this.gear === -1) {
+      // In reverse: pressing forward brakes and then returns to drive
+      if (input.forward && v > -0.5) this.gear = 1;
+      return;
+    }
+
+    // Forward gears
+    if (!stopped && v >= 0.5 && this.gear < 1) {
+      this.gear = 1;                       // rolling forward must be in a drive gear
+    } else if (stopped) {
+      if (input.backward && this._reverseReady) {
+        this.gear = -1;                    // deliberate reverse from a standstill
+        this._reverseReady = false;
+        return;
+      }
+      this.gear = 1;                       // otherwise sit in 1st, ready to pull away
     }
 
     // Up/down shifting among the forward gears
@@ -328,7 +344,7 @@ export class Car {
         this._autoCooldown = AUTO_SHIFT_COOLDOWN;
       } else if (mechRpm < AUTO_DOWNSHIFT_RPM && this.gear > 1) {
         this.gear--;
-        this.revBlip = Math.max(this.revBlip, DOWNSHIFT_BLIP); // blip on auto downshift
+        this.revBlip = Math.max(this.revBlip, DOWNSHIFT_BLIP); // rev-match blip on downshift
         this._autoCooldown = AUTO_SHIFT_COOLDOWN;
       }
     }

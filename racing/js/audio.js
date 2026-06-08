@@ -1,7 +1,7 @@
 // Procedural engine + UI sounds generated with the Web Audio API.
 // The running engine models a 2006-era F1 V8:
 //   * 8 detuned sawtooth oscillators = the 8 cylinders firing (thick, rough).
-//   * fundamental maps to RPM: ~55Hz lumpy buzz at idle -> ~900-1000Hz scream at max.
+//   * fundamental maps to RPM: deep ~48Hz rumble at idle -> ~560Hz wail at max.
 //   * harmonic oscillators (2x/3x/4x) build with revs for the metallic growl.
 //   * a waveshaper adds raw, aggressive distortion.
 //   * a bandpass formant opens (and tightens) with RPM = the building wail.
@@ -264,11 +264,12 @@ class EngineAudio {
       return;
     }
 
-    // Fundamental (firing) frequency: ~55Hz lumpy buzz at idle, ~900Hz at the
-    // redline, up to ~1000Hz on over-rev. Linear with RPM = real firing cadence.
+    // Fundamental (firing) frequency: deep ~48Hz rumble at idle rising to
+    // ~560Hz at the redline (up to ~640Hz on over-rev). Kept low so it sounds
+    // powerful and throaty, not thin and screechy. Linear with RPM.
     const rev  = Math.max(0, (rpm - 900) / (7200 - 900)); // 0 idle .. 1 redline (may exceed)
     const revC = Math.min(rev, 1);
-    const base = 55 + Math.min(rev, 1.2) * 845;
+    const base = 48 + Math.min(rev, 1.25) * 512;
 
     // 8 cylinders track the fundamental (their fixed detune keeps the spread)
     this.cylinders.forEach((o) => o.frequency.setTargetAtTime(base, t, 0.03));
@@ -279,10 +280,11 @@ class EngineAudio {
       g.gain.setTargetAtTime(g0 + g1 * revC, t, 0.05);
     });
 
-    // Bandpass opens and tightens with revs => the building scream
+    // Bandpass opens and tightens with revs => the building wail. Top end kept
+    // lower so high RPM is a powerful wail rather than a piercing screech.
     const revShape = Math.pow(Math.min(rev, 1.15), 1.15);
-    this.bandpass.frequency.setTargetAtTime(220 + revShape * 3600, t, 0.05);
-    this.bandpass.Q.setTargetAtTime(0.8 + revC * 1.7, t, 0.06);
+    this.bandpass.frequency.setTargetAtTime(180 + revShape * 2050, t, 0.05);
+    this.bandpass.Q.setTargetAtTime(0.8 + revC * 1.2, t, 0.06);
 
     // Throttle pushes the distortion harder for an aggressive on-power bite
     this.driveGain.gain.setTargetAtTime(throttle ? 1.3 : 0.85, t, 0.08);
