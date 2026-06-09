@@ -15,10 +15,10 @@ const PEAK_TORQUE_RPM   = 4600;
 const LIMITER_START_RPM = 6500;  // power begins falling off above this
 const CRANK_TIME        = 1.1;   // seconds of cranking before idle
 
-// The physics runs on a compact internal rev range; the tachometer shows a
-// high-revving scale with the redline starting at ~80,000 rpm.
-// (LIMITER_START_RPM 6500 internal -> ~80,000 displayed.)
-const DISPLAY_RPM_SCALE = 12.31;
+// The physics runs on a compact internal rev range; the tachometer maps it to a
+// realistic V12 scale: 600 rpm idle -> 6500 rpm redline.
+const DISPLAY_IDLE_RPM    = 600;
+const DISPLAY_REDLINE_RPM = 6500;
 
 // ---- Rev dynamics (display/audio smoothing — does not affect physics) ----
 const RPM_RISE_RATE  = 11;    // per second — quick rev pickup on throttle
@@ -446,10 +446,13 @@ export class Car {
 
   get position()  { return this.mesh.position; }
   get kmh()       { return Math.abs(this.speed) * 3.6; }
-  get rpmRaw()    { return this.rpm; }                            // internal sim rpm (audio)
-  get displayRpm(){ return Math.round(this.rpm * DISPLAY_RPM_SCALE); } // F1-scale rpm (HUD)
-  get maxRpm()    { return ENGINE_MAX_RPM * DISPLAY_RPM_SCALE; }   // tach ceiling (~20,000)
-  get redline()   { return LIMITER_START_RPM * DISPLAY_RPM_SCALE; }// limiter line (~16,250)
+  get rpmRaw()    { return this.rpm; }   // internal sim rpm (drives audio)
+  get displayRpm(){                      // realistic 600 idle -> 6500 redline (HUD)
+    const rev = Math.max(0, (this.rpm - ENGINE_IDLE_RPM) / (ENGINE_REDLINE - ENGINE_IDLE_RPM));
+    return Math.min(7000, Math.round(DISPLAY_IDLE_RPM + rev * (DISPLAY_REDLINE_RPM - DISPLAY_IDLE_RPM)));
+  }
+  get maxRpm()    { return 7000; }       // tach ceiling
+  get redline()   { return 6000; }       // redzone start (near the 6500 limit)
   get gearLabel() {
     if (this.gear === -1) return 'R';
     if (this.gear === 0)  return 'N';

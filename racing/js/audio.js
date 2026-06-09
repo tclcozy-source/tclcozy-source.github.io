@@ -1,13 +1,16 @@
-// Procedural engine + UI sounds generated with the Web Audio API.
-// The running engine models a Mercedes M275-style V12 biturbo: deep, smooth and
-// authoritative — a low grunt, not a high scream.
-//   * 12 tightly-detuned sawtooth oscillators = a smooth, rich V12 stack.
-//   * a clean sub-bass sine for the deep, grunty bottom end.
-//   * fundamental tied DIRECTLY to RPM but kept in a LOW range (~36Hz idle ->
-//     ~356Hz redline) so it stays deep and grunty as it revs.
-//   * low-emphasis harmonics + only light distortion = refined, not aggressive.
-//   * a warm lowpass that opens gently with revs (no screaming formant).
-//   * a subtle turbo spool/whoosh that swells under hard throttle.
+// Procedural engine + UI sounds (Web Audio API).
+// Models a Mercedes M275-style V12 biturbo: deep, heavy, grunty and clearly
+// audible even at idle.
+//
+// Grunt design (so it is actually HEARABLE, not just felt):
+//   * V12 firing frequency = RPM/10 -> ~60Hz at 600rpm idle, ~650Hz at 6500rpm.
+//   * 12 tightly-detuned sawtooths at the firing frequency: their harmonics
+//     (120/180/240Hz at idle) sit right in the audible band = the grunt.
+//   * a STRONG 2nd harmonic for extra low-mid body, plus a deep sub sine
+//     (~30Hz) for the felt rumble on good speakers/headphones.
+//   * a warm lowpass keeps it deep and heavy (never a thin/bright whine).
+//   * idle is mixed LOUD so the grunt is obviously present.
+//   * as RPM rises: pitch climbs, volume grows, filter opens, turbo swells.
 
 class EngineAudio {
   constructor() {
@@ -15,7 +18,6 @@ class EngineAudio {
     this.ready = false;
   }
 
-  // Build the audio graph. Must run after a user gesture (autoplay policy).
   _init() {
     if (this.ctx) return;
     const Ctx = window.AudioContext || window.webkitAudioContext;
@@ -24,69 +26,63 @@ class EngineAudio {
 
     try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (e) {}
 
-    // Master chain with a limiter
+    // Master + limiter
     this.master = ctx.createGain();
-    this.master.gain.value = 0.9;
+    this.master.gain.value = 0.95;
     const comp = ctx.createDynamicsCompressor();
-    comp.threshold.value = -10;
-    comp.knee.value = 6;
-    comp.ratio.value = 8;
-    comp.attack.value = 0.003;
-    comp.release.value = 0.12;
+    comp.threshold.value = -4;
+    comp.knee.value = 8;
+    comp.ratio.value = 3.5;
+    comp.attack.value = 0.004;
+    comp.release.value = 0.15;
     this.master.connect(comp);
     comp.connect(ctx.destination);
 
-    // Engine bus: [12 cylinders + harmonics] -> drive -> light waveshaper -> warm
-    // lowpass -> engineGain -> master. Sub-bass added clean (no distortion).
+    // Engine bus: [12 cylinders + harmonics] -> drive -> warm lowpass ->
+    // engineGain -> master. (No waveshaper — a V12 is smooth, and it was
+    // attenuating the audible grunt harmonics.) Sub-bass added clean.
     this.engineGain = ctx.createGain();
-    this.engineGain.gain.value = 0.0001; // silent until the engine runs
+    this.engineGain.gain.value = 0.0001; // silent until running
 
-    // Warm lowpass that opens gently with revs (smooth, never screamy)
     this.tone = ctx.createBiquadFilter();
     this.tone.type = 'lowpass';
-    this.tone.frequency.value = 350;
-    this.tone.Q.value = 0.6;
-
-    // Only light distortion — refined V12, not an aggressive racer
-    this.shaper = ctx.createWaveShaper();
-    this.shaper.curve = this._makeDistortionCurve(6);
-    this.shaper.oversample = '4x';
+    this.tone.frequency.value = 600;
+    this.tone.Q.value = 0.7;
 
     this.driveGain = ctx.createGain();
-    this.driveGain.gain.value = 0.7;
+    this.driveGain.gain.value = 1.0;
 
-    this.driveGain.connect(this.shaper);
-    this.shaper.connect(this.tone);
+    this.driveGain.connect(this.tone);
     this.tone.connect(this.engineGain);
     this.engineGain.connect(this.master);
 
-    // --- 12 cylinder oscillators: tightly detuned => smooth, rich V12 stack ---
+    // --- 12 cylinders: tightly detuned sawtooths at the firing frequency ---
     const cylBus = ctx.createGain();
-    cylBus.gain.value = 0.2;
+    cylBus.gain.value = 0.16;
     cylBus.connect(this.driveGain);
     const detunes = [-9, -7, -5, -3, -1.5, -0.5, 0.5, 1.5, 3, 5, 7, 9];
     this.cylinders = detunes.map((cents) => {
       const o = ctx.createOscillator();
       o.type = 'sawtooth';
       o.detune.value = cents;
-      o.frequency.value = 40;
+      o.frequency.value = 60;
       o.connect(cylBus);
       o.start();
       return o;
     });
 
-    // --- Harmonics: strong low (2x), modest upper (smooth, not metallic) ---
+    // --- Harmonics: STRONG 2nd for audible grunt body; lighter above ---
     const harmBus = ctx.createGain();
     harmBus.gain.value = 1.0;
     harmBus.connect(this.driveGain);
     this.harmonics = [
-      { mult: 2, g0: 0.18, g1: 0.06 },
-      { mult: 3, g0: 0.07, g1: 0.05 },
-      { mult: 4, g0: 0.025, g1: 0.03 },
+      { mult: 2, g0: 0.42, g1: 0.04 }, // strong audible grunt body, stays strong up top
+      { mult: 3, g0: 0.24, g1: 0.02 },
+      { mult: 4, g0: 0.09, g1: 0.00 },
     ].map((d) => {
       const o = ctx.createOscillator();
       o.type = 'sawtooth';
-      o.frequency.value = 80;
+      o.frequency.value = 120;
       const g = ctx.createGain();
       g.gain.value = d.g0;
       o.connect(g);
@@ -95,27 +91,25 @@ class EngineAudio {
       return { o, g, mult: d.mult, g0: d.g0, g1: d.g1 };
     });
 
-    // --- Clean sub-bass sine for the deep, authoritative grunt ---
+    // --- Deep sub sine for the heavy rumble (clean, no distortion) ---
     this.sub = ctx.createOscillator();
     this.sub.type = 'sine';
-    this.sub.frequency.value = 28;
+    this.sub.frequency.value = 30;
     this.subGain = ctx.createGain();
     this.subGain.gain.value = 0.0001;
     this.sub.connect(this.subGain);
     this.subGain.connect(this.engineGain);
     this.sub.start();
 
-    // Shared noise buffer (one-shots + turbo)
     this.noiseBuf = this._makeNoise(ctx, 1.5);
 
-    // --- Turbo spool / induction whoosh: resonant noise that swells under
-    //     hard throttle and rises in pitch with revs ---
+    // --- Turbo spool / induction whoosh under hard throttle ---
     this.turbo = ctx.createBufferSource();
     this.turbo.buffer = this.noiseBuf;
     this.turbo.loop = true;
     this.turboBP = ctx.createBiquadFilter();
     this.turboBP.type = 'bandpass';
-    this.turboBP.frequency.value = 1400;
+    this.turboBP.frequency.value = 1200;
     this.turboBP.Q.value = 4;
     this.turboGain = ctx.createGain();
     this.turboGain.gain.value = 0.0001;
@@ -146,7 +140,6 @@ class EngineAudio {
     return curve;
   }
 
-  // Resume/initialise on the first user gesture.
   attachAutoResume() {
     const unlock = () => {
       this._init();
@@ -170,26 +163,23 @@ class EngineAudio {
     });
   }
 
-  // Starter-motor crank: chugging low oscillator + whine, ~1.1s.
+  // Starter-motor crank.
   crank() {
     this._init();
     if (!this.ctx) return;
     const ctx = this.ctx, t = ctx.currentTime, dur = 1.1;
-
     const o = ctx.createOscillator();
     o.type = 'sawtooth';
-    o.frequency.setValueAtTime(55, t);
+    o.frequency.setValueAtTime(50, t);
     const g = ctx.createGain();
     g.gain.setValueAtTime(0.16, t);
-
     const lfo = ctx.createOscillator();
     lfo.type = 'square';
-    lfo.frequency.value = 11;
+    lfo.frequency.value = 10;
     const lfoGain = ctx.createGain();
     lfoGain.gain.value = 0.16;
     lfo.connect(lfoGain);
     lfoGain.connect(g.gain);
-
     o.connect(g);
     g.connect(this.master);
     o.start(t);
@@ -203,7 +193,7 @@ class EngineAudio {
     n.loop = true;
     const bp = ctx.createBiquadFilter();
     bp.type = 'bandpass';
-    bp.frequency.value = 1400;
+    bp.frequency.value = 1300;
     bp.Q.value = 3;
     const ng = ctx.createGain();
     ng.gain.setValueAtTime(0.05, t);
@@ -272,37 +262,39 @@ class EngineAudio {
       return;
     }
 
-    // ---- PITCH: tied DIRECTLY to RPM, kept LOW for a deep grunt ----
-    const rev  = Math.max(0, (rpm - 900) / (7200 - 900)); // 0 idle .. 1 redline (may exceed)
+    const rev  = Math.max(0, (rpm - 900) / (7200 - 900)); // 0 idle .. 1 redline
     const revC = Math.min(rev, 1);
-    const base = 36 + Math.min(rev, 1.3) * 320; // ~36Hz idle -> ~356Hz redline
 
-    // 12 cylinders + harmonics track the fundamental
-    this.cylinders.forEach((o) => o.frequency.setTargetAtTime(base, t, 0.025));
+    // Firing fundamental kept in the audible-deep band (~90Hz idle -> ~650Hz
+    // redline) so the grunt is heard on laptop speakers, not just felt.
+    const firing = 90 + Math.min(rev, 1.2) * 560;
+
+    this.cylinders.forEach((o) => o.frequency.setTargetAtTime(firing, t, 0.03));
     this.harmonics.forEach(({ o, g, mult, g0, g1 }) => {
-      o.frequency.setTargetAtTime(base * mult, t, 0.025);
+      o.frequency.setTargetAtTime(firing * mult, t, 0.03);
       g.gain.setTargetAtTime(g0 + g1 * revC, t, 0.05);
     });
 
-    // Clean sub-bass for the deep V12 bottom end
-    this.sub.frequency.setTargetAtTime(Math.max(28, base * 0.5), t, 0.04);
-    this.subGain.gain.setTargetAtTime(0.35, t, 0.06);
+    // Deep sub rumble — felt weight, but mixed UNDER the audible grunt so it
+    // doesn't dominate (it sits at ~30Hz, inaudible on small speakers).
+    this.sub.frequency.setTargetAtTime(Math.max(30, firing * 0.5), t, 0.04);
+    this.subGain.gain.setTargetAtTime(0.2, t, 0.06);
 
-    // Warm tone opens gently with revs (smooth, refined — not screamy)
-    this.tone.frequency.setTargetAtTime(320 + revC * 1650, t, 0.05);
+    // Warm lowpass passes the grunt harmonics at idle and opens with revs so
+    // the engine gets brighter/louder, but capped so it never becomes a whine.
+    this.tone.frequency.setTargetAtTime(600 + revC * 1650, t, 0.05);
 
-    // Light on-power bite (kept subtle for a refined V12)
-    this.driveGain.gain.setTargetAtTime(throttle ? 0.85 : 0.7, t, 0.1);
+    // Light on-power bite
+    this.driveGain.gain.setTargetAtTime(throttle ? 0.9 : 0.75, t, 0.1);
 
-    // Turbo spool: faint induction hiss always, swelling to a whoosh under hard
-    // throttle and rising in pitch with revs.
-    const turboTarget = 0.008 + (throttle ? revC * 0.06 : 0);
+    // Turbo spool: faint induction always, swelling to a whoosh under throttle
+    const turboTarget = 0.01 + (throttle ? revC * 0.06 : 0);
     this.turboGain.gain.setTargetAtTime(turboTarget, t, 0.18);
-    this.turboBP.frequency.setTargetAtTime(1100 + revC * 2600, t, 0.2);
+    this.turboBP.frequency.setTargetAtTime(1000 + revC * 2400, t, 0.2);
 
-    // Volume rises with RPM and throttle
-    const vol = 0.16 + Math.min(rev, 1.1) * 0.5 + (throttle ? 0.1 : 0) + Math.min(Math.abs(speed) / 120, 1) * 0.05;
-    this.engineGain.gain.setTargetAtTime(Math.min(vol, 0.95), t, 0.05);
+    // LOUD at idle (grunt clearly audible), and clearly louder with revs
+    const vol = 0.5 + revC * 0.45 + (throttle ? 0.08 : 0);
+    this.engineGain.gain.setTargetAtTime(Math.min(vol, 0.98), t, 0.05);
   }
 }
 
