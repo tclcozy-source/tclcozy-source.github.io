@@ -16,8 +16,9 @@ const LIMITER_START_RPM = 6500;  // power begins falling off above this
 const CRANK_TIME        = 1.1;   // seconds of cranking before idle
 
 // The physics runs on a compact internal rev range; the tachometer shows a
-// realistic F1-V8-style scale (redline ~18,000 rpm). 7200 internal -> 18,000.
-const DISPLAY_RPM_SCALE = 2.5;
+// high-revving scale with the redline starting at ~80,000 rpm.
+// (LIMITER_START_RPM 6500 internal -> ~80,000 displayed.)
+const DISPLAY_RPM_SCALE = 12.31;
 
 // ---- Rev dynamics (display/audio smoothing — does not affect physics) ----
 const RPM_RISE_RATE  = 11;    // per second — quick rev pickup on throttle
