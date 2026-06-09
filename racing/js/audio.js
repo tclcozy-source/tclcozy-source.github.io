@@ -125,6 +125,17 @@ class EngineAudio {
     this.turboGain.connect(this.master);
     this.turbo.start();
 
+    // --- Grumble: a low-rate amplitude throb on the engine bus for a rough,
+    //     grumbly character (rate speeds up a little with revs in update()). ---
+    this.grumbleLFO = ctx.createOscillator();
+    this.grumbleLFO.type = 'sine';
+    this.grumbleLFO.frequency.value = 8;
+    this.grumbleDepth = ctx.createGain();
+    this.grumbleDepth.gain.value = 0.18;
+    this.grumbleLFO.connect(this.grumbleDepth);
+    this.grumbleDepth.connect(this.engineGain.gain);
+    this.grumbleLFO.start();
+
     this.ready = true;
   }
 
@@ -282,29 +293,28 @@ class EngineAudio {
       g.gain.setTargetAtTime(g0 + g1 * revC, t, 0.05);
     });
 
-    // Deep sub rumble — felt weight, but mixed UNDER the audible grunt so it
-    // doesn't dominate (it sits at ~30Hz, inaudible on small speakers).
+    // Deep sub rumble — stronger now for a heavier, grumbly low end.
     this.sub.frequency.setTargetAtTime(Math.max(30, firing * 0.5), t, 0.04);
-    this.subGain.gain.setTargetAtTime(0.2, t, 0.06);
+    this.subGain.gain.setTargetAtTime(0.3, t, 0.06);
 
-    // Warm lowpass passes the grunt harmonics at idle and opens with revs so
-    // the engine gets brighter/louder, but capped so it never becomes a whine.
-    this.tone.frequency.setTargetAtTime(600 + revC * 1650, t, 0.05);
+    // Warm (low) lowpass for a grumbly, un-bright character.
+    this.tone.frequency.setTargetAtTime(450 + revC * 1050, t, 0.05);
+
+    // Grumble throb speeds up a little with revs
+    this.grumbleLFO.frequency.setTargetAtTime(7 + revC * 7, t, 0.1);
 
     // Light on-power bite
     this.driveGain.gain.setTargetAtTime(throttle ? 0.9 : 0.75, t, 0.1);
 
-    // MAIN engine note: the high-pitched tone, dominant and present across the
-    // whole rev range, climbing clearly in pitch and volume with RPM.
+    // High whistle note: kept, but MUCH quieter now — just a faint top layer.
     const noteHz = 800 + revC * 2600;
-    const whistleVol = 0.55 + revC * 0.3 + (throttle ? 0.08 : 0);
+    const whistleVol = 0.13 + revC * 0.1 + (throttle ? 0.04 : 0);
     this.turboGain.gain.setTargetAtTime(whistleVol, t, 0.1);
     this.turboBP.frequency.setTargetAtTime(noteHz, t, 0.12);
-    // Warming lowpass tracks just above the note, taming the airy hiss
     this.turboLP.frequency.setTargetAtTime(noteHz * 1.4, t, 0.12);
 
-    // BACKGROUND rumble: the deep grunt, now quiet underneath the main note.
-    const vol = 0.1 + revC * 0.1 + (throttle ? 0.03 : 0);
+    // MAIN voice: the deep, grumbly engine — prominent and heavy.
+    const vol = 0.5 + revC * 0.4 + (throttle ? 0.05 : 0);
     this.engineGain.gain.setTargetAtTime(vol, t, 0.05);
   }
 }
