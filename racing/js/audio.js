@@ -56,11 +56,11 @@ class EngineAudio {
     this.tone.connect(this.engineGain);
     this.engineGain.connect(this.master);
 
-    // --- 12 cylinders: tightly detuned sawtooths at the firing frequency ---
+    // --- 12 cylinders: widely detuned sawtooths => thick, grumbly stack ---
     const cylBus = ctx.createGain();
-    cylBus.gain.value = 0.16;
+    cylBus.gain.value = 0.22;
     cylBus.connect(this.driveGain);
-    const detunes = [-9, -7, -5, -3, -1.5, -0.5, 0.5, 1.5, 3, 5, 7, 9];
+    const detunes = [-21, -16, -12, -8, -4, -1.5, 1.5, 4, 8, 12, 16, 21];
     this.cylinders = detunes.map((cents) => {
       const o = ctx.createOscillator();
       o.type = 'sawtooth';
@@ -76,9 +76,9 @@ class EngineAudio {
     harmBus.gain.value = 1.0;
     harmBus.connect(this.driveGain);
     this.harmonics = [
-      { mult: 2, g0: 0.42, g1: 0.04 }, // strong audible grunt body, stays strong up top
-      { mult: 3, g0: 0.24, g1: 0.02 },
-      { mult: 4, g0: 0.09, g1: 0.00 },
+      { mult: 2, g0: 0.50, g1: 0.04 }, // strong body for a thick grunt at all revs
+      { mult: 3, g0: 0.30, g1: 0.02 },
+      { mult: 4, g0: 0.12, g1: 0.00 },
     ].map((d) => {
       const o = ctx.createOscillator();
       o.type = 'sawtooth';
@@ -100,6 +100,21 @@ class EngineAudio {
     this.sub.connect(this.subGain);
     this.subGain.connect(this.engineGain);
     this.sub.start();
+
+    // --- Sub-octave growl: detuned saws an octave below the firing frequency,
+    //     for a thick, fat low-mid body that reads as grumbly at all revs. ---
+    const growlBus = ctx.createGain();
+    growlBus.gain.value = 0.22;
+    growlBus.connect(this.driveGain);
+    this.growl = [-14, 0, 14].map((cents) => {
+      const o = ctx.createOscillator();
+      o.type = 'sawtooth';
+      o.detune.value = cents;
+      o.frequency.value = 45;
+      o.connect(growlBus);
+      o.start();
+      return o;
+    });
 
     this.noiseBuf = this._makeNoise(ctx, 1.5);
 
@@ -131,7 +146,7 @@ class EngineAudio {
     this.grumbleLFO.type = 'sine';
     this.grumbleLFO.frequency.value = 8;
     this.grumbleDepth = ctx.createGain();
-    this.grumbleDepth.gain.value = 0.18;
+    this.grumbleDepth.gain.value = 0.28;
     this.grumbleLFO.connect(this.grumbleDepth);
     this.grumbleDepth.connect(this.engineGain.gain);
     this.grumbleLFO.start();
@@ -292,16 +307,18 @@ class EngineAudio {
       o.frequency.setTargetAtTime(firing * mult, t, 0.03);
       g.gain.setTargetAtTime(g0 + g1 * revC, t, 0.05);
     });
+    // Sub-octave growl tracks half the firing frequency for thick low body
+    this.growl.forEach((o) => o.frequency.setTargetAtTime(firing * 0.5, t, 0.03));
 
     // Deep sub rumble — stronger now for a heavier, grumbly low end.
     this.sub.frequency.setTargetAtTime(Math.max(30, firing * 0.5), t, 0.04);
-    this.subGain.gain.setTargetAtTime(0.3, t, 0.06);
+    this.subGain.gain.setTargetAtTime(0.4, t, 0.06);
 
     // Warm (low) lowpass for a grumbly, un-bright character.
     this.tone.frequency.setTargetAtTime(450 + revC * 1050, t, 0.05);
 
-    // Grumble throb speeds up a little with revs
-    this.grumbleLFO.frequency.setTargetAtTime(7 + revC * 7, t, 0.1);
+    // Grumble throb — present at all revs, only slightly faster up top
+    this.grumbleLFO.frequency.setTargetAtTime(7 + revC * 4, t, 0.1);
 
     // Light on-power bite
     this.driveGain.gain.setTargetAtTime(throttle ? 0.9 : 0.75, t, 0.1);
