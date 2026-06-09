@@ -103,19 +103,25 @@ class EngineAudio {
 
     this.noiseBuf = this._makeNoise(ctx, 1.5);
 
-    // --- MAIN engine note: a tonal high-pitched whistle (resonant filtered
-    //     noise) whose pitch tracks RPM. ---
+    // --- MAIN engine note: a high-pitched tone (filtered noise) whose pitch
+    //     tracks RPM. Q kept moderate so it's a tone, not a hollow "tube"
+    //     whistle, plus a warming lowpass to roll off the airy top. ---
     this.turbo = ctx.createBufferSource();
     this.turbo.buffer = this.noiseBuf;
     this.turbo.loop = true;
     this.turboBP = ctx.createBiquadFilter();
     this.turboBP.type = 'bandpass';
     this.turboBP.frequency.value = 800;
-    this.turboBP.Q.value = 11;
+    this.turboBP.Q.value = 5;            // lower resonance -> less hollow/pressurised
+    this.turboLP = ctx.createBiquadFilter();
+    this.turboLP.type = 'lowpass';
+    this.turboLP.frequency.value = 1200; // warms it: rolls off the airy hiss above the note
+    this.turboLP.Q.value = 0.7;
     this.turboGain = ctx.createGain();
     this.turboGain.gain.value = 0.0001;
     this.turbo.connect(this.turboBP);
-    this.turboBP.connect(this.turboGain);
+    this.turboBP.connect(this.turboLP);
+    this.turboLP.connect(this.turboGain);
     this.turboGain.connect(this.master);
     this.turbo.start();
 
@@ -288,11 +294,14 @@ class EngineAudio {
     // Light on-power bite
     this.driveGain.gain.setTargetAtTime(throttle ? 0.9 : 0.75, t, 0.1);
 
-    // MAIN engine note: the high-pitched whistle, dominant and present across
-    // the whole rev range, climbing clearly in pitch and volume with RPM.
-    const whistleVol = 0.6 + revC * 0.3 + (throttle ? 0.08 : 0);
+    // MAIN engine note: the high-pitched tone, dominant and present across the
+    // whole rev range, climbing clearly in pitch and volume with RPM.
+    const noteHz = 800 + revC * 2600;
+    const whistleVol = 0.55 + revC * 0.3 + (throttle ? 0.08 : 0);
     this.turboGain.gain.setTargetAtTime(whistleVol, t, 0.1);
-    this.turboBP.frequency.setTargetAtTime(800 + revC * 2600, t, 0.12);
+    this.turboBP.frequency.setTargetAtTime(noteHz, t, 0.12);
+    // Warming lowpass tracks just above the note, taming the airy hiss
+    this.turboLP.frequency.setTargetAtTime(noteHz * 1.4, t, 0.12);
 
     // BACKGROUND rumble: the deep grunt, now quiet underneath the main note.
     const vol = 0.1 + revC * 0.1 + (throttle ? 0.03 : 0);
