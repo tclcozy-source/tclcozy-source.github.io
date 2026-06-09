@@ -103,14 +103,15 @@ class EngineAudio {
 
     this.noiseBuf = this._makeNoise(ctx, 1.5);
 
-    // --- Turbo spool / induction whoosh under hard throttle ---
+    // --- MAIN engine note: a tonal high-pitched whistle (resonant filtered
+    //     noise) whose pitch tracks RPM. ---
     this.turbo = ctx.createBufferSource();
     this.turbo.buffer = this.noiseBuf;
     this.turbo.loop = true;
     this.turboBP = ctx.createBiquadFilter();
     this.turboBP.type = 'bandpass';
-    this.turboBP.frequency.value = 1200;
-    this.turboBP.Q.value = 4;
+    this.turboBP.frequency.value = 800;
+    this.turboBP.Q.value = 11;
     this.turboGain = ctx.createGain();
     this.turboGain.gain.value = 0.0001;
     this.turbo.connect(this.turboBP);
@@ -287,14 +288,15 @@ class EngineAudio {
     // Light on-power bite
     this.driveGain.gain.setTargetAtTime(throttle ? 0.9 : 0.75, t, 0.1);
 
-    // Turbo spool: faint induction always, swelling to a whoosh under throttle
-    const turboTarget = 0.01 + (throttle ? revC * 0.06 : 0);
-    this.turboGain.gain.setTargetAtTime(turboTarget, t, 0.18);
-    this.turboBP.frequency.setTargetAtTime(1000 + revC * 2400, t, 0.2);
+    // MAIN engine note: the high-pitched whistle, dominant and present across
+    // the whole rev range, climbing clearly in pitch and volume with RPM.
+    const whistleVol = 0.6 + revC * 0.3 + (throttle ? 0.08 : 0);
+    this.turboGain.gain.setTargetAtTime(whistleVol, t, 0.1);
+    this.turboBP.frequency.setTargetAtTime(800 + revC * 2600, t, 0.12);
 
-    // LOUD at idle (grunt clearly audible), and clearly louder with revs
-    const vol = 0.5 + revC * 0.45 + (throttle ? 0.08 : 0);
-    this.engineGain.gain.setTargetAtTime(Math.min(vol, 0.98), t, 0.05);
+    // BACKGROUND rumble: the deep grunt, now quiet underneath the main note.
+    const vol = 0.1 + revC * 0.1 + (throttle ? 0.03 : 0);
+    this.engineGain.gain.setTargetAtTime(vol, t, 0.05);
   }
 }
 
