@@ -9,6 +9,32 @@
 <body>
   <canvas id="game-canvas"></canvas>
 
+  <!-- First-person cockpit overlay (shown only in cockpit view) -->
+  <div id="cockpit-overlay">
+    <div id="cockpit-dash"></div>
+    <div id="cockpit-wheel">
+      <div id="cockpit-wheel-spin">
+        <svg viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg">
+          <!-- spokes -->
+          <line x1="120" y1="120" x2="22"  y2="120" stroke="#17181c" stroke-width="24" stroke-linecap="round"/>
+          <line x1="120" y1="120" x2="218" y2="120" stroke="#17181c" stroke-width="24" stroke-linecap="round"/>
+          <line x1="120" y1="120" x2="120" y2="220" stroke="#17181c" stroke-width="24" stroke-linecap="round"/>
+          <!-- rim -->
+          <circle cx="120" cy="120" r="104" fill="none" stroke="#0e0f12" stroke-width="26"/>
+          <circle cx="120" cy="120" r="104" fill="none" stroke="#2b2d34" stroke-width="10"/>
+          <!-- hub -->
+          <circle cx="120" cy="120" r="38" fill="#15161a"/>
+          <circle cx="120" cy="120" r="32" fill="#23252c"/>
+          <!-- top centre marker -->
+          <rect x="114" y="18" width="12" height="22" rx="3" fill="#d11414"/>
+        </svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- View mode hint -->
+  <div id="view-hint">3rd person · <span class="key-hint">C</span> cockpit</div>
+
   <!-- Ignition / starter -->
   <div id="ignition-controls">
     <div id="engine-status" class="status-off">Engine Off</div>

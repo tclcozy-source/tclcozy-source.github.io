@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 
+// ---- Third-person chase camera ----
 const CHASE_DISTANCE = 9;
 const CHASE_HEIGHT   = 3.5;
 const LERP_POS       = 0.08;  // position smoothing
@@ -13,10 +14,11 @@ export class ChaseCamera {
     this._init    = false;
   }
 
+  reset() { this._init = false; }
+
   update(car) {
     const heading = car.mesh.rotation.y;
 
-    // Ideal camera position: behind and above the car
     const idealX = car.position.x - Math.sin(heading) * CHASE_DISTANCE;
     const idealY = car.position.y + CHASE_HEIGHT;
     const idealZ = car.position.z - Math.cos(heading) * CHASE_DISTANCE;
@@ -32,5 +34,50 @@ export class ChaseCamera {
 
     this.camera.position.copy(this._pos);
     this.camera.lookAt(this._lookAt);
+  }
+}
+
+// ---- First-person cockpit camera ----
+// Driver's seat: slightly left of centre (LHD), at eye height, looking forward
+// over the dash. Local frame: +Z forward, +X is the car's left.
+const SEAT_X     = 0.34;  // left of centre
+const SEAT_Y     = 0.92;  // eye height
+const SEAT_Z     = 0.05;  // just behind the dash
+const STEER_LOOK = 0.16;  // how much the view yaws with steering (rad at full lock)
+const LOOK_DIST  = 12;
+const LOOK_DOWN  = 0.07;  // look slightly down over the dash
+
+export class CockpitCamera {
+  constructor(camera) {
+    this.camera = camera;
+    this._look  = new THREE.Vector3();
+    this._yaw   = 0;
+    this._init  = false;
+  }
+
+  reset() { this._init = false; }
+
+  update(car) {
+    const h = car.heading;
+
+    // Driver-seat world position (rotate the local seat offset by the heading)
+    const px = car.position.x + Math.cos(h) * SEAT_X + Math.sin(h) * SEAT_Z;
+    const py = car.position.y + SEAT_Y;
+    const pz = car.position.z - Math.sin(h) * SEAT_X + Math.cos(h) * SEAT_Z;
+    this.camera.position.set(px, py, pz);
+
+    // Smoothly yaw the view a little with steering for a natural feel
+    const targetYaw = car.steerValue * STEER_LOOK;
+    if (!this._init) { this._yaw = targetYaw; this._init = true; }
+    this._yaw += (targetYaw - this._yaw) * 0.2;
+
+    const lookH = h + this._yaw;
+    this._look.set(
+      px + Math.sin(lookH) * LOOK_DIST,
+      py - LOOK_DOWN * LOOK_DIST,
+      pz + Math.cos(lookH) * LOOK_DIST,
+    );
+    this.camera.up.set(0, 1, 0);
+    this.camera.lookAt(this._look);
   }
 }

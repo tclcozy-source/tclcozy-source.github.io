@@ -180,6 +180,75 @@ body {
   color: #34d399;
 }
 
+/* ---- First-person cockpit overlay ---- */
+#cockpit-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 6;
+  pointer-events: none;
+  overflow: hidden;
+}
+body.view-cockpit #cockpit-overlay { display: block; }
+
+#cockpit-dash {
+  position: absolute;
+  left: -5%;
+  right: -5%;
+  bottom: 0;
+  height: 33%;
+  background: radial-gradient(130% 90% at 50% 125%, #2c2e34 0%, #15161a 55%, #0b0c0f 100%);
+  border-top-left-radius: 50% 64px;
+  border-top-right-radius: 50% 64px;
+  box-shadow: inset 0 8px 22px rgba(0, 0, 0, 0.6);
+}
+
+#cockpit-dash::before {
+  content: '';
+  position: absolute;
+  left: 0; right: 0; top: 0;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.12), transparent);
+  border-radius: 999px;
+}
+
+#cockpit-wheel {
+  position: absolute;
+  left: 50%;
+  bottom: -128px;
+  width: 430px;
+  height: 430px;
+  transform: translateX(-50%);
+  z-index: 2;
+}
+
+#cockpit-wheel-spin {
+  width: 100%;
+  height: 100%;
+  transform-origin: 50% 50%;
+  transform: rotate(0deg);
+  filter: drop-shadow(0 -3px 10px rgba(0, 0, 0, 0.45));
+}
+
+#cockpit-wheel-spin svg { width: 100%; height: 100%; display: block; }
+
+/* View-mode hint (top centre) */
+#view-hint {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 15;
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 999px;
+  padding: 6px 14px;
+  font-size: 0.78rem;
+  color: rgba(255, 255, 255, 0.7);
+  letter-spacing: 0.03em;
+  backdrop-filter: blur(6px);
+}
+
 /* Ignition / engine status (top-left) */
 #ignition-controls {
   position: fixed;

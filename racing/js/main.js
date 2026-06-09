@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { RoomEnvironment }    from 'three/addons/environments/RoomEnvironment.js';
 import { input }              from './input.js';
 import { Car }                from './car.js';
-import { ChaseCamera }        from './camera.js';
+import { ChaseCamera, CockpitCamera } from './camera.js';
 import { buildWorld, scatterTrees } from './world.js';
 import { buildTrack }         from './track.js';
 import { engineAudio }        from './audio.js';
@@ -51,7 +51,26 @@ function startGame() {
   const car         = new Car(scene);
   car.placeAt(track.start.x, track.start.z, track.startHeading);
   car.autoTransmission = false; // desktop defaults to manual (Q/E)
-  const chaseCamera = new ChaseCamera(camera);
+  const chaseCamera   = new ChaseCamera(camera);
+  const cockpitCamera = new CockpitCamera(camera);
+  let cockpitView = false; // false = third person (default), true = cockpit
+
+  const wheelSpinEl = document.getElementById('cockpit-wheel-spin');
+  const viewHintEl  = document.getElementById('view-hint');
+  function setView(cockpit) {
+    cockpitView = cockpit;
+    document.body.classList.toggle('view-cockpit', cockpit);
+    car.mesh.visible = !cockpit;        // hide the car body when sitting inside it
+    camera.fov = cockpit ? 74 : 65;     // wider FOV feels right in the cockpit
+    camera.updateProjectionMatrix();
+    (cockpit ? cockpitCamera : chaseCamera).reset();
+    if (viewHintEl) {
+      viewHintEl.innerHTML = cockpit
+        ? 'Cockpit · <span class="key-hint">C</span> 3rd person'
+        : '3rd person · <span class="key-hint">C</span> cockpit';
+    }
+  }
+  setView(false);
 
   // HUD elements
   const speedEl    = document.getElementById('speed-value');
@@ -89,8 +108,18 @@ function startGame() {
       refreshTransmissionUI();
     }
 
+    // View toggle (C): third person <-> cockpit
+    if (input.toggleView) { input.toggleView = false; setView(!cockpitView); }
+
     car.update(input, dt);
-    chaseCamera.update(car);
+
+    if (cockpitView) {
+      cockpitCamera.update(car);
+      // steering wheel turns with steering (more than the road wheels, like a real wheel)
+      if (wheelSpinEl) wheelSpinEl.style.transform = `rotate(${(-car.steerValue * 110).toFixed(1)}deg)`;
+    } else {
+      chaseCamera.update(car);
+    }
 
     // Sound events on state changes
     if (car.engineState !== prevState) {

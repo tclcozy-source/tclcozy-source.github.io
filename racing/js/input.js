@@ -9,6 +9,7 @@ export const input = {
   ignitionToggle: false, // one-shot: I
   startEngine: false,    // one-shot: Ctrl+I
   toggleTransmission: false, // one-shot: T (auto/manual)
+  toggleView: false,     // one-shot: C (chase / cockpit)
 };
 
 // Held-direction keys
@@ -32,6 +33,7 @@ window.addEventListener('keydown', (e) => {
       e.preventDefault();
     }
     if (e.key === 't' || e.key === 'T') { input.toggleTransmission = true; e.preventDefault(); }
+    if (e.key === 'c' || e.key === 'C') { input.toggleView = true; e.preventDefault(); }
   }
 });
 window.addEventListener('keyup', (e) => {
