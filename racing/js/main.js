@@ -74,10 +74,6 @@ function startGame() {
   // Clock
   const clock = new THREE.Clock();
 
-  // Track transitions so we can fire one-shot sounds
-  let prevGear  = car.gear;
-  let prevState = car.engineState;
-
   // Game loop
   function tick() {
     const dt = Math.min(clock.getDelta(), 0.05); // cap dt to avoid tunnelling
@@ -92,20 +88,10 @@ function startGame() {
     car.update(input, dt);
     chaseCamera.update(car);
 
-    // Sound events on state changes
-    if (car.engineState !== prevState) {
-      if (car.engineState === 'cranking') engineAudio.crank();
-      prevState = car.engineState;
-    }
-    if (car.startRejected) {        // tried to start with ignition off
-      engineAudio.fail();
-      car.startRejected = false;
-    }
-    if (car.gear !== prevGear) {
-      engineAudio.shift();
-      prevGear = car.gear;
-    }
-    // Engine loop: audible while running, louder under throttle, pitched by RPM
+    if (car.startRejected) car.startRejected = false; // consume (no sound)
+
+    // Engine loop: real recorded engine, audible while running, louder under
+    // throttle, playbackRate nudged by RPM.
     engineAudio.update(car.isRunning, input.forward, car.rpm);
 
     // Update HUD (tachometer shows the F1-scale display RPM)
