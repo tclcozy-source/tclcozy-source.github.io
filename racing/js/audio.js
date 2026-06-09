@@ -317,8 +317,8 @@ class EngineAudio {
     // Warm (low) lowpass for a grumbly, un-bright character.
     this.tone.frequency.setTargetAtTime(450 + revC * 1050, t, 0.05);
 
-    // Grumble throb — present at all revs, only slightly faster up top
-    this.grumbleLFO.frequency.setTargetAtTime(7 + revC * 4, t, 0.1);
+    // Grumble throb — slower/heavier; present at all revs
+    this.grumbleLFO.frequency.setTargetAtTime(6 + revC * 3, t, 0.1);
 
     // Light on-power bite
     this.driveGain.gain.setTargetAtTime(throttle ? 0.9 : 0.75, t, 0.1);
@@ -333,6 +333,12 @@ class EngineAudio {
     // MAIN voice: the deep, grumbly engine — prominent and heavy.
     const vol = 0.5 + revC * 0.4 + (throttle ? 0.05 : 0);
     this.engineGain.gain.setTargetAtTime(vol, t, 0.05);
+
+    // Grumble depth: strong and roughly constant across the rev range (scaled
+    // with volume so it stays grumbly as revs climb), easing off only when
+    // almost at the redline (top ~15% of revs).
+    const grumbleFrac = revC < 0.85 ? 0.62 : Math.max(0.12, 0.62 - (revC - 0.85) / 0.15 * 0.5);
+    this.grumbleDepth.gain.setTargetAtTime(vol * grumbleFrac, t, 0.08);
   }
 }
 
