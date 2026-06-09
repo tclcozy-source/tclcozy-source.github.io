@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { RoomEnvironment }    from 'three/addons/environments/RoomEnvironment.js';
 import { input }              from './input.js';
 import { Car }                from './car.js';
 import { ChaseCamera }        from './camera.js';
@@ -36,6 +37,10 @@ function startGame() {
   // Scene & camera
   const scene  = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.1, 500);
+
+  // Environment map for realistic reflections on the car paint / glass / rims
+  const pmrem = new THREE.PMREMGenerator(renderer);
+  scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
 
   // World: sky, lights, ground -> track -> trees (avoiding the track)
   buildWorld(scene);
@@ -100,8 +105,8 @@ function startGame() {
       engineAudio.shift();
       prevGear = car.gear;
     }
-    // Engine loop: audible while running, slightly louder under throttle
-    engineAudio.update(car.isRunning, input.forward);
+    // Engine loop: audible while running, louder under throttle, pitched by RPM
+    engineAudio.update(car.isRunning, input.forward, car.rpm);
 
     // Update HUD (tachometer shows the F1-scale display RPM)
     speedEl.textContent = Math.round(car.kmh);

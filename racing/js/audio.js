@@ -7,8 +7,11 @@
 // coasting. No pitch-shifting, no filtering, no layering.
 
 const ENGINE_URL = new URL('../assets/engine.wav', import.meta.url);
-const COAST_VOL = 0.40; // engine running, off the throttle
-const ACCEL_VOL = 0.85; // engine running, accelerating
+const COAST_VOL = 0.70; // engine running, off the throttle
+const ACCEL_VOL = 1.00; // engine running, accelerating
+// Playback rate kept LOW for a deep, aggressive V10 growl (never an F1 screech).
+const RATE_IDLE    = 0.60;
+const RATE_REDLINE = 1.10;
 
 class EngineAudio {
   constructor() {
@@ -24,7 +27,7 @@ class EngineAudio {
     const ctx = this.ctx = new Ctx();
 
     this.master = ctx.createGain();
-    this.master.gain.value = 0.9;
+    this.master.gain.value = 1.0;
     this.master.connect(ctx.destination);
 
     // The looping engine runs through its own gain (0 = silent/off)
@@ -134,12 +137,20 @@ class EngineAudio {
     }
   }
 
-  // Per-frame: engine loop volume only. running -> loop audible; off -> silent.
-  update(running, throttle) {
+  // Per-frame: loop volume (slightly louder under throttle) + a gentle,
+  // deep playback-rate change with RPM. running -> audible; off -> silent.
+  update(running, throttle, rpm) {
     if (!this.ready || !this.ctx || !this.engineReady) return;
     const t = this.ctx.currentTime;
-    const target = running ? (throttle ? ACCEL_VOL : COAST_VOL) : 0.0001;
-    this.engineGain.gain.setTargetAtTime(target, t, 0.15);
+
+    const vol = running ? (throttle ? ACCEL_VOL : COAST_VOL) : 0.0001;
+    this.engineGain.gain.setTargetAtTime(vol, t, 0.15);
+
+    if (running) {
+      const rev = Math.max(0, Math.min((rpm - 900) / (7200 - 900), 1.1));
+      const rate = RATE_IDLE + rev * (RATE_REDLINE - RATE_IDLE);
+      this.engineSource.playbackRate.setTargetAtTime(rate, t, 0.1);
+    }
   }
 }
 
