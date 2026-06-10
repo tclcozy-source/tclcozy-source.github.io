@@ -41,8 +41,8 @@ export class ChaseCamera {
 // Driver's seat: slightly left of centre (LHD), at eye height, looking forward
 // over the dash. Local frame: +Z forward, +X is the car's left.
 const SEAT_X     = 0.34;  // left of centre
-const SEAT_Y     = 0.92;  // eye height
-const SEAT_Z     = 0.05;  // just behind the dash
+const SEAT_Y     = 0.98;  // eye height
+const SEAT_Z     = -0.35; // pulled back from the dash so more of it is in view
 const STEER_LOOK = 0.16;  // how much the view yaws with steering (rad at full lock)
 const LOOK_DIST  = 12;
 const LOOK_DOWN  = 0.07;  // look slightly down over the dash
