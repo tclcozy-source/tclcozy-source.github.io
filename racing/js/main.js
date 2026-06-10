@@ -57,6 +57,30 @@ function startGame() {
 
   const wheelSpinEl = document.getElementById('cockpit-wheel-spin');
   const viewHintEl  = document.getElementById('view-hint');
+  const cwdSpeed = document.getElementById('cwd-speed');
+  const cwdGear  = document.getElementById('cwd-gear');
+  const cwdRpm   = document.getElementById('cwd-rpm');
+  const cwdLeds  = Array.from(document.querySelectorAll('#cwd-shift i'));
+  function updateWheelDisplay() {
+    cwdSpeed.textContent = Math.round(car.kmh);
+    cwdGear.textContent  = car.gearLabel;
+    cwdRpm.textContent   = car.displayRpm;
+    const frac = Math.min(car.displayRpm / car.maxRpm, 1);
+    const atRedline = car.displayRpm >= car.redline;
+    cwdGear.classList.toggle('redline', atRedline);
+    const n = cwdLeds.length;
+    if (atRedline) {                       // GT3 shift lights flash blue at the limit
+      const on = Math.floor(performance.now() / 70) % 2 === 0;
+      for (let i = 0; i < n; i++) cwdLeds[i].className = on ? 'on-b' : '';
+      return;
+    }
+    const lit = frac <= 0.5 ? 0 : Math.ceil(((frac - 0.5) / 0.5) * n);
+    for (let i = 0; i < n; i++) {
+      let c = '';
+      if (i < lit) c = i < n * 0.5 ? 'on-g' : (i < n * 0.8 ? 'on-a' : 'on-r');
+      cwdLeds[i].className = c;
+    }
+  }
   function setView(cockpit) {
     cockpitView = cockpit;
     document.body.classList.toggle('view-cockpit', cockpit);
@@ -117,6 +141,7 @@ function startGame() {
       cockpitCamera.update(car);
       // steering wheel turns with steering (more than the road wheels, like a real wheel)
       if (wheelSpinEl) wheelSpinEl.style.transform = `rotate(${(-car.steerValue * 110).toFixed(1)}deg)`;
+      updateWheelDisplay();
     } else {
       chaseCamera.update(car);
     }

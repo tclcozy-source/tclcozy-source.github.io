@@ -10,50 +10,86 @@
   <canvas id="game-canvas"></canvas>
 
   <!-- First-person cockpit overlay (shown only in cockpit view) -->
-  <div id="cockpit-overlay">
-    <div id="cockpit-dash"></div>
+  <div id="cockpit-overlay" aria-hidden="true">
+    <!-- windscreen frame: roof header, A-pillars, mirror -->
+    <div id="ck-roof"></div>
+    <div id="ck-mirror"></div>
+    <div id="ck-pillar-l"></div>
+    <div id="ck-pillar-r"></div>
+    <div id="ck-vignette"></div>
+
+    <!-- dashboard (fills the lower portion) -->
+    <div id="cockpit-dash">
+      <div id="ck-binnacle"></div>
+      <div id="ck-vents">
+        <div class="ck-vent"></div>
+        <div class="ck-vent"></div>
+      </div>
+      <div id="ck-console">
+        <span></span><span></span><span></span>
+        <span></span><span></span><span></span>
+      </div>
+    </div>
+
+    <!-- steering wheel (left-hand drive) -->
     <div id="cockpit-wheel">
       <div id="cockpit-wheel-spin">
         <svg viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg">
-          <!-- spokes -->
-          <line x1="120" y1="120" x2="22"  y2="120" stroke="#17181c" stroke-width="26" stroke-linecap="round"/>
-          <line x1="120" y1="120" x2="218" y2="120" stroke="#17181c" stroke-width="26" stroke-linecap="round"/>
-          <line x1="120" y1="120" x2="120" y2="220" stroke="#17181c" stroke-width="26" stroke-linecap="round"/>
-          <!-- rim -->
-          <circle cx="120" cy="120" r="104" fill="none" stroke="#0e0f12" stroke-width="28"/>
-          <circle cx="120" cy="120" r="104" fill="none" stroke="#2b2d34" stroke-width="9"/>
+          <defs>
+            <pattern id="ckCarbon" width="9" height="9" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+              <rect width="9" height="9" fill="#16171b"/>
+              <rect width="4.5" height="4.5" fill="#212329"/>
+              <rect x="4.5" y="4.5" width="4.5" height="4.5" fill="#212329"/>
+            </pattern>
+            <radialGradient id="ckHub" cx="50%" cy="36%" r="75%">
+              <stop offset="0%" stop-color="#26272d"/>
+              <stop offset="100%" stop-color="#0d0e11"/>
+            </radialGradient>
+          </defs>
+          <!-- spokes (carbon) -->
+          <g stroke="url(#ckCarbon)" stroke-linecap="round">
+            <line x1="120" y1="120" x2="20"  y2="120" stroke-width="30"/>
+            <line x1="120" y1="120" x2="220" y2="120" stroke-width="30"/>
+            <line x1="120" y1="120" x2="120" y2="226" stroke-width="32"/>
+          </g>
+          <!-- thick carbon rim with edge shading for depth -->
+          <circle cx="120" cy="120" r="103" fill="none" stroke="#050608" stroke-width="38"/>
+          <circle cx="120" cy="120" r="103" fill="none" stroke="url(#ckCarbon)" stroke-width="30"/>
+          <circle cx="120" cy="120" r="121" fill="none" stroke="#000000" stroke-width="4" opacity="0.7"/>
+          <circle cx="120" cy="120" r="86"  fill="none" stroke="#000000" stroke-width="4" opacity="0.55"/>
+          <circle cx="120" cy="120" r="116" fill="none" stroke="#3c3e46" stroke-width="1.5" opacity="0.5"/>
+          <circle cx="120" cy="120" r="91"  fill="none" stroke="#3c3e46" stroke-width="1.5" opacity="0.4"/>
           <!-- grip pads with stitching (9 & 3 o'clock) -->
-          <rect x="6"   y="98" width="26" height="44" rx="11" fill="#202227" stroke="#3a3d45" stroke-width="2"/>
-          <rect x="208" y="98" width="26" height="44" rx="11" fill="#202227" stroke="#3a3d45" stroke-width="2"/>
-          <line x1="13"  y1="104" x2="13"  y2="136" stroke="#d11414" stroke-width="1.5" stroke-dasharray="3 3"/>
-          <line x1="227" y1="104" x2="227" y2="136" stroke="#d11414" stroke-width="1.5" stroke-dasharray="3 3"/>
-          <!-- rotary dials on the side spokes -->
-          <circle cx="72"  cy="120" r="13" fill="#0d0e11" stroke="#3a3d45" stroke-width="2"/>
-          <circle cx="72"  cy="120" r="7"  fill="#1c1e23"/>
-          <line   x1="72"  y1="113" x2="72"  y2="120" stroke="#e0c020" stroke-width="2"/>
-          <circle cx="168" cy="120" r="13" fill="#0d0e11" stroke="#3a3d45" stroke-width="2"/>
-          <circle cx="168" cy="120" r="7"  fill="#1c1e23"/>
-          <line   x1="168" y1="113" x2="168" y2="120" stroke="#28b0e0" stroke-width="2"/>
-          <!-- hub control panel -->
-          <rect x="88" y="90" width="64" height="68" rx="10" fill="#15161a" stroke="#34373f" stroke-width="2"/>
-          <!-- shift-light strip -->
-          <rect x="94" y="95" width="52" height="9" rx="3" fill="#0a0b0d"/>
-          <circle cx="100" cy="99.5" r="2" fill="#23d05a"/>
-          <circle cx="108" cy="99.5" r="2" fill="#23d05a"/>
-          <circle cx="116" cy="99.5" r="2" fill="#e0c020"/>
-          <circle cx="124" cy="99.5" r="2" fill="#e0c020"/>
-          <circle cx="132" cy="99.5" r="2" fill="#d11414"/>
-          <circle cx="140" cy="99.5" r="2" fill="#d11414"/>
-          <!-- coloured button grid -->
-          <circle cx="100" cy="120" r="5" fill="#d11414"/>
-          <circle cx="120" cy="120" r="5" fill="#e0c020"/>
-          <circle cx="140" cy="120" r="5" fill="#28b0e0"/>
-          <circle cx="100" cy="140" r="5" fill="#23d05a"/>
-          <circle cx="120" cy="140" r="5" fill="#c8ccd4"/>
-          <circle cx="140" cy="140" r="5" fill="#d11414"/>
+          <rect x="2"   y="95" width="30" height="50" rx="13" fill="#16171b" stroke="#3a3d45" stroke-width="2"/>
+          <rect x="208" y="95" width="30" height="50" rx="13" fill="#16171b" stroke="#3a3d45" stroke-width="2"/>
+          <line x1="10"  y1="102" x2="10"  y2="138" stroke="#c01414" stroke-width="1.5" stroke-dasharray="3 3"/>
+          <line x1="230" y1="102" x2="230" y2="138" stroke="#c01414" stroke-width="1.5" stroke-dasharray="3 3"/>
+          <!-- rotary dials -->
+          <circle cx="68"  cy="120" r="14" fill="#0c0d10" stroke="#3a3d45" stroke-width="2"/>
+          <circle cx="68"  cy="120" r="7"  fill="#1c1e23"/>
+          <line   x1="68"  y1="112" x2="68"  y2="120" stroke="#e0c020" stroke-width="2"/>
+          <circle cx="172" cy="120" r="14" fill="#0c0d10" stroke="#3a3d45" stroke-width="2"/>
+          <circle cx="172" cy="120" r="7"  fill="#1c1e23"/>
+          <line   x1="172" y1="112" x2="172" y2="120" stroke="#28b0e0" stroke-width="2"/>
+          <!-- hub backing (the digital display sits over this) -->
+          <rect x="82" y="84" width="76" height="80" rx="13" fill="url(#ckHub)" stroke="#34373f" stroke-width="2"/>
+          <!-- accent buttons flanking the display -->
+          <circle cx="90"  cy="152" r="4.5" fill="#c01414"/>
+          <circle cx="150" cy="152" r="4.5" fill="#23c050"/>
           <!-- top centre marker (GT3 yellow) -->
-          <rect x="113" y="16" width="14" height="24" rx="3" fill="#e0c020"/>
+          <rect x="112" y="9" width="16" height="27" rx="3" fill="#e8c81e"/>
         </svg>
+      </div>
+      <!-- digital dash display (fixed upright, live telemetry) -->
+      <div id="cockpit-wheel-display">
+        <div id="cwd-shift">
+          <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+        </div>
+        <div id="cwd-row">
+          <div class="cwd-side"><b id="cwd-speed">0</b><span>KM/H</span></div>
+          <div id="cwd-gear">N</div>
+          <div class="cwd-side"><b id="cwd-rpm">0</b><span>RPM</span></div>
+        </div>
       </div>
     </div>
   </div>
