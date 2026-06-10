@@ -40,12 +40,11 @@ export class ChaseCamera {
 // ---- First-person cockpit camera ----
 // Driver's seat: slightly left of centre (LHD), at eye height, looking forward
 // over the dash. Local frame: +Z forward, +X is the car's left.
-const SEAT_X     = 0.42;  // well to the left (left-hand drive seat)
-const SEAT_Y     = 0.96;  // eye height (sit low like a GT3)
-const SEAT_Z     = -0.35; // pulled back from the dash so more of it is in view
-const STEER_LOOK = 0.16;  // how much the view yaws with steering (rad at full lock)
+// The seat offset comes from car.driverHead, kept in sync with the 3D cockpit.
+const STEER_LOOK = 0.10;  // subtle view yaw with steering (rad at full lock)
 const LOOK_DIST  = 12;
-const LOOK_DOWN  = 0.07;  // look slightly down over the dash
+const LOOK_DOWN  = 0.08;  // look slightly down over the dash
+const FALLBACK_SEAT = { x: -0.40, y: 0.96, z: -0.05 };
 
 export class CockpitCamera {
   constructor(camera) {
@@ -61,9 +60,10 @@ export class CockpitCamera {
     const h = car.heading;
 
     // Driver-seat world position (rotate the local seat offset by the heading)
-    const px = car.position.x + Math.cos(h) * SEAT_X + Math.sin(h) * SEAT_Z;
-    const py = car.position.y + SEAT_Y;
-    const pz = car.position.z - Math.sin(h) * SEAT_X + Math.cos(h) * SEAT_Z;
+    const s = car.driverHead || FALLBACK_SEAT;
+    const px = car.position.x + Math.cos(h) * s.x + Math.sin(h) * s.z;
+    const py = car.position.y + s.y;
+    const pz = car.position.z - Math.sin(h) * s.x + Math.cos(h) * s.z;
     this.camera.position.set(px, py, pz);
 
     // Smoothly yaw the view a little with steering for a natural feel

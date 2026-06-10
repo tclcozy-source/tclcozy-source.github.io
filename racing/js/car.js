@@ -7,6 +7,12 @@ const STEER_RESPONSE  = 6.0;    // how fast steering eases toward target (per s)
 const STEER_RETURN    = 9.0;    // quicker self-centering when no input
 const BODY_ROLL_MAX   = 0.03;   // subtle visual lean
 
+// ---- First-person cockpit ----
+const DRIVER_X     = -0.40;  // left-hand drive seat (negative X = driver's left)
+const DRIVER_EYE_Y = 1.00;   // eye height (above the dash so the road is visible)
+const DRIVER_EYE_Z = -0.12;  // just behind the wheel
+const WHEEL_TURN   = 1.9;    // max steering-wheel rotation (rad) at full lock
+
 // ---- Engine ----
 const ENGINE_IDLE_RPM   = 900;
 const ENGINE_REDLINE    = 7200;
@@ -66,13 +72,16 @@ export class Car {
     this._reverseReady = false; // auto: reverse only after a deliberate re-press at a stop
     this.atLimiter = false;     // true while revs are pinned at the limiter
 
+    // Driver-head offset in the car's local frame (read by the cockpit camera)
+    this.driverHead = new THREE.Vector3(DRIVER_X, DRIVER_EYE_Y, DRIVER_EYE_Z);
+
     this.mesh = this._buildMesh();
     scene.add(this.mesh);
   }
 
   _buildMesh() {
     // Detailed GT3 race car (Huracan-GT3 inspired). Forward = +Z (nose), rear = -Z.
-    const group = new THREE.Group();
+    const ext = new THREE.Group();   // exterior (shown in third person)
 
     const paintMat  = new THREE.MeshPhysicalMaterial({ color: 0x2fae54, metalness: 0.5, roughness: 0.28, clearcoat: 1.0, clearcoatRoughness: 0.08 });
     const carbonMat = new THREE.MeshPhysicalMaterial({ color: 0x14161a, metalness: 0.45, roughness: 0.42, clearcoat: 0.5, clearcoatRoughness: 0.35 });
@@ -91,7 +100,7 @@ export class Car {
       m.position.set(x, y, z);
       if (rx) m.rotation.x = rx;
       m.castShadow = cast;
-      group.add(m);
+      ext.add(m);
       return m;
     };
     const mirror = (geo, mat, x, y, z, rx = 0) => { add(geo, mat, x, y, z, rx); add(geo, mat, -x, y, z, rx); };
@@ -144,7 +153,7 @@ export class Car {
       const decal = new THREE.Mesh(new THREE.PlaneGeometry(0.6, 0.6), decalMat);
       decal.position.set(s * 0.985, 0.55, 0.12);
       decal.rotation.y = s > 0 ? Math.PI / 2 : -Math.PI / 2;
-      group.add(decal);
+      ext.add(decal);
     });
 
     // Detailed wheels (tire + multi-spoke rim + brake disc + caliper)
@@ -182,12 +191,20 @@ export class Car {
     ].forEach(({ x, z, r, w, front }) => {
       const { wheel, spinner } = makeWheel(r, w);
       wheel.position.set(x, r, z);
-      group.add(wheel);
+      ext.add(wheel);
       this.wheelMeshes.push(spinner);
       if (front) this.frontWheels.push(wheel);
     });
 
-    return group;
+    // Assemble root: exterior + (hidden) first-person cockpit interior
+    this.exterior = ext;
+    this.cockpit  = this._buildCockpit();
+    this.cockpit.visible = false;          // shown only in first-person view
+
+    const root = new THREE.Group();
+    root.add(ext);
+    root.add(this.cockpit);
+    return root;
   }
 
   // Canvas texture: a white roundel with a race number for the door livery.
@@ -211,6 +228,189 @@ export class Car {
     const tex = new THREE.CanvasTexture(c);
     tex.anisotropy = 4;
     return tex;
+  }
+
+  // ---- First-person cockpit interior (real 3D geometry) ----
+  _buildCockpit() {
+    const g = new THREE.Group();
+    const X = DRIVER_X;
+
+    const dashMat = new THREE.MeshStandardMaterial({ color: 0x15171b, roughness: 0.86, metalness: 0.1 });
+    const trimMat = new THREE.MeshStandardMaterial({ color: 0x0d0e12, roughness: 0.7,  metalness: 0.2 });
+    const accMat  = new THREE.MeshStandardMaterial({ color: 0x222530, roughness: 0.5,  metalness: 0.5 });
+    const rimMat  = new THREE.MeshPhysicalMaterial({ color: 0x101114, roughness: 0.5, metalness: 0.3, clearcoat: 0.5, clearcoatRoughness: 0.4 });
+    const ventMat = new THREE.MeshStandardMaterial({ color: 0x050506, roughness: 0.95 });
+    const markMat = new THREE.MeshStandardMaterial({ color: 0xc9a832, roughness: 0.5 });
+
+    // Dashboard: rolled top edge, sloped face, centre console, binnacle hood
+    const dashTop = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 1.92, 20), dashMat);
+    dashTop.rotation.z = Math.PI / 2;
+    dashTop.position.set(0, 0.74, 0.52);
+    dashTop.receiveShadow = true;
+    g.add(dashTop);
+
+    const dashFace = new THREE.Mesh(new THREE.BoxGeometry(1.92, 0.4, 0.12), dashMat);
+    dashFace.position.set(0, 0.52, 0.5);
+    dashFace.rotation.x = 0.3;
+    dashFace.receiveShadow = true;
+    g.add(dashFace);
+
+    const centreConsole = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.46, 0.85), dashMat);
+    centreConsole.position.set(0.16, 0.4, 0.05);
+    g.add(centreConsole);
+
+    // Digital display on the dash (3D textured surface, faces the driver)
+    this.dashTexture = this._makeDashTexture();
+    const screenGroup = new THREE.Group();
+    screenGroup.position.set(X, 0.93, 0.48);
+    screenGroup.rotation.x = 0.34;
+    const bezel = new THREE.Mesh(new THREE.BoxGeometry(0.33, 0.15, 0.02), trimMat);
+    bezel.position.z = 0.02;         // behind the screen (away from the driver)
+    screenGroup.add(bezel);
+    const screen = new THREE.Mesh(
+      new THREE.PlaneGeometry(0.29, 0.115),
+      new THREE.MeshBasicMaterial({ map: this.dashTexture, side: THREE.DoubleSide }),
+    );
+    screen.rotation.y = Math.PI;     // face the driver, text reads correctly
+    screen.position.z = 0.0;
+    screenGroup.add(screen);
+    g.add(screenGroup);
+
+    // Centre air vents (recessed, with louvers)
+    for (let i = 0; i < 2; i++) {
+      const vx = 0.05 + i * 0.27;
+      const vent = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.08, 0.05), ventMat);
+      vent.position.set(vx, 0.7, 0.5);
+      g.add(vent);
+      for (let j = 0; j < 3; j++) {
+        const lou = new THREE.Mesh(new THREE.BoxGeometry(0.21, 0.006, 0.06), accMat);
+        lou.position.set(vx, 0.68 + j * 0.024, 0.51);
+        g.add(lou);
+      }
+    }
+
+    // Steering column + wheel (rotates with steering, parallaxes with the camera)
+    const pivot = new THREE.Group();
+    pivot.position.set(X, 0.71, 0.34);
+    pivot.rotation.x = -0.45;        // column rake
+    g.add(pivot);
+
+    const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.03, 0.24, 12), trimMat);
+    shaft.rotation.x = Math.PI / 2;
+    shaft.position.z = -0.14;
+    pivot.add(shaft);
+
+    const wheel = new THREE.Group();
+    pivot.add(wheel);
+    this.steeringWheel = wheel;
+
+    const R = 0.16;
+    const rim = new THREE.Mesh(new THREE.TorusGeometry(R, 0.019, 14, 40), rimMat);
+    rim.castShadow = true;
+    wheel.add(rim);
+    const hub = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.055, 0.05, 18), accMat);
+    hub.rotation.x = Math.PI / 2;
+    wheel.add(hub);
+    for (let k = 0; k < 3; k++) {
+      const a = -Math.PI / 2 + k * (Math.PI * 2 / 3);
+      const spoke = new THREE.Mesh(new THREE.BoxGeometry(0.024, R, 0.014), accMat);
+      spoke.position.set(Math.cos(a) * R / 2, Math.sin(a) * R / 2, 0);
+      spoke.rotation.z = a - Math.PI / 2;
+      wheel.add(spoke);
+    }
+    const mark = new THREE.Mesh(new THREE.BoxGeometry(0.022, 0.026, 0.012), markMat);
+    mark.position.set(0, R - 0.004, 0.02);
+    wheel.add(mark);
+
+    // Interior frame: windscreen header, headliner, A-pillars, door sills
+    const header = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.1, 0.14), trimMat);
+    header.position.set(0, 1.16, 0.58);
+    g.add(header);
+
+    const roof = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.06, 1.4), trimMat);
+    roof.position.set(0, 1.24, -0.12);
+    g.add(roof);
+
+    [-1, 1].forEach((s) => {
+      const pillar = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.72, 0.1), trimMat);
+      pillar.position.set(s * 0.66, 0.96, 0.54);
+      pillar.rotation.x = -0.5;
+      pillar.rotation.z = s * 0.12;
+      g.add(pillar);
+      const sill = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.12, 1.2), trimMat);
+      sill.position.set(s * 0.68, 0.74, -0.1);
+      g.add(sill);
+    });
+
+    return g;
+  }
+
+  // Canvas-backed texture for the 3D dash display.
+  _makeDashTexture() {
+    const c = document.createElement('canvas');
+    c.width = 256; c.height = 96;
+    this._dashCanvas = c;
+    this._dashCtx = c.getContext('2d');
+    const tex = new THREE.CanvasTexture(c);
+    tex.anisotropy = 4;
+    this._drawDash(0, 'N', 0, 0, false);
+    tex.needsUpdate = true;
+    return tex;
+  }
+
+  _drawDash(speed, gear, rpm, frac, redline) {
+    const ctx = this._dashCtx, W = 256, H = 96;
+    ctx.fillStyle = '#05090b'; ctx.fillRect(0, 0, W, H);
+    // shift-light bar across the top
+    const n = 14, cw = (W - 16) / n;
+    const lit = frac <= 0.5 ? 0 : Math.ceil(((frac - 0.5) / 0.5) * n);
+    for (let i = 0; i < n; i++) {
+      let col = '#0b1a14';
+      if (i < lit) {
+        if (redline) col = '#39c6ff';
+        else if (i < n * 0.5) col = '#27c060';
+        else if (i < n * 0.8) col = '#d8ad1e';
+        else col = '#e02828';
+      }
+      ctx.fillStyle = col;
+      ctx.fillRect(8 + i * cw, 6, cw - 2, 9);
+    }
+    // gear (big, centre)
+    ctx.fillStyle = redline ? '#ff6b6b' : '#e6fbef';
+    ctx.font = 'bold 50px Consolas, monospace';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(String(gear), W / 2, H / 2 + 14);
+    // speed (left)
+    ctx.fillStyle = '#79c79a';
+    ctx.textAlign = 'left';
+    ctx.font = 'bold 26px Consolas, monospace';
+    ctx.fillText(String(speed), 10, H / 2 + 12);
+    ctx.fillStyle = 'rgba(120,200,160,0.55)';
+    ctx.font = '11px Consolas, monospace';
+    ctx.fillText('KM/H', 10, H - 8);
+    // rpm (right)
+    ctx.fillStyle = '#79c79a';
+    ctx.textAlign = 'right';
+    ctx.font = 'bold 22px Consolas, monospace';
+    ctx.fillText(String(rpm), W - 10, H / 2 + 10);
+    ctx.fillStyle = 'rgba(120,200,160,0.55)';
+    ctx.font = '11px Consolas, monospace';
+    ctx.fillText('RPM', W - 10, H - 8);
+  }
+
+  // Refresh the dash display (called each frame while in cockpit view).
+  updateDashDisplay() {
+    if (!this.dashTexture) return;
+    const frac = Math.min(this.displayRpm / this.maxRpm, 1);
+    const redline = this.displayRpm >= this.redline;
+    this._drawDash(Math.round(this.kmh), this.gearLabel, this.displayRpm, frac, redline);
+    this.dashTexture.needsUpdate = true;
+  }
+
+  // Toggle between the third-person exterior and the first-person cockpit.
+  setCockpitView(on) {
+    if (this.cockpit)  this.cockpit.visible = on;
+    if (this.exterior) this.exterior.visible = !on;
   }
 
   // Place the car at a track position facing a heading (radians).
@@ -442,6 +642,9 @@ export class Car {
     // Steer the front wheels visually with the smoothed steering
     const steerAngle = this.steerValue * 0.5;
     this.frontWheels.forEach(w => { w.rotation.y = steerAngle; });
+
+    // Turn the 3D cockpit steering wheel (left input -> anticlockwise)
+    if (this.steeringWheel) this.steeringWheel.rotation.z = -this.steerValue * WHEEL_TURN;
   }
 
   get position()  { return this.mesh.position; }
