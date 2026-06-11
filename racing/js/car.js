@@ -15,9 +15,9 @@ const DRIVER_EYE_Z = -0.30;  // pulled back so the road is clearly visible
 const WHEEL_TURN   = 1.9;    // max steering-wheel rotation (rad) at full lock
 
 // ---- Drift mode (toggled with B) ----
-const DRIFT_YAW_GAIN  = 1.35; // extra steering authority that kicks the rear out
-const REAR_GRIP_DRIFT = 2.6;  // how fast travel-dir chases heading (low = more slide)
-const SELF_ALIGN      = 1.5;  // restoring yaw that keeps the slide controllable
+const DRIFT_YAW_GAIN  = 1.45; // extra steering authority that kicks the rear out
+const REAR_GRIP_DRIFT = 2.2;  // how fast travel-dir chases heading (low = more slide)
+const SELF_ALIGN      = 1.35; // restoring yaw that keeps the slide controllable
 const DRIFT_REF_SPEED = 16;   // speed at which self-align reaches full strength
 const SLIDE_SCRUB     = 0.12; // speed scrubbed off while sliding sideways
 const SLIDE_THRESH    = 0.12; // slip angle (rad) above which tyres smoke / mark
