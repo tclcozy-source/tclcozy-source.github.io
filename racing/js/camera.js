@@ -43,7 +43,7 @@ export class ChaseCamera {
 // The seat offset comes from car.driverHead, kept in sync with the 3D cockpit.
 const STEER_LOOK = 0.10;  // subtle view yaw with steering (rad at full lock)
 const LOOK_DIST  = 12;
-const LOOK_DOWN  = 0.08;  // look slightly down over the dash
+const LOOK_DOWN  = 0.2;   // look down a little so the wheel & dash sit in view
 const FALLBACK_SEAT = { x: -0.40, y: 0.96, z: -0.05 };
 
 export class CockpitCamera {

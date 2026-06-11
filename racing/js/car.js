@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
 // ---- Steering ----
 const MAX_YAW_RATE    = 2.2;    // rad/s at full lock, low speed
@@ -304,22 +305,39 @@ export class Car {
     pivot.add(wheel);
     this.steeringWheel = wheel;
 
+    // Downloaded racing-wheel model (Poly Pizza, CC-BY 3.0). Loaded async and
+    // dropped in over a simple fallback rim. The model is round and lies flat
+    // in its own XZ plane, so we stand it upright (axis Y -> the wheel group's
+    // local Z) and scale it to ~0.34 m, so it spins about the column when
+    // wheel.rotation.z changes with steering.
     const R = 0.16;
-    const rim = new THREE.Mesh(new THREE.TorusGeometry(R, 0.019, 14, 40), rimMat);
-    rim.castShadow = true;
-    wheel.add(rim);
-    const hub = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.055, 0.05, 18), accMat);
-    hub.rotation.x = Math.PI / 2;
-    wheel.add(hub);
-    for (let k = 0; k < 3; k++) {
-      const a = -Math.PI / 2 + k * (Math.PI * 2 / 3);
-      const spoke = new THREE.Mesh(new THREE.BoxGeometry(0.024, R, 0.014), accMat);
-      spoke.position.set(Math.cos(a) * R / 2, Math.sin(a) * R / 2, 0);
-      spoke.rotation.z = a - Math.PI / 2;
-      wheel.add(spoke);
-    }
-    const mark = new THREE.Mesh(new THREE.BoxGeometry(0.022, 0.026, 0.012), markMat);
-    mark.position.set(0, R - 0.004, 0.02);
+    const fallback = new THREE.Mesh(new THREE.TorusGeometry(R, 0.019, 12, 32), rimMat);
+    fallback.castShadow = true;
+    wheel.add(fallback);
+
+    new GLTFLoader().load(
+      'models/steering_wheel.glb',
+      (gltf) => {
+        const model = gltf.scene;
+        model.scale.setScalar(0.00099);   // ~344 model units -> ~0.34 m diameter
+        model.rotation.x = Math.PI / 2;   // lay-flat wheel -> upright, facing the driver
+        model.traverse((o) => {
+          if (o.isMesh) {
+            o.castShadow = true;
+            o.material = (o.material && o.material.name === 'default') ? accMat : rimMat;
+          }
+        });
+        wheel.remove(fallback);
+        wheel.add(model);
+        this._wheelModel = model;
+      },
+      undefined,
+      (err) => console.warn('[cockpit] steering-wheel model failed to load:', err),
+    );
+
+    // Small upright marker on the rim so the wheel's rotation reads clearly
+    const mark = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.03, 0.012), markMat);
+    mark.position.set(0, R - 0.005, 0.025);
     wheel.add(mark);
 
     // Interior frame: windscreen header, headliner, A-pillars, door sills
