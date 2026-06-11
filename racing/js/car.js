@@ -68,6 +68,11 @@ const AUTO_UPSHIFT_RPM   = 6400; // rev out near the limiter, but reachable in e
 const AUTO_DOWNSHIFT_RPM = 1850; // only drop a gear once revs fall well off — no eager downshifts
 const AUTO_SHIFT_COOLDOWN = 0.7; // seconds between auto shifts (relaxed, anti-hunting)
 
+// ---- Track surface / pit lane ----
+const PIT_LIMIT     = 16;    // m/s (~58 km/h) pit-lane speed limit
+const PIT_BRAKE     = 30;    // firm auto-brake that enforces the pit limit
+const PIT_STOP_TIME = 3.5;   // seconds of service once stopped in the box
+
 export class Car {
   constructor(scene) {
     this.speed       = 0;       // signed m/s: + forward, - reverse
@@ -91,6 +96,17 @@ export class Car {
     this.travelDir = 0;         // direction the car is actually moving (vs heading)
     this.slip      = 0;         // slip angle = heading - travelDir (rad)
     this.isSliding = false;     // true while the rear is breaking traction
+
+    // Track surface + pit state
+    this.track       = null;    // set by main; provides sampleSurface / heightAt
+    this.surface     = 'asphalt';
+    this.surfaceGrip = 1;       // 0..1 grip multiplier (grass / gravel reduce it)
+    this.surfaceDrag = 0;       // extra deceleration off-track
+    this.inPitLane   = false;
+    this.inPitBox    = false;
+    this.pitState    = 'none';  // 'none' | 'servicing' | 'done'
+    this.pitTimer    = 0;
+    this._groundY    = 0;
 
     // Driver-head offset in the car's local frame (read by the cockpit camera)
     this.driverHead = new THREE.Vector3(DRIVER_X, DRIVER_EYE_Y, DRIVER_EYE_Z);
@@ -452,7 +468,8 @@ export class Car {
 
   // Place the car at a track position facing a heading (radians).
   placeAt(x, z, heading) {
-    this.mesh.position.set(x, 0, z);
+    const y = this.track ? this.track.heightAt(x, z) : 0;
+    this.mesh.position.set(x, y, z);
     this.heading = heading;
     this.travelDir = heading;
     this.speed = 0;
@@ -479,12 +496,42 @@ export class Car {
   get isRunning() { return this.engineState === 'running'; }
 
   update(input, dt) {
+    this._sampleSurface();
     this._handleIgnition(input);
     this._handleShift(input);
     this._updateEngine(input, dt);
     this._updateSteering(input, dt);
     this._integrate(dt);
     this._updateVisuals(dt);
+    this._updatePit(input, dt);
+  }
+
+  // Query the track surface under the car: grip, drag, elevation, pit flags.
+  _sampleSurface() {
+    if (!this.track) return;
+    const s = this.track.sampleSurface(this.mesh.position.x, this.mesh.position.z);
+    this.surface     = s.surface;
+    this.surfaceGrip = s.grip;
+    this.surfaceDrag = s.drag;
+    this.inPitLane   = s.inPitLane;
+    this.inPitBox    = s.inPitBox;
+    this._groundY    = s.height;
+  }
+
+  // Pit-stop state machine: stop in the box -> a few seconds of service -> GO.
+  _updatePit(input, dt) {
+    if (this.pitState === 'none') {
+      if (this.inPitBox && Math.abs(this.speed) < 0.6 && this.isRunning) {
+        this.pitState = 'servicing';
+        this.pitTimer = PIT_STOP_TIME;
+      }
+    } else if (this.pitState === 'servicing') {
+      this.speed = 0;                       // held while serviced
+      this.pitTimer -= dt;
+      if (this.pitTimer <= 0) this.pitState = 'done';
+    } else if (this.pitState === 'done') {
+      if (!this.inPitBox) this.pitState = 'none';   // pulled away -> ready to pit again
+    }
   }
 
   _handleIgnition(input) {
@@ -565,7 +612,7 @@ export class Car {
       }
     }
 
-    this.speed += engineAccel * dt;
+    this.speed += engineAccel * this.surfaceGrip * dt;   // less drive off-track
     this._applyBrakeAndDrag(braking, dt);
 
     // Displayed/audible rpm: quick to rise, gradual to fall, plus the
@@ -591,9 +638,15 @@ export class Car {
       if (this.speed > 0)      this.speed = Math.max(0, this.speed - BRAKE_DECEL * dt);
       else if (this.speed < 0) this.speed = Math.min(0, this.speed + BRAKE_DECEL * dt);
     }
-    const drag = ROLLING_DRAG + AERO_DRAG * this.speed * this.speed;
+    const drag = ROLLING_DRAG + AERO_DRAG * this.speed * this.speed + this.surfaceDrag;
     if (this.speed > 0)      this.speed = Math.max(0, this.speed - drag * dt);
     else if (this.speed < 0) this.speed = Math.min(0, this.speed + drag * dt);
+
+    // Pit-lane speed limiter (auto-brake), released while being serviced
+    if (this.inPitLane && this.pitState !== 'servicing') {
+      if (this.speed >  PIT_LIMIT) this.speed = Math.max( PIT_LIMIT, this.speed - PIT_BRAKE * dt);
+      if (this.speed < -PIT_LIMIT) this.speed = Math.min(-PIT_LIMIT, this.speed + PIT_BRAKE * dt);
+    }
 
     this.speed = THREE.MathUtils.clamp(this.speed, -MAX_REVERSE_SPEED, 75);
   }
@@ -658,7 +711,7 @@ export class Car {
     if (absV > 0.4) {
       const speedFactor = 1 / (1 + absV * STEER_SPEED_REF); // calmer steering at speed
       const dir = Math.sign(this.speed);
-      const yawRate = this.steerValue * MAX_YAW_RATE * speedFactor * dir;
+      const yawRate = this.steerValue * MAX_YAW_RATE * speedFactor * dir * this.surfaceGrip;
 
       if (this.driftMode) {
         // Loose rear: steering kicks the back out and the slide HOLDS. Rear grip
@@ -691,7 +744,13 @@ export class Car {
     // Move along the direction of travel (which differs from heading in a slide)
     this.mesh.position.x += Math.sin(this.travelDir) * this.speed * dt;
     this.mesh.position.z += Math.cos(this.travelDir) * this.speed * dt;
-    this.mesh.position.y = 0;
+    // Follow the track-surface elevation
+    if (this.track) {
+      const gy = this.track.heightAt(this.mesh.position.x, this.mesh.position.z);
+      this.mesh.position.y += (gy - this.mesh.position.y) * 0.5;
+    } else {
+      this.mesh.position.y = 0;
+    }
     this.mesh.rotation.y = this.heading;
   }
 
@@ -729,6 +788,12 @@ export class Car {
     return String(this.gear);
   }
   get transmissionLabel() { return this.autoTransmission ? 'AUTO' : 'MANUAL'; }
+  get pitStatus() {
+    if (this.pitState === 'servicing') return { active: true, text: 'PIT STOP — ' + Math.ceil(this.pitTimer) + 's', kind: 'busy' };
+    if (this.pitState === 'done')      return { active: true, text: 'GO!', kind: 'go' };
+    if (this.inPitLane)                return { active: true, text: 'PIT LANE — LIMITER', kind: 'limit' };
+    return { active: false, text: '', kind: '' };
+  }
   get statusLabel() {
     switch (this.engineState) {
       case 'ignition': return 'Ignition On';

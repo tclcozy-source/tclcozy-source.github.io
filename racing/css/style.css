@@ -180,6 +180,27 @@ body {
   color: #34d399;
 }
 
+/* Pit-lane / pit-stop status banner */
+#pit-status {
+  display: none;
+  position: fixed;
+  top: 86px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 15;
+  padding: 7px 20px;
+  border-radius: 10px;
+  font-weight: 800;
+  font-size: 0.9rem;
+  letter-spacing: 0.1em;
+  color: #fff;
+  backdrop-filter: blur(6px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+#pit-status.pit-limit { background: rgba(40, 90, 170, 0.8); }
+#pit-status.pit-busy  { background: rgba(190, 130, 20, 0.85); }
+#pit-status.pit-go    { background: rgba(30, 160, 70, 0.9); animation: status-blink 0.4s steps(2, start) infinite; }
+
 /* Drift-mode indicator */
 #drift-badge {
   display: none;

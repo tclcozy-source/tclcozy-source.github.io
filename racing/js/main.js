@@ -50,6 +50,7 @@ function startGame() {
 
   // Car + chase camera
   const car         = new Car(scene);
+  car.track = track;                         // surface grip, elevation, pit lane
   car.placeAt(track.start.x, track.start.z, track.startHeading);
   car.autoTransmission = false; // desktop defaults to manual (Q/E)
   const chaseCamera   = new ChaseCamera(camera);
@@ -82,6 +83,7 @@ function startGame() {
   const statusEl   = document.getElementById('engine-status');
   const transLabel = document.getElementById('transmission-label');
   const transBtn   = document.getElementById('btn-transmission');
+  const pitEl      = document.getElementById('pit-status');
 
   function refreshTransmissionUI() {
     if (transLabel) transLabel.textContent = car.autoTransmission ? 'AUTO' : 'MANUAL';
@@ -156,6 +158,13 @@ function startGame() {
     tachFillEl.classList.toggle('redline', car.displayRpm > car.redline);
     statusEl.textContent = car.statusLabel;
     statusEl.className   = 'status-' + car.engineState;
+
+    if (pitEl) {
+      const pit = car.pitStatus;
+      pitEl.style.display = pit.active ? 'block' : 'none';
+      pitEl.textContent   = pit.text;
+      pitEl.className      = 'pit-' + pit.kind;
+    }
 
     renderer.render(scene, camera);
     requestAnimationFrame(tick);
