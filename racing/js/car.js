@@ -62,7 +62,8 @@ const MAX_REVERSE_SPEED = 12;
 const EFF_RATIO_1 = GEAR_RATIOS[1] * FINAL_DRIVE; // reference for engine braking
 
 // ---- Automatic transmission ----
-const AUTO_UPSHIFT_RPM   = 6900; // hold each gear and rev out before upshifting
+const AUTO_UPSHIFT_RPM   = 6400; // rev out near the limiter, but reachable in every gear
+                                 // (5th tops out ~6780 rpm under drag, so it can still hit 6th)
 const AUTO_DOWNSHIFT_RPM = 1850; // only drop a gear once revs fall well off — no eager downshifts
 const AUTO_SHIFT_COOLDOWN = 0.7; // seconds between auto shifts (relaxed, anti-hunting)
 
