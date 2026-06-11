@@ -15,11 +15,11 @@ const DRIVER_EYE_Z = -0.30;  // pulled back so the road is clearly visible
 const WHEEL_TURN   = 1.9;    // max steering-wheel rotation (rad) at full lock
 
 // ---- Drift mode (toggled with B) ----
-const DRIFT_YAW_GAIN  = 1.45; // steering authority that kicks the rear out
-const REAR_GRIP_DRIFT = 0.8;  // how fast travel-dir catches heading (low = holds the slide)
-const SELF_ALIGN      = 0.7;  // gentle restoring yaw at small/mid slip
-const SELF_ALIGN_PROG = 5.0;  // restoring ramps past SLIP_SOFT so big angles are caught
-const SLIP_SOFT       = 0.5;  // rad (~29 deg) where the progressive restoring kicks in
+const DRIFT_YAW_GAIN  = 2.4;  // huge steering authority — the rear kicks out on the lightest input
+const REAR_GRIP_DRIFT = 0.5;  // very low: the rear stays loose and the slide holds
+const SELF_ALIGN      = 0.35; // barely any self-correction — heavy oversteer
+const SELF_ALIGN_PROG = 4.5;  // still ramps at big angles so counter-steer can save it
+const SLIP_SOFT       = 0.55; // let it slide well past ~30 deg before the catch ramps in
 const DRIFT_REF_SPEED = 16;   // speed at which self-align reaches full strength
 const SLIDE_SCRUB     = 0.03; // gentle — a drift keeps most of its speed
 const SLIDE_THRESH    = 0.10; // slip angle (rad) above which tyres smoke / mark
