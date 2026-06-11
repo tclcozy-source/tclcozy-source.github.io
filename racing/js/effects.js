@@ -5,8 +5,8 @@ const REAR = [{ x: 0.94, z: -1.5 }, { x: -0.94, z: -1.5 }];
 
 const SMOKE_MAX = 180;   // tyre-smoke particle pool
 const SKID_MAX  = 800;   // skid-mark instance pool
-const SKID_W    = 0.22;  // skid quad width / length (m)
-const SKID_L    = 0.34;
+const SKID_W    = 0.26;  // skid quad width / length (m)
+const SKID_L    = 0.44;
 const SKID_STEP = 0.16;  // lay a new mark every this many metres of travel
 
 // Tyre smoke + skid marks for drift mode. Pure CPU-driven pools so there is no
@@ -72,7 +72,7 @@ export class DriftEffects {
     const geo = new THREE.PlaneGeometry(SKID_W, SKID_L);
     geo.rotateX(-Math.PI / 2);            // lie flat on the ground (length along Z)
     const mat = new THREE.MeshBasicMaterial({
-      color: 0x0a0a0a, transparent: true, opacity: 0.5, depthWrite: false,
+      color: 0x080808, transparent: true, opacity: 0.6, depthWrite: false,
       polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2,
     });
     this.skids = new THREE.InstancedMesh(geo, mat, SKID_MAX);
@@ -91,7 +91,7 @@ export class DriftEffects {
   }
 
   _spawnSmoke(x, y, z, intensity) {
-    const count = 1 + Math.floor(intensity * 1);
+    const count = 1;
     for (let c = 0; c < count; c++) {
       let i = -1;
       for (let k = 0; k < this.sN; k++) {
@@ -102,12 +102,12 @@ export class DriftEffects {
       this.sPos[i * 3]     = x + (Math.random() - 0.5) * 0.25;
       this.sPos[i * 3 + 1] = y + Math.random() * 0.1;
       this.sPos[i * 3 + 2] = z + (Math.random() - 0.5) * 0.25;
-      this.sVel[i * 3]     = (Math.random() - 0.5) * 0.9;
-      this.sVel[i * 3 + 1] = 0.5 + Math.random() * 0.8;
-      this.sVel[i * 3 + 2] = (Math.random() - 0.5) * 0.9;
-      this.sMax[i]   = 0.55 + Math.random() * 0.5;
+      this.sVel[i * 3]     = (Math.random() - 0.5) * 1.0;
+      this.sVel[i * 3 + 1] = 0.75 + Math.random() * 0.9; // rise so the plume reads
+      this.sVel[i * 3 + 2] = (Math.random() - 0.5) * 1.0;
+      this.sMax[i]   = 0.5 + Math.random() * 0.4;
       this.sLife[i]  = this.sMax[i];
-      this.sSize[i]  = 11 + Math.random() * 9;
+      this.sSize[i]  = 10 + Math.random() * 7;
       this.sAlpha[i] = 0;
     }
   }
@@ -130,7 +130,7 @@ export class DriftEffects {
         const lx = REAR[w].x, lz = REAR[w].z;
         const wx = car.position.x + cos * lx + sin * lz;
         const wz = car.position.z - sin * lx + cos * lz;
-        this._spawnSmoke(wx, 0.18, wz, intensity);
+        this._spawnSmoke(wx, 0.22, wz, intensity);
 
         const last = this._lastPos[w];
         if (last) {
@@ -162,9 +162,9 @@ export class DriftEffects {
       this.sVel[i * 3]     *= (1 - 1.6 * dt);
       this.sVel[i * 3 + 1] *= (1 - 0.6 * dt);
       this.sVel[i * 3 + 2] *= (1 - 1.6 * dt);
-      this.sSize[i] += 17 * dt;                     // billow out
+      this.sSize[i] += 13 * dt;                     // billow out
       const age = 1 - t;                            // 0 -> 1
-      this.sAlpha[i] = Math.sin(Math.min(1, age) * Math.PI) * 0.32; // fade in then out
+      this.sAlpha[i] = Math.sin(Math.min(1, age) * Math.PI) * 0.22; // fade in then out
     }
     this.smokeGeo.attributes.position.needsUpdate = true;
     this.smokeGeo.attributes.aSize.needsUpdate = true;

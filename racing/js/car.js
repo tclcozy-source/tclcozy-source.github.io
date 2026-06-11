@@ -15,12 +15,14 @@ const DRIVER_EYE_Z = -0.30;  // pulled back so the road is clearly visible
 const WHEEL_TURN   = 1.9;    // max steering-wheel rotation (rad) at full lock
 
 // ---- Drift mode (toggled with B) ----
-const DRIFT_YAW_GAIN  = 1.45; // extra steering authority that kicks the rear out
-const REAR_GRIP_DRIFT = 2.2;  // how fast travel-dir chases heading (low = more slide)
-const SELF_ALIGN      = 1.35; // restoring yaw that keeps the slide controllable
+const DRIFT_YAW_GAIN  = 1.45; // steering authority that kicks the rear out
+const REAR_GRIP_DRIFT = 0.8;  // how fast travel-dir catches heading (low = holds the slide)
+const SELF_ALIGN      = 0.7;  // gentle restoring yaw at small/mid slip
+const SELF_ALIGN_PROG = 5.0;  // restoring ramps past SLIP_SOFT so big angles are caught
+const SLIP_SOFT       = 0.5;  // rad (~29 deg) where the progressive restoring kicks in
 const DRIFT_REF_SPEED = 16;   // speed at which self-align reaches full strength
-const SLIDE_SCRUB     = 0.12; // speed scrubbed off while sliding sideways
-const SLIDE_THRESH    = 0.12; // slip angle (rad) above which tyres smoke / mark
+const SLIDE_SCRUB     = 0.03; // gentle — a drift keeps most of its speed
+const SLIDE_THRESH    = 0.10; // slip angle (rad) above which tyres smoke / mark
 const SLIDE_MIN_SPEED = 6;    // m/s below which we never count it as a slide
 
 // ---- Engine ----
@@ -657,16 +659,20 @@ export class Car {
       const yawRate = this.steerValue * MAX_YAW_RATE * speedFactor * dir;
 
       if (this.driftMode) {
-        // Loose rear: steering kicks the back out, the car rotates faster than
-        // it travels, and the velocity direction lags behind — a slide.
+        // Loose rear: steering kicks the back out and, crucially, the travel
+        // direction only slowly catches the heading — so the slide HOLDS even
+        // when the wheel is centred, and is steered (and caught) by the driver.
         this.heading += yawRate * DRIFT_YAW_GAIN * dt;
-        let slip = wrapPi(this.heading - this.travelDir);
-        this.travelDir += slip * REAR_GRIP_DRIFT * dt;             // rear grip recovering
-        // Self-aligning moment (rear tyres) pulls the nose back toward travel
-        // so the slide settles into a controllable angle instead of spinning.
-        this.heading -= slip * SELF_ALIGN * Math.min(1, absV / DRIFT_REF_SPEED) * dt;
+        const slip = wrapPi(this.heading - this.travelDir);
+        this.travelDir += slip * REAR_GRIP_DRIFT * dt;
+        // Self-aligning torque is gentle at small/mid angles (the rear stays
+        // loose) but ramps up past SLIP_SOFT, so extreme angles are caught
+        // instead of spinning — controllable, never an instant snap-back.
+        const sa = (SELF_ALIGN + Math.max(0, Math.abs(slip) - SLIP_SOFT) * SELF_ALIGN_PROG)
+                   * Math.min(1, absV / DRIFT_REF_SPEED);
+        this.heading -= slip * sa * dt;
         this.slip = wrapPi(this.heading - this.travelDir);
-        this.speed -= Math.abs(this.slip) * SLIDE_SCRUB * absV * dt; // scrub off speed
+        this.speed -= Math.abs(this.slip) * SLIDE_SCRUB * absV * dt;  // gentle scrub
         this.isSliding = Math.abs(this.slip) > SLIDE_THRESH && absV > SLIDE_MIN_SPEED;
       } else {
         // Full grip: the car goes exactly where it points.
