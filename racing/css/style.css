@@ -180,6 +180,26 @@ body {
   color: #34d399;
 }
 
+/* Drift-mode indicator */
+#drift-badge {
+  display: none;
+  position: fixed;
+  top: 54px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 15;
+  padding: 5px 16px;
+  border-radius: 999px;
+  background: rgba(190, 45, 32, 0.85);
+  border: 1px solid rgba(255, 130, 110, 0.5);
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.74rem;
+  letter-spacing: 0.14em;
+  box-shadow: 0 2px 12px rgba(190, 45, 32, 0.4);
+  backdrop-filter: blur(6px);
+}
+
 /* View-mode hint (top centre) */
 #view-hint {
   position: fixed;

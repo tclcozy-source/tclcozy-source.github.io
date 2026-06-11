@@ -10,6 +10,7 @@ export const input = {
   startEngine: false,    // one-shot: Ctrl+I
   toggleTransmission: false, // one-shot: T (auto/manual)
   toggleView: false,     // one-shot: C (chase / cockpit)
+  driftToggle: false,    // one-shot: B (drift mode on / off)
 };
 
 // Held-direction keys
@@ -34,6 +35,7 @@ window.addEventListener('keydown', (e) => {
     }
     if (e.key === 't' || e.key === 'T') { input.toggleTransmission = true; e.preventDefault(); }
     if (e.key === 'c' || e.key === 'C') { input.toggleView = true; e.preventDefault(); }
+    if (e.key === 'b' || e.key === 'B') { input.driftToggle = true; e.preventDefault(); }
   }
 });
 window.addEventListener('keyup', (e) => {

@@ -6,6 +6,7 @@ import { ChaseCamera, CockpitCamera } from './camera.js';
 import { buildWorld, scatterTrees } from './world.js';
 import { buildTrack }         from './track.js';
 import { engineAudio }        from './audio.js';
+import { DriftEffects }       from './effects.js';
 
 // ---- Desktop-only gate ----------------------------------------------------
 // This game is laptop/desktop only. On phones/tablets show a message and stop.
@@ -53,9 +54,11 @@ function startGame() {
   car.autoTransmission = false; // desktop defaults to manual (Q/E)
   const chaseCamera   = new ChaseCamera(camera);
   const cockpitCamera = new CockpitCamera(camera);
+  const driftEffects  = new DriftEffects(scene);
   let cockpitView = false; // false = third person (default), true = cockpit
 
-  const viewHintEl = document.getElementById('view-hint');
+  const viewHintEl  = document.getElementById('view-hint');
+  const driftBadge  = document.getElementById('drift-badge');
   function setView(cockpit) {
     cockpitView = cockpit;
     car.setCockpitView(cockpit);        // 3D interior on / exterior off
@@ -63,9 +66,10 @@ function startGame() {
     camera.updateProjectionMatrix();
     (cockpit ? cockpitCamera : chaseCamera).reset();
     if (viewHintEl) {
-      viewHintEl.innerHTML = cockpit
+      viewHintEl.innerHTML = (cockpit
         ? 'Cockpit · <span class="key-hint">C</span> 3rd person'
-        : '3rd person · <span class="key-hint">C</span> cockpit';
+        : '3rd person · <span class="key-hint">C</span> cockpit')
+        + ' · <span class="key-hint">B</span> drift';
     }
   }
   setView(false);
@@ -109,7 +113,15 @@ function startGame() {
     // View toggle (C): third person <-> cockpit
     if (input.toggleView) { input.toggleView = false; setView(!cockpitView); }
 
+    // Drift mode toggle (B)
+    if (input.driftToggle) {
+      input.driftToggle = false;
+      car.driftMode = !car.driftMode;
+      if (driftBadge) driftBadge.style.display = car.driftMode ? 'block' : 'none';
+    }
+
     car.update(input, dt);
+    driftEffects.update(car, dt);
 
     if (cockpitView) {
       cockpitCamera.update(car);

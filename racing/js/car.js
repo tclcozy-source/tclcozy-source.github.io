@@ -9,10 +9,19 @@ const STEER_RETURN    = 9.0;    // quicker self-centering when no input
 const BODY_ROLL_MAX   = 0.03;   // subtle visual lean
 
 // ---- First-person cockpit ----
-const DRIVER_X     = -0.40;  // left-hand drive seat (negative X = driver's left)
-const DRIVER_EYE_Y = 1.00;   // eye height (above the dash so the road is visible)
-const DRIVER_EYE_Z = -0.12;  // just behind the wheel
+const DRIVER_X     = -0.45;  // left-hand drive seat (negative X = driver's left)
+const DRIVER_EYE_Y = 1.06;   // eye height — raised to see over the wheel & dash
+const DRIVER_EYE_Z = -0.30;  // pulled back so the road is clearly visible
 const WHEEL_TURN   = 1.9;    // max steering-wheel rotation (rad) at full lock
+
+// ---- Drift mode (toggled with B) ----
+const DRIFT_YAW_GAIN  = 1.35; // extra steering authority that kicks the rear out
+const REAR_GRIP_DRIFT = 2.6;  // how fast travel-dir chases heading (low = more slide)
+const SELF_ALIGN      = 1.5;  // restoring yaw that keeps the slide controllable
+const DRIFT_REF_SPEED = 16;   // speed at which self-align reaches full strength
+const SLIDE_SCRUB     = 0.12; // speed scrubbed off while sliding sideways
+const SLIDE_THRESH    = 0.12; // slip angle (rad) above which tyres smoke / mark
+const SLIDE_MIN_SPEED = 6;    // m/s below which we never count it as a slide
 
 // ---- Engine ----
 const ENGINE_IDLE_RPM   = 900;
@@ -72,6 +81,12 @@ export class Car {
     this._autoCooldown = 0;     // anti-hunting timer for auto shifts
     this._reverseReady = false; // auto: reverse only after a deliberate re-press at a stop
     this.atLimiter = false;     // true while revs are pinned at the limiter
+
+    // Drift state
+    this.driftMode = false;     // toggled with B
+    this.travelDir = 0;         // direction the car is actually moving (vs heading)
+    this.slip      = 0;         // slip angle = heading - travelDir (rad)
+    this.isSliding = false;     // true while the rear is breaking traction
 
     // Driver-head offset in the car's local frame (read by the cockpit camera)
     this.driverHead = new THREE.Vector3(DRIVER_X, DRIVER_EYE_Y, DRIVER_EYE_Z);
@@ -292,8 +307,8 @@ export class Car {
 
     // Steering column + wheel (rotates with steering, parallaxes with the camera)
     const pivot = new THREE.Group();
-    pivot.position.set(X, 0.71, 0.34);
-    pivot.rotation.x = -0.45;        // column rake
+    pivot.position.set(X, 0.7, 0.32);
+    pivot.rotation.x = 0.5;          // column rake: reclines the wheel ~28°, top away from driver
     g.add(pivot);
 
     const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.03, 0.24, 12), trimMat);
@@ -320,7 +335,7 @@ export class Car {
       (gltf) => {
         const model = gltf.scene;
         model.scale.setScalar(0.00099);   // ~344 model units -> ~0.34 m diameter
-        model.rotation.x = Math.PI / 2;   // lay-flat wheel -> upright, facing the driver
+        model.rotation.x = -Math.PI / 2;  // lay-flat wheel -> upright; pivot rake reclines it toward the driver
         model.traverse((o) => {
           if (o.isMesh) {
             o.castShadow = true;
@@ -435,6 +450,7 @@ export class Car {
   placeAt(x, z, heading) {
     this.mesh.position.set(x, 0, z);
     this.heading = heading;
+    this.travelDir = heading;
     this.speed = 0;
     this.gear = 1;
     this.mesh.rotation.y = heading;
@@ -630,18 +646,44 @@ export class Car {
     const target = (input.left ? 1 : 0) - (input.right ? 1 : 0);
     const resp = (target === 0) ? STEER_RETURN : STEER_RESPONSE;
     this.steerValue += (target - this.steerValue) * Math.min(1, resp * dt);
-
-    // Turn rate eases off as speed climbs, for stability
-    if (Math.abs(this.speed) > 0.5) {
-      const speedFactor = 1 / (1 + Math.abs(this.speed) * STEER_SPEED_REF);
-      const yawRate = this.steerValue * MAX_YAW_RATE * speedFactor;
-      this.heading += yawRate * Math.sign(this.speed) * dt;
-    }
   }
 
   _integrate(dt) {
-    this.mesh.position.x += Math.sin(this.heading) * this.speed * dt;
-    this.mesh.position.z += Math.cos(this.heading) * this.speed * dt;
+    const absV = Math.abs(this.speed);
+
+    if (absV > 0.4) {
+      const speedFactor = 1 / (1 + absV * STEER_SPEED_REF); // calmer steering at speed
+      const dir = Math.sign(this.speed);
+      const yawRate = this.steerValue * MAX_YAW_RATE * speedFactor * dir;
+
+      if (this.driftMode) {
+        // Loose rear: steering kicks the back out, the car rotates faster than
+        // it travels, and the velocity direction lags behind — a slide.
+        this.heading += yawRate * DRIFT_YAW_GAIN * dt;
+        let slip = wrapPi(this.heading - this.travelDir);
+        this.travelDir += slip * REAR_GRIP_DRIFT * dt;             // rear grip recovering
+        // Self-aligning moment (rear tyres) pulls the nose back toward travel
+        // so the slide settles into a controllable angle instead of spinning.
+        this.heading -= slip * SELF_ALIGN * Math.min(1, absV / DRIFT_REF_SPEED) * dt;
+        this.slip = wrapPi(this.heading - this.travelDir);
+        this.speed -= Math.abs(this.slip) * SLIDE_SCRUB * absV * dt; // scrub off speed
+        this.isSliding = Math.abs(this.slip) > SLIDE_THRESH && absV > SLIDE_MIN_SPEED;
+      } else {
+        // Full grip: the car goes exactly where it points.
+        this.heading += yawRate * dt;
+        this.travelDir = this.heading;
+        this.slip = 0;
+        this.isSliding = false;
+      }
+    } else {
+      this.travelDir = this.heading;
+      this.slip = 0;
+      this.isSliding = false;
+    }
+
+    // Move along the direction of travel (which differs from heading in a slide)
+    this.mesh.position.x += Math.sin(this.travelDir) * this.speed * dt;
+    this.mesh.position.z += Math.cos(this.travelDir) * this.speed * dt;
     this.mesh.position.y = 0;
     this.mesh.rotation.y = this.heading;
   }
@@ -689,6 +731,9 @@ export class Car {
     }
   }
 }
+
+// Wrap an angle to [-PI, PI].
+function wrapPi(a) { return Math.atan2(Math.sin(a), Math.cos(a)); }
 
 // Normalised engine torque (0..1) across the rev range.
 function torqueFactor(rpm) {
