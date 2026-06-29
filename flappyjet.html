@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Flappy Jet</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; overflow: hidden; background: #6cc4f5; }
+  #game { display: block; width: 100vw; height: 100vh; touch-action: none; cursor: pointer; }
+</style>
+</head>
+<body>
+<canvas id="game"></canvas>
+<script>
+(function () {
+  "use strict";
+
+  var canvas = document.getElementById("game");
+  var ctx = canvas.getContext("2d");
+
+  // ---- Sizing (handles high-DPI + window resize) ----
+  var W = 0, H = 0, DPR = 1;
+  function resize() {
+    DPR = Math.min(window.devicePixelRatio || 1, 2);
+    W = window.innerWidth;
+    H = window.innerHeight;
+    canvas.width = Math.floor(W * DPR);
+    canvas.height = Math.floor(H * DPR);
+    canvas.style.width = W + "px";
+    canvas.style.height = H + "px";
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    groundH = Math.max(60, H * 0.10);
+  }
+  window.addEventListener("resize", resize);
+
+  // ---- Game constants ----
+  var GRAVITY = 0.45;
+  var FLAP = -8.0;
+  var BASE_SPEED = 2.7;
+  var OBST_W = 84;
+  var JET_W = 50, JET_H = 26;
+
+  var groundH = 80;
+
+  // ---- State ----
+  var state = "start"; // "start" | "play" | "over"
+  var score = 0, highScore = 0;
+  var speed = BASE_SPEED;
+  var jet, obstacles, bgHills, spawnX, groundScroll, overTimer;
+
+  function gapHeight() { return Math.max(150, Math.min(250, H * 0.34)); }
+
+  function reset() {
+    jet = { x: W * 0.28, y: H * 0.45, vy: 0, rot: 0 };
+    obstacles = [];
+    score = 0;
+    speed = BASE_SPEED;
+    groundScroll = 0;
+    overTimer = 0;
+    // pre-build parallax background hills (static silhouettes that scroll/loop)
+    buildHills();
+    // first obstacle a bit off-screen to the right
+    spawnX = W + 120;
+    spawnObstacle(spawnX);
+  }
+
+  function buildHills() {
+    bgHills = [];
+    var n = 0;
+    var x = 0;
+    while (x < W + 400) {
+      var w = 160 + Math.random() * 220;
+      var h = H * (0.16 + Math.random() * 0.18);
+      bgHills.push({ x: x, w: w, h: h });
+      x += w * 0.62;
+      n++;
+    }
+    hillScroll = 0;
+  }
+  var hillScroll = 0;
+
+  function spawnObstacle(x) {
+    var g = gapHeight();
+    var margin = 60;
+    var maxTop = H - groundH - g - margin;
+    var gapTop = margin + Math.random() * Math.max(20, maxTop - margin);
+    obstacles.push({ x: x, gapTop: gapTop, gapH: g, scored: false, seed: Math.random() * 1000 });
+  }
+
+  // ---- Input ----
+  function flapOrStart() {
+    if (state === "start") {
+      reset();
+      state = "play";
+      jet.vy = FLAP;
+    } else if (state === "play") {
+      jet.vy = FLAP;
+    } else if (state === "over") {
+      if (overTimer > 22) { // small debounce so you don't instantly restart
+        reset();
+        state = "play";
+        jet.vy = FLAP;
+      }
+    }
+  }
+  canvas.addEventListener("pointerdown", function (e) { e.preventDefault(); flapOrStart(); }, { passive: false });
+  window.addEventListener("keydown", function (e) {
+    if (e.code === "Space" || e.code === "ArrowUp" || e.key === " " || e.key === "ArrowUp") {
+      e.preventDefault();
+      flapOrStart();
+    }
+  });
+
+  // ---- Update ----
+  function update(dtf) {
+    if (state === "play") {
+      // jet physics
+      jet.vy += GRAVITY * dtf;
+      jet.y += jet.vy * dtf;
+      // tilt: up when rising, down when falling
+      var target = Math.max(-0.5, Math.min(1.1, jet.vy * 0.06));
+      jet.rot += (target - jet.rot) * 0.18 * dtf;
+
+      // scroll obstacles
+      for (var i = 0; i < obstacles.length; i++) {
+        var o = obstacles[i];
+        o.x -= speed * dtf;
+        if (!o.scored && o.x + OBST_W < jet.x) {
+          o.scored = true;
+          score++;
+          if (score % 5 === 0) speed += 0.35; // ramp difficulty every 5 points
+        }
+      }
+      // remove off-screen and spawn new
+      if (obstacles.length && obstacles[0].x + OBST_W < -20) obstacles.shift();
+      var spacing = Math.max(230, Math.min(360, W * 0.5));
+      var last = obstacles[obstacles.length - 1];
+      if (!last || last.x < W - spacing) spawnObstacle(W + 40);
+
+      // parallax + ground scroll
+      hillScroll -= speed * 0.35 * dtf;
+      groundScroll = (groundScroll - speed * dtf) % 40;
+
+      // collisions
+      if (checkCollision()) gameOver();
+    } else if (state === "over") {
+      overTimer += dtf;
+      // let the jet fall after dying
+      jet.vy += GRAVITY * dtf;
+      jet.y += jet.vy * dtf;
+      var floor = H - groundH - JET_H * 0.5;
+      if (jet.y > floor) { jet.y = floor; jet.vy = 0; }
+      jet.rot += (1.1 - jet.rot) * 0.1 * dtf;
+    } else if (state === "start") {
+      // gentle hover on the start screen
+      jet.y = H * 0.45 + Math.sin(Date.now() / 350) * 10;
+      jet.rot = Math.sin(Date.now() / 350) * 0.08;
+    }
+  }
+
+  function checkCollision() {
+    // ground / sky
+    if (jet.y + JET_H * 0.45 > H - groundH) return true;
+    if (jet.y - JET_H * 0.45 < 0) return true; // flew off the top
+    // obstacle gap (jet bounding box vs the closed top/bottom regions)
+    var jl = jet.x - JET_W * 0.42, jr = jet.x + JET_W * 0.46;
+    var jt = jet.y - JET_H * 0.40, jb = jet.y + JET_H * 0.40;
+    for (var i = 0; i < obstacles.length; i++) {
+      var o = obstacles[i];
+      if (jr > o.x && jl < o.x + OBST_W) {
+        if (jt < o.gapTop || jb > o.gapTop + o.gapH) return true;
+      }
+    }
+    return false;
+  }
+
+  function gameOver() {
+    state = "over";
+    overTimer = 0;
+    if (score > highScore) highScore = score;
+  }
+
+  // ---- Drawing ----
+  function drawBackground() {
+    var g = ctx.createLinearGradient(0, 0, 0, H);
+    g.addColorStop(0, "#3aa0e8");
+    g.addColorStop(0.55, "#7fc6f2");
+    g.addColorStop(1, "#cdedfb");
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, W, H);
+
+    // parallax background hills (slower than obstacles)
+    var baseY = H - groundH;
+    ctx.fillStyle = "rgba(120, 170, 210, 0.55)";
+    for (var pass = 0; pass < 2; pass++) {
+      var ox = (hillScroll % (W + 400)) + pass * (W + 400);
+      for (var i = 0; i < bgHills.length; i++) {
+        var hl = bgHills[i];
+        var cx = hl.x + ox;
+        ctx.beginPath();
+        ctx.moveTo(cx - hl.w * 0.5, baseY);
+        ctx.quadraticCurveTo(cx, baseY - hl.h, cx + hl.w * 0.5, baseY);
+        ctx.closePath();
+        ctx.fill();
+      }
+    }
+  }
+
+  function drawCloud(o) {
+    // fluffy white cloud filling the TOP region down to gapTop
+    var cx = o.x + OBST_W * 0.5;
+    var bottom = o.gapTop;
+    ctx.save();
+    ctx.fillStyle = "#ffffff";
+    // stack of puffs from the top down to the gap edge
+    var puffs = [
+      [0, bottom - 26, 40], [-34, bottom - 18, 30], [34, bottom - 18, 30],
+      [-18, bottom - 44, 30], [18, bottom - 46, 32], [0, bottom - 64, 30]
+    ];
+    // tall column behind so there's no gap up to the top of screen
+    ctx.fillStyle = "#f3f9ff";
+    ctx.fillRect(o.x + 8, -2, OBST_W - 16, bottom - 30);
+    ctx.fillStyle = "#ffffff";
+    for (var i = 0; i < puffs.length; i++) {
+      ctx.beginPath();
+      ctx.arc(cx + puffs[i][0], puffs[i][1], puffs[i][2], 0, Math.PI * 2);
+      ctx.fill();
+    }
+    // soft shadow at the bottom lip
+    ctx.fillStyle = "rgba(180,200,220,0.5)";
+    ctx.beginPath();
+    ctx.ellipse(cx, bottom - 8, OBST_W * 0.5, 12, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  function drawMountain(o) {
+    // brown/green mountain filling the BOTTOM region from gapBottom to ground
+    var top = o.gapTop + o.gapH;
+    var groundY = H - groundH;
+    var cx = o.x + OBST_W * 0.5;
+    var peakW = OBST_W * 0.95;
+    ctx.save();
+    // rock body
+    ctx.fillStyle = "#7a5638";
+    ctx.beginPath();
+    ctx.moveTo(cx - peakW * 0.5, groundY);
+    ctx.lineTo(cx, top);
+    ctx.lineTo(cx + peakW * 0.5, groundY);
+    ctx.closePath();
+    ctx.fill();
+    // lighter sunlit face
+    ctx.fillStyle = "#946a45";
+    ctx.beginPath();
+    ctx.moveTo(cx, top);
+    ctx.lineTo(cx + peakW * 0.5, groundY);
+    ctx.lineTo(cx + peakW * 0.12, groundY);
+    ctx.closePath();
+    ctx.fill();
+    // green cap / foliage near the top
+    ctx.fillStyle = "#3f8b46";
+    ctx.beginPath();
+    ctx.moveTo(cx, top);
+    ctx.lineTo(cx - peakW * 0.22, top + o.gapH * 0 + 46);
+    ctx.lineTo(cx + peakW * 0.22, top + 46);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+  }
+
+  function drawGround() {
+    var y = H - groundH;
+    ctx.fillStyle = "#5fae4e";
+    ctx.fillRect(0, y, W, groundH);
+    ctx.fillStyle = "#4f9a40";
+    ctx.fillRect(0, y, W, 8);
+    // simple scrolling texture stripes
+    ctx.fillStyle = "rgba(0,0,0,0.06)";
+    for (var x = groundScroll; x < W; x += 40) {
+      ctx.fillRect(x, y + 14, 20, groundH - 14);
+    }
+  }
+
+  function drawJet() {
+    ctx.save();
+    ctx.translate(jet.x, jet.y);
+    ctx.rotate(jet.rot);
+
+    // flame when rising
+    if (state === "play" && jet.vy < -1) {
+      ctx.fillStyle = "rgba(255,160,40,0.9)";
+      ctx.beginPath();
+      ctx.moveTo(-JET_W * 0.42, -3);
+      ctx.lineTo(-JET_W * 0.42 - 12 - Math.random() * 6, 0);
+      ctx.lineTo(-JET_W * 0.42, 3);
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    var w = JET_W, h = JET_H;
+    // tail fin
+    ctx.fillStyle = "#9aa3ad";
+    ctx.beginPath();
+    ctx.moveTo(-w * 0.40, -2);
+    ctx.lineTo(-w * 0.50, -h * 0.7);
+    ctx.lineTo(-w * 0.26, -2);
+    ctx.closePath();
+    ctx.fill();
+    // body
+    ctx.fillStyle = "#e9edf2";
+    ctx.beginPath();
+    ctx.moveTo(-w * 0.46, 0);
+    ctx.quadraticCurveTo(-w * 0.2, -h * 0.5, w * 0.2, -h * 0.42);
+    ctx.lineTo(w * 0.5, 0);              // nose tip (triangle)
+    ctx.quadraticCurveTo(w * 0.2, h * 0.5, -w * 0.46, h * 0.32);
+    ctx.closePath();
+    ctx.fill();
+    // grey underside / wing
+    ctx.fillStyle = "#b9c0c8";
+    ctx.beginPath();
+    ctx.moveTo(-w * 0.05, h * 0.1);
+    ctx.lineTo(-w * 0.34, h * 0.6);
+    ctx.lineTo(w * 0.06, h * 0.28);
+    ctx.closePath();
+    ctx.fill();
+    // nose triangle accent
+    ctx.fillStyle = "#cfd6dd";
+    ctx.beginPath();
+    ctx.moveTo(w * 0.22, -h * 0.34);
+    ctx.lineTo(w * 0.5, 0);
+    ctx.lineTo(w * 0.22, h * 0.30);
+    ctx.closePath();
+    ctx.fill();
+    // cockpit window
+    ctx.fillStyle = "#5aa9d8";
+    ctx.beginPath();
+    ctx.ellipse(w * 0.06, -h * 0.12, w * 0.12, h * 0.2, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.restore();
+  }
+
+  function roundShadowText(text, x, y, font, fill) {
+    ctx.font = font;
+    ctx.textAlign = "center";
+    ctx.lineWidth = Math.max(3, parseInt(font, 10) * 0.09);
+    ctx.strokeStyle = "rgba(0,0,0,0.35)";
+    ctx.strokeText(text, x, y);
+    ctx.fillStyle = fill;
+    ctx.fillText(text, x, y);
+  }
+
+  function drawScore() {
+    if (state === "play" || state === "over") {
+      roundShadowText(String(score), W / 2, Math.max(70, H * 0.12),
+        "bold " + Math.round(Math.min(90, H * 0.11)) + "px Arial, sans-serif", "#ffffff");
+    }
+  }
+
+  function drawStartScreen() {
+    ctx.textAlign = "center";
+    roundShadowText("FLAPPY JET", W / 2, H * 0.30,
+      "bold " + Math.round(Math.min(84, W * 0.13)) + "px Arial, sans-serif", "#ffffff");
+    roundShadowText("Tap / Space / ↑ to fly", W / 2, H * 0.39,
+      "bold " + Math.round(Math.min(30, W * 0.05)) + "px Arial, sans-serif", "#eaf6ff");
+
+    // pulsing prompt
+    var a = 0.55 + 0.45 * Math.sin(Date.now() / 300);
+    ctx.globalAlpha = a;
+    roundShadowText("TAP TO START", W / 2, H * 0.66,
+      "bold " + Math.round(Math.min(40, W * 0.07)) + "px Arial, sans-serif", "#ffe680");
+    ctx.globalAlpha = 1;
+  }
+
+  function drawOverScreen() {
+    // dim panel
+    ctx.fillStyle = "rgba(0,0,0,0.35)";
+    var pw = Math.min(420, W * 0.82), ph = Math.min(320, H * 0.5);
+    var px = (W - pw) / 2, py = (H - ph) / 2;
+    roundRect(px, py, pw, ph, 18);
+    ctx.fill();
+
+    roundShadowText("GAME OVER", W / 2, py + ph * 0.26,
+      "bold " + Math.round(Math.min(54, pw * 0.13)) + "px Arial, sans-serif", "#ff6b6b");
+    roundShadowText("Score: " + score, W / 2, py + ph * 0.5,
+      "bold " + Math.round(Math.min(34, pw * 0.085)) + "px Arial, sans-serif", "#ffffff");
+    roundShadowText("Best: " + highScore, W / 2, py + ph * 0.66,
+      "bold " + Math.round(Math.min(30, pw * 0.075)) + "px Arial, sans-serif", "#ffe680");
+
+    if (overTimer > 22) {
+      var a = 0.55 + 0.45 * Math.sin(Date.now() / 300);
+      ctx.globalAlpha = a;
+      roundShadowText("Tap to restart", W / 2, py + ph * 0.86,
+        "bold " + Math.round(Math.min(26, pw * 0.065)) + "px Arial, sans-serif", "#eaf6ff");
+      ctx.globalAlpha = 1;
+    }
+  }
+
+  function roundRect(x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r);
+    ctx.closePath();
+  }
+
+  function draw() {
+    drawBackground();
+    if (obstacles) {
+      for (var i = 0; i < obstacles.length; i++) {
+        drawCloud(obstacles[i]);
+        drawMountain(obstacles[i]);
+      }
+    }
+    drawGround();
+    if (jet) drawJet();
+    drawScore();
+    if (state === "start") drawStartScreen();
+    else if (state === "over") drawOverScreen();
+  }
+
+  // ---- Main loop (delta-normalised to ~60fps) ----
+  var lastT = 0;
+  function frame(t) {
+    if (!lastT) lastT = t;
+    var dtf = (t - lastT) / (1000 / 60);
+    lastT = t;
+    if (dtf > 3) dtf = 3; // clamp after tab switches
+    update(dtf);
+    draw();
+    requestAnimationFrame(frame);
+  }
+
+  // ---- Boot ----
+  resize();
+  reset();
+  state = "start";
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
