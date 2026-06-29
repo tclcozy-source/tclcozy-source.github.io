@@ -208,64 +208,120 @@
   }
 
   function drawCloud(o) {
-    // fluffy white cloud filling the TOP region down to gapTop
-    var cx = o.x + OBST_W * 0.5;
-    var bottom = o.gapTop;
+    // Fluffy cloud cluster hanging from the top down to the gap (gapTop).
+    // The straight interior fill is fully hidden behind overlapping puffs so
+    // the sides and top read as bumpy, with a flat-ish puffy bottom.
+    var w = OBST_W;
+    var cx = o.x + w * 0.5;
+    var bottom = o.gapTop;   // flat-ish bottom edge at the gap
+    var top = -36;           // hangs from above the top of the screen
+    var r = w * 0.33;
+    var i;
+
     ctx.save();
-    ctx.fillStyle = "#ffffff";
-    // stack of puffs from the top down to the gap edge
-    var puffs = [
-      [0, bottom - 26, 40], [-34, bottom - 18, 30], [34, bottom - 18, 30],
-      [-18, bottom - 44, 30], [18, bottom - 46, 32], [0, bottom - 64, 30]
+
+    // bottom edge cluster (the prominent fluffy part), centres ~1 radius up so
+    // the puff bottoms land roughly on `bottom`
+    var bp = [
+      [cx - w * 0.34, bottom - r * 0.98, r * 0.92],
+      [cx - w * 0.11, bottom - r * 1.05, r * 1.05],
+      [cx + w * 0.13, bottom - r * 1.05, r * 1.02],
+      [cx + w * 0.34, bottom - r * 0.98, r * 0.90]
     ];
-    // tall column behind so there's no gap up to the top of screen
-    ctx.fillStyle = "#f3f9ff";
-    ctx.fillRect(o.x + 8, -2, OBST_W - 16, bottom - 30);
+    var puffs = bp.slice();
+    // stacked bumpy body up to the top
+    for (var y = bottom - r * 1.7; y > top + r; y -= r * 0.95) {
+      puffs.push([cx - w * 0.26, y, r * 0.80]);
+      puffs.push([cx + w * 0.26, y, r * 0.80]);
+      puffs.push([cx,            y - r * 0.1, r * 0.95]);
+    }
+    // rounded top cap
+    puffs.push([cx - w * 0.13, top + r * 0.7, r * 0.8]);
+    puffs.push([cx + w * 0.13, top + r * 0.7, r * 0.8]);
+    puffs.push([cx,            top + r * 0.35, r * 0.9]);
+
+    // interior fill (hidden behind the puffs) so a tall cloud has no gaps
     ctx.fillStyle = "#ffffff";
-    for (var i = 0; i < puffs.length; i++) {
+    ctx.fillRect(cx - w * 0.26, top, w * 0.52, bottom - top);
+
+    // white puffs
+    for (i = 0; i < puffs.length; i++) {
       ctx.beginPath();
-      ctx.arc(cx + puffs[i][0], puffs[i][1], puffs[i][2], 0, Math.PI * 2);
+      ctx.arc(puffs[i][0], puffs[i][1], puffs[i][2], 0, Math.PI * 2);
       ctx.fill();
     }
-    // soft shadow at the bottom lip
-    ctx.fillStyle = "rgba(180,200,220,0.5)";
+
+    // soft light-grey underside shading, clipped to a band along the bottom
+    ctx.save();
     ctx.beginPath();
-    ctx.ellipse(cx, bottom - 8, OBST_W * 0.5, 12, 0, 0, Math.PI * 2);
-    ctx.fill();
+    ctx.rect(cx - w * 0.75, bottom - 15, w * 1.5, 17);
+    ctx.clip();
+    ctx.fillStyle = "rgba(196, 208, 224, 0.9)";
+    for (i = 0; i < bp.length; i++) {
+      ctx.beginPath();
+      ctx.arc(bp[i][0], bp[i][1], bp[i][2], 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+
     ctx.restore();
   }
 
   function drawMountain(o) {
-    // brown/green mountain filling the BOTTOM region from gapBottom to ground
-    var top = o.gapTop + o.gapH;
+    // Broad rocky mountain filling the BOTTOM region (gapBottom -> ground).
+    // Wide base that extends past the hitbox, a solid (trapezoid) peak rather
+    // than a thin spike, a darker shaded side, and a small snow cap on top.
+    var peakY = o.gapTop + o.gapH;       // top of the mountain = bottom of the gap
     var groundY = H - groundH;
     var cx = o.x + OBST_W * 0.5;
-    var peakW = OBST_W * 0.95;
+    var height = groundY - peakY;
+    var halfBase = OBST_W * 0.5 + 48;    // wide base, spills beyond the 84px hitbox
+    var topHalf = OBST_W * 0.30;         // solid wide peak (trapezoid top)
+
     ctx.save();
-    // rock body
-    ctx.fillStyle = "#7a5638";
+
+    // main rock body (lit side colour)
+    ctx.fillStyle = "#8a7868";
     ctx.beginPath();
-    ctx.moveTo(cx - peakW * 0.5, groundY);
-    ctx.lineTo(cx, top);
-    ctx.lineTo(cx + peakW * 0.5, groundY);
+    ctx.moveTo(cx - halfBase, groundY);
+    ctx.lineTo(cx - topHalf, peakY);
+    ctx.lineTo(cx + topHalf, peakY);
+    ctx.lineTo(cx + halfBase, groundY);
     ctx.closePath();
     ctx.fill();
-    // lighter sunlit face
-    ctx.fillStyle = "#946a45";
+
+    // darker shaded side (right half) for depth
+    ctx.fillStyle = "#5f5247";
     ctx.beginPath();
-    ctx.moveTo(cx, top);
-    ctx.lineTo(cx + peakW * 0.5, groundY);
-    ctx.lineTo(cx + peakW * 0.12, groundY);
+    ctx.moveTo(cx, peakY);
+    ctx.lineTo(cx + topHalf, peakY);
+    ctx.lineTo(cx + halfBase, groundY);
+    ctx.lineTo(cx, groundY);
     ctx.closePath();
     ctx.fill();
-    // green cap / foliage near the top
-    ctx.fillStyle = "#3f8b46";
+
+    // subtle ridge line down the lit face
+    ctx.strokeStyle = "rgba(0,0,0,0.10)";
+    ctx.lineWidth = 2.5;
     ctx.beginPath();
-    ctx.moveTo(cx, top);
-    ctx.lineTo(cx - peakW * 0.22, top + o.gapH * 0 + 46);
-    ctx.lineTo(cx + peakW * 0.22, top + 46);
+    ctx.moveTo(cx - topHalf * 0.5, peakY + height * 0.12);
+    ctx.lineTo(cx - halfBase * 0.55, groundY);
+    ctx.stroke();
+
+    // small snow cap on the very top peak only (wavy lower edge)
+    var capH = Math.min(height * 0.26, 26);
+    ctx.fillStyle = "#f6fafd";
+    ctx.beginPath();
+    ctx.moveTo(cx - topHalf * 1.12, peakY + capH * 0.45);
+    ctx.lineTo(cx - topHalf, peakY);
+    ctx.lineTo(cx + topHalf, peakY);
+    ctx.lineTo(cx + topHalf * 1.12, peakY + capH * 0.45);
+    ctx.lineTo(cx + topHalf * 0.45, peakY + capH);
+    ctx.lineTo(cx,                  peakY + capH * 0.62);
+    ctx.lineTo(cx - topHalf * 0.45, peakY + capH);
     ctx.closePath();
     ctx.fill();
+
     ctx.restore();
   }
 
